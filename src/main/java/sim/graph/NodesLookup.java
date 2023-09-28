@@ -142,14 +142,17 @@ public class NodesLookup {
 		return node;
 	}
 
-	/**
-	 * Given a node in the graph, it returns all the nodes whose distance from the
-	 * given node is between the given lower and the upper limits.
-	 *
-	 * @param node;
-	 * @param lowerLimit;
-	 * @param upperLimit;
-	 */
+    /**
+     * Returns a randomly selected node whose distance from the origin node falls within the specified range and has centrality values above or equal to a specified percentile.
+     *
+     * @param network    The input graph.
+     * @param junctions  The vector layer representing junctions.
+     * @param originNode The origin node.
+     * @param lowerLimit The minimum distance from the origin node.
+     * @param upperLimit The maximum distance from the origin node.
+     * @param percentile The percentile used as a threshold for centrality values.
+     * @return A randomly selected node that satisfies the specified distance and centrality criteria.
+     */
 	public static ArrayList<NodeGraph> getNodesBetweenDistanceInterval(Graph network, VectorLayer junctions,
 			NodeGraph node, double lowerLimit, double upperLimit) {
 
@@ -162,15 +165,18 @@ public class NodesLookup {
 		return containedNodes;
 	}
 
-	/**
-	 * Given a graph, the function returns a random node whose distance from a
-	 * passed origin node is within certain limits.
-	 *
-	 * @param network    a graph;
-	 * @param originNode a node;
-	 * @param lowerLimit the minimum distance from the origin node;
-	 * @param upperLimit the maximum distance from the origin node;
-	 */
+    /**
+     * Returns a randomly selected node whose distance from the origin node falls within the specified range and has 
+     * centrality values above or equal to a specified percentile.
+     *
+     * @param network    The input graph.
+     * @param junctions  The vector layer representing junctions.
+     * @param originNode The origin node.
+     * @param lowerLimit The minimum distance from the origin node.
+     * @param upperLimit The maximum distance from the origin node.
+     * @param percentile The percentile used as a threshold for centrality values.
+     * @return A randomly selected node that satisfies the specified distance and centrality criteria.
+     */
 	public static NodeGraph randomNodeBetweenDistanceInterval(Graph network, VectorLayer junctions,
 			NodeGraph originNode, double lowerLimit, double upperLimit) {
 
@@ -182,16 +188,16 @@ public class NodesLookup {
 		return node;
 	}
 
-	/**
-	 * Given a node in the graph, a lower and an upper limit, it returns all the
-	 * nodes whose distance from the given node is between the lower and the upper
-	 * limit. Moreover, the returned nodes must be in a different region from the
-	 * originNode.
-	 *
-	 * @param node;
-	 * @param lowerLimit;
-	 * @param upperLimit;
-	 */
+	 /**
+     * Returns a list of nodes whose distance from the given node falls within the specified range and belong to a different region.
+     *
+     * @param network    The input graph.
+     * @param junctions  The vector layer representing junctions.
+     * @param node       The reference node.
+     * @param lowerLimit The minimum distance from the reference node.
+     * @param upperLimit The maximum distance from the reference node.
+     * @return A list of nodes that meet the distance and region criteria.
+     */
 	public static ArrayList<NodeGraph> getNodesBetweenDistanceIntervalRegion(Graph network, VectorLayer junctions,
 			NodeGraph node, double lowerLimit, double upperLimit) {
 		ArrayList<NodeGraph> containedNodes = new ArrayList<>();
@@ -249,23 +255,18 @@ public class NodesLookup {
 		return containedSalientNodes;
 	}
 
-	/**
-	 * Given a graph, the function returns a random node whose distance from a
-	 * passed origin node is within certain limits. The returned node's centrality
-	 * is higher or equal to the value at the passed percentile. This is to allow
-	 * the modeller to only employ salient junctions. The percentile determines the
-	 * threshold used to identify salient nodes.
-	 *
-	 * For example, if 0.75 is provided, only the nodes whose centrality value is
-	 * higher than the value at the 75th percentile are considered. This is computed
-	 * within the entire graph.
-	 *
-	 * @param network    a graph;
-	 * @param originNode a node;
-	 * @param lowerLimit the minimum distance from the origin node;
-	 * @param upperLimit the maximum distance from the origin node;
-	 * @param percentile the percentile used to identify salient nodes;
-	 */
+    /**
+     * Returns a randomly selected node whose distance from the origin node falls within the specified range and has 
+     * centrality values above or equal to a specified percentile.
+     *
+     * @param network    The input graph.
+     * @param junctions  The vector layer representing junctions.
+     * @param originNode The origin node.
+     * @param lowerLimit The minimum distance from the origin node.
+     * @param upperLimit The maximum distance from the origin node.
+     * @param percentile The percentile used as a threshold for centrality values.
+     * @return A randomly selected node that satisfies the specified distance and centrality criteria.
+     */
 	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph network, VectorLayer junctions,
 			NodeGraph originNode, double lowerLimit, double upperLimit, double percentile) {
 
@@ -284,18 +285,18 @@ public class NodesLookup {
 		return node;
 	}
 
-	/**
-	 * Given a graph, the function returns a random node whose distance from a
-	 * passed origin node is within certain limits. The returned node belongs to a
-	 * certain category amongst "live", "work", "visit", depending on the string DMA
-	 * that was passed.
-	 *
-	 * @param network    a graph;
-	 * @param originNode a node;
-	 * @param lowerLimit the minimum distance from the origin node;
-	 * @param upperLimit the maximum distance from the origin node;
-	 * @param DMA        the desired node's category;
-	 */
+    /**
+     * Returns a randomly selected node whose distance from the origin node falls within the specified range and has 
+     * centrality values above or equal to a specified percentile.
+     *
+     * @param network    The input graph.
+     * @param junctions  The vector layer representing junctions.
+     * @param originNode The origin node.
+     * @param lowerLimit The minimum distance from the origin node.
+     * @param upperLimit The maximum distance from the origin node.
+     * @param percentile The percentile used as a threshold for centrality values.
+     * @return A randomly selected node that satisfies the specified distance and centrality criteria.
+     */
 	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph network, VectorLayer junctions,
 			NodeGraph originNode, double lowerLimit, double upperLimit, String DMA) {
 
@@ -332,18 +333,14 @@ public class NodesLookup {
 		return node;
 	}
 
-	/**
-	 * Given a graph, the function returns a random node whose distance from a
-	 * passed origin node is within certain limits. The returned node belongs to a
-	 * certain category amongst "live", "work", "visit", depending on the string DMA
-	 * that was passed.
-	 *
-	 * @param network    a graph;
-	 * @param originNode a node;
-	 * @param lowerLimit the minimum distance from the origin node;
-	 * @param upperLimit the maximum distance from the origin node;
-	 * @param DMA        the desired node's category;
-	 */
+    /**
+     * Returns a randomly selected node from the graph that belongs to a specified category ("live," "work," "visit") 
+     * based on the provided DMA (District Market Area).
+     *
+     * @param network    The input graph.
+     * @param DMA        The desired node category.
+     * @return A randomly selected node from the specified category based on the DMA.
+     */
 	public static NodeGraph randomNodeDMA(Graph network, String DMA) {
 
 		final Random random = new Random();
