@@ -138,11 +138,11 @@ public class Graph extends PlanarGraph {
 	}
 	
 	/**
-	 * Generates network structures for the graph. This method generates essential
-	 * network structures, including the node mapping (nodesMap) and adjacency matrix
-	 * (adjacencyMatrix) that represent relationships between nodes and edges.
+	 * Generates structures for the graph. This method generates essential structures, 
+	 * including the node mapping (nodesMap) and adjacency matrix (adjacencyMatrix) 
+	 * that represent relationships between nodes and edges.
 	 */
-	public void generateNetworkStructures() {
+	public void generateGraphStructures() {
 		generateNodesMap();
 		generateAdjacencyMatrix();
 	}
