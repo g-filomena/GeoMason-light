@@ -373,7 +373,7 @@ public class Graph extends PlanarGraph {
 	public Map<NodeGraph, Double> salientNodesWithinSpace(NodeGraph node, NodeGraph otherNode, double percentile) {
 
 		ArrayList<NodeGraph> containedNodes = new ArrayList<>();
-		final Geometry smallestEnclosingCircle = NodeGraphUtils.enclosingCircleBetweenNodes(node, otherNode);
+		final Geometry smallestEnclosingCircle = GraphUtils.enclosingCircleBetweenNodes(node, otherNode);
 		containedNodes = this.getContainedNodes(smallestEnclosingCircle);
 
 		if (containedNodes.isEmpty())
@@ -407,7 +407,7 @@ public class Graph extends PlanarGraph {
 	 */
 	public ArrayList<EdgeGraph> edgesInNodesSpace(NodeGraph node, NodeGraph otherNode) {
 
-		Double radius = NodeGraphUtils.nodesDistance(node, otherNode) * 1.50;
+		Double radius = GraphUtils.nodesDistance(node, otherNode) * 1.50;
 		if (radius < 500)
 			radius = 500.0;
 		final Geometry bufferOrigin = node.masonGeometry.geometry.buffer(radius);
