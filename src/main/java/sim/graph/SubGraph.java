@@ -356,7 +356,7 @@ public class SubGraph extends Graph {
 			final NodeGraph parentNode = this.getParentNode(n);
 			centralityMap.put(n, parentNode.centrality);
 		}
-		centralityMap = (LinkedHashMap<NodeGraph, Double>) Utilities.sortByValue(centralityMap, false);
+		this.centralityMap = (LinkedHashMap<NodeGraph, Double>) Utilities.sortByValue(centralityMap, false);
 	}
 
 	/**
