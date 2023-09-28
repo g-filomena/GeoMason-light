@@ -27,7 +27,6 @@ import org.locationtech.jts.planargraph.DirectedEdge;
 import org.locationtech.jts.planargraph.PlanarGraph;
 
 import sim.field.geo.VectorLayer;
-import sim.util.geo.GeometryUtilities;
 import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
@@ -374,7 +373,7 @@ public class Graph extends PlanarGraph {
 	public Map<NodeGraph, Double> salientNodesWithinSpace(NodeGraph node, NodeGraph otherNode, double percentile) {
 
 		ArrayList<NodeGraph> containedNodes = new ArrayList<>();
-		final Geometry smallestEnclosingCircle = GeometryUtilities.nodesEnclosingCircle(node, otherNode);
+		final Geometry smallestEnclosingCircle = NodeGraphUtils.enclosingCircleBetweenNodes(node, otherNode);
 		containedNodes = this.getContainedNodes(smallestEnclosingCircle);
 
 		if (containedNodes.isEmpty())
@@ -408,7 +407,7 @@ public class Graph extends PlanarGraph {
 	 */
 	public ArrayList<EdgeGraph> edgesInNodesSpace(NodeGraph node, NodeGraph otherNode) {
 
-		Double radius = GeometryUtilities.nodesDistance(node, otherNode) * 1.50;
+		Double radius = NodeGraphUtils.nodesDistance(node, otherNode) * 1.50;
 		if (radius < 500)
 			radius = 500.0;
 		final Geometry bufferOrigin = node.masonGeometry.geometry.buffer(radius);
