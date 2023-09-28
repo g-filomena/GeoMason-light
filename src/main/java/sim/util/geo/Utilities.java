@@ -18,11 +18,15 @@ import sim.util.Bag;
  */
 public class Utilities {
 
-	/** It sorts a Map on the basis of its values, and on the method provided (descending)
-	 *
-	 * @param map the map;
-	 * @param descending if true, values are sorted in a descending order, otherwise ascending;
-	 */
+    /**
+     * Sorts a Map based on its values.
+     *
+     * @param map        The map to be sorted.
+     * @param descending If true, values are sorted in descending order; otherwise, they are sorted in ascending order.
+     * @param <K>        The type of keys in the map.
+     * @param <V>        The type of values in the map.
+     * @return A sorted map based on values.
+     */
 	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map, boolean descending) {
 		if (descending) return map.entrySet()
 				.stream()
@@ -45,27 +49,31 @@ public class Utilities {
 						));
 	}
 	
-	/**
-	 * It filters the content of the map on the basis of the key values. Only entries whose keys are contained in the given Bag are kept.
-	 * A new map is returned.
-	 *
-	 * @param map, the input map;
-	 * @param filter, a Bag containing the desired keys;
-	 */
-	public static HashMap<MasonGeometry, Double> filterMap(HashMap<MasonGeometry, Double> map, Bag filter) {
-		HashMap<MasonGeometry, Double> mapFiltered = new HashMap<MasonGeometry, Double> (map);
-		ArrayList<MasonGeometry> result = new ArrayList<MasonGeometry>();
-		for(MasonGeometry key : mapFiltered.keySet()) {if(filter.contains(key)) result.add(key);}
-		mapFiltered.keySet().retainAll(result);
-		return mapFiltered;
-	}
+//    /**
+//     * Filters a map based on the keys provided in a Bag. Only entries with keys in the Bag are kept.
+//     *
+//     * @param map    The input map.
+//     * @param filter A Bag containing the desired keys.
+//     * @return A new map containing only the filtered entries.
+//     */
+//	public static HashMap<MasonGeometry, Double> filterMap(HashMap<MasonGeometry, Double> map, Bag filter) {
+//		HashMap<MasonGeometry, Double> mapFiltered = new HashMap<MasonGeometry, Double> (map);
+//		ArrayList<MasonGeometry> result = new ArrayList<MasonGeometry>();
+//		for(MasonGeometry key : mapFiltered.keySet()) 
+//			if(filter.contains(key)) result.add(key);
+//		mapFiltered.keySet().retainAll(result);
+//		return mapFiltered;
+//	}
 
-	/**
-	 * Given a certain value, it returns the key of the first entry whose values is equal to the input.
-	 *
-	 * @param map, the input map;
-	 * @param value, the input value whose key is of interest;
-	 */
+    /**
+     * Retrieves the key from a map based on a specified value.
+     *
+     * @param map   The input map.
+     * @param value The value whose corresponding key is of interest.
+     * @param <K>   The type of keys in the map.
+     * @param <V>   The type of values in the map.
+     * @return The key corresponding to the provided value.
+     */
 	public static <K, V> K getKeyFromValue(Map<K, V> map, V value) {
 		for (Entry<K, V> entry : map.entrySet()) {
 			if (Objects.equals(value, entry.getValue())) return entry.getKey();
@@ -73,14 +81,15 @@ public class Utilities {
 		return null;
 	}
 
-	/**
-	 * It returns a random value from a distribution with a given mean and a standard deviation.
-	 * If a direction is provided, only values higher or lower than the mean are returned.
-	 *
-	 * @param mean the distribution's mean;
-	 * @param sd the distribution's standard deviation;
-	 * @param direction either "left", only values lower than the mean, or "right", higher than the mean, otherwise pass null;
-	 */
+    /**
+     * Generates a random value from a distribution with a given mean and standard deviation.
+     * Optionally, values higher or lower than the mean can be returned based on the provided direction.
+     *
+     * @param mean      The mean of the distribution.
+     * @param sd        The standard deviation of the distribution.
+     * @param direction Either "left" (for values lower than the mean), "right" (for values higher than the mean), or null.
+     * @return A random value from the distribution.
+     */
 	public static double fromDistribution(double mean, double sd, String direction) 	{
 		Random random = new Random();
 		double result = random.nextGaussian()*sd+mean;
@@ -92,25 +101,32 @@ public class Utilities {
 		return result;
 	}
 	
-    // Filter the map to keep entries where the value is >= thresholdValue
+    /**
+     * Filters a map to keep entries where the value is greater than or equal to the provided threshold value.
+     *
+     * @param map        The input map.
+     * @param minValue   The minimum value for filtering.
+     * @param <K>        The type of keys in the map.
+     * @return A filtered map.
+     */
     public static <K> Map<K, Integer> filterMapByMinValue(Map<K, Integer> map, int minValue) {
         return map.entrySet().stream()
                 .filter(entry -> entry.getValue() >= minValue)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 	
-    // Filter the map to keep entries below the threshold value
-    public static <K, V extends Comparable<Double>> Map<K, Double> filterMapByPercentile(Map<K, Double> map, double percentile) {
-        
+    /**
+     * Filters a map to keep entries below the provided percentile threshold value.
+     *
+     * @param map       The input map.
+     * @param percentile The percentile value (e.g., 0.95 for 95th percentile).
+     * @param <K>       The type of keys in the map.
+     * @return A filtered map.
+     */
+    public static <K, V extends Comparable<Double>> Map<K, Double> filterMapByPercentile(Map<K, Double> map, 
+    		double percentile) {
     	double percentileValue = calculatePercentileThreshold(map, percentile);
     	return filterMapByThreshold(map, percentileValue);
-    }
-
-    // Filter the map to keep entries below the threshold value
-    private static <K, V extends Comparable<Double>> Map<K, Double> filterMapByThreshold(Map<K, Double> map, Double thresholdValue) {
-        return map.entrySet().stream()
-                .filter(entry -> entry.getValue().compareTo(thresholdValue) < 0)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
     
     // Calculate the threshold value for a given percentile
@@ -128,13 +144,30 @@ public class Utilities {
         return valuesArray[index];
     }
     
+    // Filter the map to keep entries below the threshold value
+    private static <K, V extends Comparable<Double>> Map<K, Double> filterMapByThreshold(Map<K, Double> map, 
+    		double thresholdValue) {
+        return map.entrySet().stream()
+                .filter(entry -> entry.getValue().compareTo(thresholdValue) < 0)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+    
+    /**
+     * Filters a map to keep entries that match the provided key list.
+     *
+     * @param map     The input map.
+     * @param keyList The list of keys to include in the filtered map.
+     * @param <K>     The type of keys in the map.
+     * @param <V>     The type of values in the map.
+     * @return A filtered map.
+     */
     public static <K, V> HashMap<K, V> filterMapByIndex(HashMap<K, V> map, ArrayList<K> keyList) {
     	Map<K, V> filteredMap = map.entrySet().stream()
 		    .filter(entry -> keyList.contains(entry.getKey()))
 		    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     	return new HashMap<K, V> (filteredMap);
     }
-    	
+
 }
 
 
