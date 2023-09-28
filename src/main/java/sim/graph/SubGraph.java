@@ -398,7 +398,7 @@ public class SubGraph extends Graph {
 	 * @return A mapping of salient nodes within the subgraph to their centrality values, or
 	 *         null if no salient nodes are found in the subgraph.
 	 */
-	private Map<NodeGraph, Double> subGraphSalientNodes(double percentile) {
+	public Map<NodeGraph, Double> subGraphSalientNodes(double percentile) {
 
 		int position;
 		position = (int) (centralityMap.size() * percentile);
