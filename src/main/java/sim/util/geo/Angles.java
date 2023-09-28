@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2023 Gabriele Filomena
+ * University of Liverpool, UK
+ * 
+ * This program is free software: it can redistributed and/or modified
+ * under the terms of the GNU General Public License 3.0 as published by
+ * the Free Software Foundation.
+ *
+ * See the file "LICENSE" for more information
+ */
 package sim.util.geo;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -8,28 +18,39 @@ import org.locationtech.jts.geom.MultiPoint;
 import sim.graph.NodeGraph;
 
 /**
- * Set of functions for computing angles' and related-measures.
- *
+ * The class provides utility methods for working with angles and coordinates.
+ * It contains static methods to calculate angles between points, compute angular differences,
+ * and perform various angle-related calculations.
  */
-
 public class Angles {
 
+	/**
+	 * Computes the dot product between two vectors represented as arrays of doubles.
+	 *
+	 * @param vectorA The first vector as an array of doubles.
+	 * @param vectorB The second vector as an array of doubles.
+	 * @return The dot product of the two input vectors.
+	 */
 	private static double dot(double[] vectorA, double[] vectorB) {
-		return vectorA[0] * vectorB[0] + vectorA[1] * vectorB[1];
+	    return vectorA[0] * vectorB[0] + vectorA[1] * vectorB[1];
 	}
 
 	/**
-	 * It computes the angle formed by two nodes in a network, with the y-axis It
-	 * returns a value in degrees.
+	 * Computes the angle in degrees between two NodeGraph instances.
 	 *
-	 * @param originNode      the first node;
-	 * @param destinationNode the second node;
+	 * This method calculates the angle in degrees between two NodeGraph instances, where
+	 * 'originNode' represents the starting point, and 'destinationNode' represents the
+	 * ending point. The angle is measured with respect to the positive y-axis.
+	 *
+	 * @param originNode      The starting NodeGraph.
+	 * @param destinationNode The ending NodeGraph.
+	 * @return The angle in degrees between the two NodeGraph instances with respect to the y-axis.
 	 */
 	public static double angle(NodeGraph originNode, NodeGraph destinationNode) {
 		final Coordinate origin = originNode.getCoordinate();
 		final Coordinate destination = destinationNode.getCoordinate();
-		final double[] vectorA = { origin.x - origin.x, origin.y - (origin.y + 2000) };
-		final double[] vectorB = { origin.x - destination.x, origin.y - destination.y };
+		final double[] vectorA = {origin.x - origin.x, origin.y - (origin.y + 2000)};
+		final double[] vectorB = {origin.x - destination.x, origin.y - destination.y};
 		final double dot_prod = dot(vectorA, vectorB);
 		final double magA = Math.pow(dot(vectorA, vectorA), 0.5);
 		final double magB = Math.pow(dot(vectorB, vectorB), 0.5);
@@ -42,15 +63,19 @@ public class Angles {
 	}
 
 	/**
-	 * It computes the angle formed by two locations, expressed in coordinates
-	 * pairs, with the y-axis. It returns a value in degrees.
+	 * Computes the angle in degrees formed by two sets of coordinates with respect to the y-axis.
 	 *
-	 * @param origin      the first coordinates pair;
-	 * @param destination the second coordinates pair;
+	 * This method calculates the angle between two sets of coordinates, where the first set
+	 * represents the origin and the second set represents the destination. The angle is measured
+	 * with respect to the positive y-axis and returned in degrees.
+	 *
+	 * @param origin      The coordinates of the origin point.
+	 * @param destination The coordinates of the destination point.
+	 * @return The angle in degrees between the origin and destination with respect to the y-axis.
 	 */
 	public static double angle(Coordinate origin, Coordinate destination) {
-		final double[] vectorA = { origin.x - origin.x, origin.y - (origin.y + 2000) };
-		final double[] vectorB = { origin.x - destination.x, origin.y - destination.y };
+		final double[] vectorA = {origin.x - origin.x, origin.y - (origin.y + 2000)};
+		final double[] vectorB = {origin.x - destination.x, origin.y - destination.y};
 		final double dot_prod = dot(vectorA, vectorB);
 		final double magA = Math.pow(dot(vectorA, vectorA), 0.5);
 		final double magB = Math.pow(dot(vectorB, vectorB), 0.5);
@@ -60,14 +85,19 @@ public class Angles {
 		if (destination.x < origin.x)
 			angleDeg = 180 + (180 - angleDeg);
 		return angleDeg;
-
 	}
 
 	/**
-	 * It computes the difference between two angles. It returns a value in degrees.
+	 * Calculates the angular difference between two angles, considering their orientations.
 	 *
-	 * @param angleA the first angle (degrees);
-	 * @param angleB the second angle (degrees);
+	 * This method computes the absolute angular difference between two angles, taking
+	 * into account their orientations in degrees. The result is the smallest angular
+	 * difference between the two angles, considering both positive and negative
+	 * angular directions.
+	 *
+	 * @param angleA The first angle in degrees.
+	 * @param angleB The second angle in degrees.
+	 * @return The absolute angular difference between angleA and angleB in degrees.
 	 */
 	public static double differenceAngles(Double angleA, Double angleB) {
 		double difference = 0;
@@ -90,13 +120,18 @@ public class Angles {
 	}
 
 	/**
-	 * It verifies whether an angle between an origin and a second node is towards
-	 * certain destination, on the basis of a cone of x degrees.
+	 * Checks whether an angle between an origin and a second node falls within a specified cone.
 	 *
-	 * @param angleOD the angle between the origin and the destination (degrees);
-	 * @param angleON the second angle, between the origin and a possible
-	 *                intermediate node (degrees);
-	 * @param cone    the amplitude of the cone (degrees);
+	 * This method determines if an angle, given the angle between the origin and
+	 * the destination node (angleOD), the angle between the origin and a possible
+	 * intermediate node (angleON), and the amplitude of the cone (cone), lies within
+	 * the specified cone.
+	 *
+	 * @param angleOD The angle between the origin and the destination node in degrees.
+	 * @param angleON The angle between the origin and the intermediate node in degrees.
+	 * @param cone    The amplitude of the cone in degrees.
+	 * @return        {@code true} if the angle between the origin and the intermediate
+	 *                node is within the specified cone; {@code false} otherwise.
 	 */
 	public static boolean isInDirection(double angleOD, double angleON, double cone) {
 		double limitLeft = angleOD - (cone / 2.0 + 1.0);
@@ -118,12 +153,15 @@ public class Angles {
 	}
 
 	/**
+	 * Calculates the coordinate at a specified angle and distance from the given origin node.
+	 *
 	 * Given a NodeGraph, a distance from it, and a desired angle formed with the y
 	 * axis, it returns the coordinates of the resulting location.
 	 *
-	 * @param originNode the input node;
-	 * @param distance   the distance from the input node;
-	 * @param angle      the angle formed by the angle with the y axis;
+	 * @param originNode The origin node from which to measure the angle and distance.
+	 * @param distance   The distance from the origin node to the target coordinate.
+	 * @param angle      The angle in degrees at which to position the target coordinate.
+	 * @return           The calculated coordinate based on the given parameters.
 	 */
 	public static Coordinate getCoordAngle(NodeGraph originNode, double distance, double angle) {
 		final double x = distance * Math.sin(Math.toRadians(angle)) + originNode.getCoordinate().x;
@@ -133,14 +171,16 @@ public class Angles {
 	}
 
 	/**
-	 * Given two NodeGraph, and half of the amplitude of a desired angle, either
-	 * positive or negative (+ 35.0° or - 35.0° --> 70°) from the first node towards
-	 * the other one, it returns the coordinate of the point that would form with
-	 * the first node one of the lines of the view cone.
+	 * Calculates the coordinate of a point within the view cone of a node.
 	 *
-	 * @param node         a node;
-	 * @param otherNode    another node;
-	 * @param desiredAngle half of the field of view's amplitude;
+	 * Given two NodeGraph instances and half of the amplitude of a desired angle (either
+	 * positive or negative, e.g. + 35.0° or - 35.0° --> 70°), this method computes the coordinate of a point that, 
+	 * when connected with the first node, forms one of the lines of the view cone.
+	 *
+	 * @param node          The starting node.
+	 * @param otherNode     The target node.
+	 * @param desiredAngle  The half of the field of view's amplitude in degrees.
+	 * @return              The coordinate of the point within the view cone.
 	 */
 	private static Coordinate angleViewField(NodeGraph node, NodeGraph otherNode, double desiredAngle) {
 		double angle = angle(node, otherNode);
@@ -155,13 +195,14 @@ public class Angles {
 	}
 
 	/**
-	 * Given two NodeGraph, and the amplitude of a desired field (or cone) of view
-	 * from the first node towards the second node, it returns the corresponding
-	 * geometry.
+	 * Computes the view field geometry between two nodes based on a specified field of view angle.
+	 * The view field represents the region visible from the first node to the second node within
+	 * the given field of view angle.
 	 *
-	 * @param node        a node;
-	 * @param otherNode   another node;
-	 * @param fieldOfView the desired field of view's amplitude;
+	 * @param node         The first node, from which the view field is observed.
+	 * @param otherNode    The second node, defining the direction of observation.
+	 * @param fieldOfView  The field of view angle in degrees (half of the total angle).
+	 * @return A geometry representing the view field between the two nodes.
 	 */
 	public static Geometry viewField(NodeGraph node, NodeGraph otherNode, double fieldOfView) {
 
@@ -177,5 +218,4 @@ public class Angles {
 		final Geometry viewField = points.convexHull();
 		return viewField;
 	}
-
 }
