@@ -1,10 +1,13 @@
-/* 
- * Copyright 2023 by Gabriele Filomena
+/*
+ * Copyright (c) 2023 Gabriele Filomena
  * University of Liverpool, UK
- * The MIT License (MIT)
+ * 
+ * This program is free software: it can redistributed and/or modified
+ * under the terms of the GNU General Public License 3.0 as published by
+ * the Free Software Foundation.
  *
+ * See the file "LICENSE" for more information
  */
-
 package sim.graph;
 
 import java.util.ArrayList;
@@ -21,9 +24,9 @@ import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
 /**
- * A node of a planar graph that extends the Node class (JTS), with additional
- * and more straightforward functions. This class is one of the main components,
- * along with EdgeGraph, of the graphs belonging to the Graph class.
+ * A node of a planar graph that extends the {@code Node} class (JTS), with additional
+ * and more straightforward functions. This class is one of the two components,
+ * along with {@code EdgeGraph}, of the graphs belonging to the {@code Graph} class.
  */
 public class NodeGraph extends Node {
 
