@@ -16,6 +16,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPoint;
 
 import sim.graph.NodeGraph;
+import sim.graph.NodeGraphUtils;
 
 /**
  * The class provides utility methods for working with angles and coordinates.
@@ -190,7 +191,7 @@ public class Angles {
 		double resultingAngle = angle + desiredAngle;
 		if (resultingAngle > 360.0)
 			resultingAngle = resultingAngle - 360.0;
-		final Coordinate coord = getCoordAngle(node, GeometryUtilities.nodesDistance(node, otherNode), resultingAngle);
+		final Coordinate coord = getCoordAngle(node, NodeGraphUtils.nodesDistance(node, otherNode), resultingAngle);
 		return coord;
 	}
 
