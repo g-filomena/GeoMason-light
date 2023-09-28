@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2023 Gabriele Filomena
+ * University of Liverpool, UK
+ * 
+ * This program is free software: it can redistributed and/or modified
+ * under the terms of the GNU General Public License 3.0 as published by
+ * the Free Software Foundation.
+ *
+ * See the file "LICENSE" for more information
+ */
 package sim.graph;
 
 import java.util.ArrayList;
@@ -13,10 +23,8 @@ import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
 /**
- * An edge that extends the GeomPlanarGraphEdge (GeoMason) and Edge (Jts)
- * classes. This is one of the main components, along with NodeGraph, of graphs
- * belonging to the class Graph.
- *
+ * An edge that extends the and {@code Edge} (Jts) class. This is one of the two components, 
+ * along with {@code NodeGraph}, of graphs belonging to the class {@code Graph}.
  */
 public class EdgeGraph extends Edge {
 
