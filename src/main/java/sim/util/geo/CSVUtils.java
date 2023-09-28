@@ -13,15 +13,14 @@ public class CSVUtils {
 	private static final char DEFAULT_SEPARATOR = ',';
 
     /**
-     * Writes a CSV line to the provided Writer using the specified separator and no custom quotes.
+     * Writes a CSV line to the provided Writer using the default separator (',') and no custom quotes.
      *
-     * @param w         The Writer to write the CSV line to.
-     * @param values    The list of values to be written as a CSV line.
-     * @param separators The separator character to use between values.
+     * @param w      The Writer to write the CSV line to.
+     * @param values The list of values to be written as a CSV line.
      * @throws IOException If an I/O error occurs while writing to the Writer.
      */
-    public static void writeLine(Writer w, List<String> values, char separators) throws IOException {
-        writeLine(w, values, separators, ' ');
+    public static void writeLine(Writer w, List<String> values) throws IOException {
+        writeLine(w, values, DEFAULT_SEPARATOR, ' ');
     }
 
     /**
