@@ -52,7 +52,7 @@ public class SubGraph extends Graph {
 	        this.addFromOtherGraph(parentGraph, edge);
 	    for (final NodeGraph node : this.getNodesList())
 	        node.setNeighbouringComponents();
-	    generateNetworkStructures();
+	    generateGraphStructures();
 	}
 
 	/**
