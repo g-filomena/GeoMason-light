@@ -19,7 +19,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.planargraph.DirectedEdge;
 import org.locationtech.jts.planargraph.Node;
 
-import sim.util.geo.GeometryUtilities;
 import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
@@ -196,13 +195,13 @@ public class NodeGraph extends Node {
 				continue;
 
 			if (this.equals(destinationNode)) {
-				cost = GeometryUtilities.nodesDistance(edge.getOtherNode(this), originNode);
+				cost = NodeGraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
 				if (cost < distance) {
 					distance = cost;
 					best = dualNode;
 				}
 			} else {
-				cost = GeometryUtilities.nodesDistance(edge.getOtherNode(this), destinationNode);
+				cost = NodeGraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
 
 				if (previousJunction != null && (previousJunction == dualNode.primalEdge.fromNode
 						|| previousJunction == dualNode.primalEdge.toNode))
@@ -261,10 +260,10 @@ public class NodeGraph extends Node {
 				continue;
 
 			if (this.equals(destinationNode)) {
-				final double cost = GeometryUtilities.nodesDistance(edge.getOtherNode(this), originNode);
+				final double cost = NodeGraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
 				dualNodes.put(dualNode, cost);
 			} else {
-				final double cost = GeometryUtilities.nodesDistance(edge.getOtherNode(this), destinationNode);
+				final double cost = NodeGraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
 
 				if (previousJunction != null && (previousJunction == dualNode.primalEdge.fromNode
 						|| previousJunction == dualNode.primalEdge.toNode))
