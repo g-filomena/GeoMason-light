@@ -1,10 +1,13 @@
-/* 
- * Copyright 2023 by Gabriele Filomena
+/*
+ * Copyright (c) 2023 Gabriele Filomena
  * University of Liverpool, UK
- * The MIT License (MIT)
+ * 
+ * This program is free software: it can redistributed and/or modified
+ * under the terms of the GNU General Public License 3.0 as published by
+ * the Free Software Foundation.
  *
+ * See the file "LICENSE" for more information
  */
-
 package sim.graph;
 
 import java.util.ArrayList;
@@ -29,8 +32,8 @@ import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
 /**
- * A planar graph that extends the GeomPlanarGraph (GeoMason) and PlanarGraph
- * (JTS) classes. Its basic components are NodeGraph and EdgeGraph.
+ * A planar graph that extends the {@code PlanarGraph} (JTS) class. Its basic components are {@code NodeGraph} and 
+ * {@code EdgeGraph}.
  */
 public class Graph extends PlanarGraph {
 	public ArrayList<EdgeGraph> edgesGraph = new ArrayList<>();
