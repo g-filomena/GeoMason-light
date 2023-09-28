@@ -10,12 +10,11 @@
  */
 package sim.graph;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
-import sim.field.geo.VectorLayer;
-import sim.util.geo.MasonGeometry;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
 
 /**
  * The {@code NodeGraphUtils} class provides utility methods for working with collections of {@code NodeGraph} objects.
@@ -134,8 +133,8 @@ public class NodeGraphUtils {
 	 * @param node      a node;
 	 * @param otherNode an other node;
 	 */
-	public static LineString LineStringFromNodes(NodeGraph node, NodeGraph otherNode) {
-		final Coordinate[] coords = { node.getCoordinate(), otherNode.getCoordinate() };
+	public static LineString LineStringBetweenNodes(NodeGraph node, NodeGraph otherNode) {
+		final Coordinate[] coords = {node.getCoordinate(), otherNode.getCoordinate()};
 		final LineString line = new GeometryFactory().createLineString(coords);
 		return line;
 	}
