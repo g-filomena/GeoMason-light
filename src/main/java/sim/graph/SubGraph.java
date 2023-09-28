@@ -1,10 +1,13 @@
-/* 
- * Copyright 2023 by Gabriele Filomena
+/*
+ * Copyright (c) 2023 Gabriele Filomena
  * University of Liverpool, UK
- * The MIT License (MIT)
+ * 
+ * This program is free software: it can redistributed and/or modified
+ * under the terms of the GNU General Public License 3.0 as published by
+ * the Free Software Foundation.
  *
+ * See the file "LICENSE" for more information
  */
-
 package sim.graph;
 
 import java.util.ArrayList;
@@ -24,15 +27,14 @@ import org.locationtech.jts.planargraph.DirectedEdge;
 import sim.util.geo.Utilities;
 
 /**
- * This class represents sub graphs derived from a graph. It establishes links
+ * This class represents subgraphs derived from a graph. It establishes links
  * between the components of the parent graph and the corresponding child
- * components, allowing faster operations and the creation of "regional" or
+ * components, allowing for faster operations and the creation of "regional" or
  * "district" graphs.
  *
- * Agent navigation throughout a SubGraph is straightforward and can be easily
+ * Agent navigation within a {@code SubGraph} is straightforward and can be easily
  * retraced to the parent graph.
  */
-
 public class SubGraph extends Graph {
 	private final SubGraphNodesMap subGraphNodesMap = new SubGraphNodesMap();
 	private final SubGraphEdgesMap subGraphEdgesMap = new SubGraphEdgesMap();
