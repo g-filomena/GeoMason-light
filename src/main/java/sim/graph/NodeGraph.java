@@ -195,13 +195,13 @@ public class NodeGraph extends Node {
 				continue;
 
 			if (this.equals(destinationNode)) {
-				cost = NodeGraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
+				cost = GraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
 				if (cost < distance) {
 					distance = cost;
 					best = dualNode;
 				}
 			} else {
-				cost = NodeGraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
+				cost = GraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
 
 				if (previousJunction != null && (previousJunction == dualNode.primalEdge.fromNode
 						|| previousJunction == dualNode.primalEdge.toNode))
@@ -260,10 +260,10 @@ public class NodeGraph extends Node {
 				continue;
 
 			if (this.equals(destinationNode)) {
-				final double cost = NodeGraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
+				final double cost = GraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
 				dualNodes.put(dualNode, cost);
 			} else {
-				final double cost = NodeGraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
+				final double cost = GraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
 
 				if (previousJunction != null && (previousJunction == dualNode.primalEdge.fromNode
 						|| previousJunction == dualNode.primalEdge.toNode))
