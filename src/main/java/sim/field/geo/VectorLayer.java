@@ -317,11 +317,13 @@ public class VectorLayer extends GeomVectorField {
 	}
 
 	/**
-	 * Retrieves a list of integer IDs associated with the geometries in this VectorLayer.
-	 * This function iterates through the geometries in the VectorLayer and extracts the integer IDs
-	 * stored as user data in each MasonGeometry. It returns a list of these IDs.
+	 * Sets a unique identifier for each MasonGeometry object in the geometries list.
 	 *
-	 * @return A list of integer IDs associated with the geometries in this VectorLayer.
+	 * This method assigns a unique identifier to each MasonGeometry object in the
+	 * geometries list based on the specified attribute name. The attribute value
+	 * for each MasonGeometry is used as its unique identifier.
+	 *
+	 * @param attributeName The name of the attribute that contains unique identifiers.
 	 */
 	public void setID(String attributeName) {
 
