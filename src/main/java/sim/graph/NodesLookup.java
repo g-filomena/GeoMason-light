@@ -169,15 +169,13 @@ public class NodesLookup {
 	}
 
     /**
-     * Returns a randomly selected node whose distance from the origin node falls within the specified range and has 
-     * centrality values above or equal to a specified percentile.
+     * Returns a randomly selected node whose distance from the origin node falls within the specified range.
      *
      * @param graph      The input graph.
      * @param junctions  The vector layer representing junctions.
      * @param originNode The origin node.
      * @param lowerLimit The minimum distance from the origin node.
      * @param upperLimit The maximum distance from the origin node.
-     * @param percentile The percentile used as a threshold for centrality values.
      * @return A randomly selected node that satisfies the specified distance and centrality criteria.
      */
 	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, VectorLayer junctions,
