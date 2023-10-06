@@ -18,8 +18,8 @@ You can find the original manual of Geomason on the [Geomason Site](https://cs.g
 * All the code now refers to the last version of Java Topology Suite (JTS).
 
 ### Dependencies:
-* mason;
-* javatuples;
+* mason.
+* javatuples.
 * jts.
 
 GeoMason-light requires that the jar files for the above dependencies are in the user's java class path or amongst the external libraries of the user's Project in Eclipse.
