@@ -281,12 +281,13 @@ public class SubGraph extends Graph {
 	}
 
 	/**
-	 * Sets the barrier attributes for edges within the current subgraph.
-	 * This method copies barrier attributes from the corresponding parent graph's edges
-	 * to the edges within the subgraph, and it compiles a list of unique barrier IDs
-	 * present in the subgraph.
+	 * Sets attributes of a child edge based on the attributes of a parent edge.
 	 *
-	 * @return A list of unique barrier IDs in the current subgraph.
+	 * This method is used to propagate certain attributes from a parent edge to its
+	 * child edge, such as the edge ID and attributes related to dual edges.
+	 *
+	 * @param childEdge The child edge to which attributes will be set.
+	 * @param parentEdge The parent edge from which attributes will be copied.
 	 */
 	public void setAttributesChildEdge(EdgeGraph childEdge, EdgeGraph parentEdge) {
 
