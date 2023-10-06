@@ -23,9 +23,9 @@ import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
 /**
- * A node of a planar graph that extends the {@code Node} class (JTS), with additional
+ * A node of a planar graph that extends the `Node` class (JTS), with additional
  * and more straightforward functions. This class is one of the two components,
- * along with {@code EdgeGraph}, of the graphs belonging to the {@code Graph} class.
+ * along with {@link EdgeGraph}, of the graphs belonging to the {@link Graph} class.
  */
 public class NodeGraph extends Node {
 
