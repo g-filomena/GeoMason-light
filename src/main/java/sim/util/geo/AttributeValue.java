@@ -11,14 +11,10 @@ package sim.util.geo;
 
 
 /** This contains the values associated with MasonGeometry attributes.
- * <p>
+
  * This consists of a value,
  * whether to display this attribute in the inspector or not, and the number of bytes needed to store the value.
  * The value can be an Integer, Float, or String.
- *
- * @see MasonGeometry
- * @see ShapeFileImporter
- * @see ShapeFileExporter
  *
  */
 public class AttributeValue implements java.io.Serializable
