@@ -40,9 +40,6 @@ import sim.util.geo.MasonGeometry;
  * queries. As objects are inserted into the field, the minimum bounding
  * rectangle (MBR) is expanded to include the new object. This allows a
  * determination of the area of the field.
- * <p/>
- * <p>
- * Note that the field assumes the geometries use the same coordinate system.
  */
 public class GeomVectorField extends GeomField {
 
@@ -79,12 +76,6 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Is true if the spatial index needs to be rebuilt
-	 * <p/>
-	 * 
-	 * @see removeGeometry()
-	 * @see clear()
-	 * @see updateSpatialIndex()
-	 * @see setGeometryLocation()
 	 */
 	private boolean needToRebuildIndex = false;
 
@@ -239,7 +230,6 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Returns Bag of all the field's geometry objects.
-	 * <p>
 	 * Do not modify the Bag, nor the Geometries inside the bag, as this will have
 	 * undefined consequences for drawing and inspecting.
 	 */
@@ -303,10 +293,7 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Return geometries that are covered by the given geometry.
-	 * <p>
 	 * Do not modify the returned Bag.
-	 * <p>
-	 * XXX Could be made more efficient by using spatial index to narrow candidates.
 	 */
 	public final Bag getCoveredObjects(MasonGeometry g) {
 		Bag coveringObjects = new Bag();
@@ -327,7 +314,6 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Returns geometries that contain the given object.
-	 * <p>
 	 * Contain is more exclusive than cover and doesn't include things on the
 	 * boundary. Do not modify the returned Bag.
 	 */
@@ -351,7 +337,6 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Returns geometries that touch the given geometry.
-	 * <p>
 	 * Do not modify the returned Bag.
 	 */
 	public final Bag getTouchingObjects(MasonGeometry mg) {
@@ -376,7 +361,6 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Returns true if the given Geometry is covered by any geometry in the field.
-	 * <p>
 	 * Cover here includes points in the boundaries.
 	 */
 	public boolean isCovered(MasonGeometry g) {
@@ -397,7 +381,6 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Returns true if the coordinate is within any geometry in the field.
-	 * <p>
 	 * However, it offers no guarantee for points on the boundaries. Use this
 	 * version if you want to check if an agent is within a geometry; its roughly an
 	 * order of magnitude faster than using the Geometry version.
@@ -417,7 +400,6 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Get the centroid of the given Geometry.
-	 * <p>
 	 * Note that the returned location uses the coordinate system of the underlying
 	 * GIS data.
 	 */
@@ -431,11 +413,9 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Moves the centroid of the given geometry to the provided point.
-	 * <p>
-	 * <em>Note</em> that the spatial index is not notified of the geometry changes.
+	 * The spatial index is not notified of the geometry changes.
 	 * It is strongly recommended that updateSpatialIndex() be invoked after all
 	 * geometry position changes.
-	 * <p/>
 	 * 
 	 * @see GeomVectorField#updateSpatialIndex()
 	 */
@@ -450,7 +430,6 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Rebuild the spatial index from the current set of geometry
-	 * <p>
 	 * If the objects contained in this field have moved, then the spatial index
 	 * will have to be updated. This is done by replacing the current spatial index
 	 * with an entirely new one built from the same stored geometry.
@@ -470,11 +449,9 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Schedules a repeating Steppable that updates spatial index
-	 * <p>
 	 * The spatial index for a GeomVectorField containing moving objects will need
 	 * to be updated after all such objects have moved. This method returns a
 	 * Steppable that invokes updateSpatialIndex() that does this.
-	 * <p/>
 	 * 
 	 * @return a Steppable that can be used to remove this Steppable from the
 	 *         schedule
@@ -492,13 +469,8 @@ public class GeomVectorField extends GeomField {
 
 	/**
 	 * Locate a specific geometry inside the quadtree
-	 * <p>
-	 * XXX Is returning what we're looking for when the target geometry is not found
-	 * the desired behavior?
-	 * <p/>
 	 * 
 	 * @param g is geometry for which we're looking
-	 *          <p/>
 	 * @return located geometry; will return g if not found.
 	 */
 	public synchronized MasonGeometry findGeometry(MasonGeometry g) {
@@ -515,15 +487,10 @@ public class GeomVectorField extends GeomField {
 	}
 
 	/**
-	 * Searches the field for the first object with attribute <i>name</i> that has
-	 * value <i>value</i>.
-	 * <p/>
+	 * Searches the field for the first object with attribute equals to name that has the given value.
 	 * 
 	 * @param name  of attribute
 	 * @param value of attribute
-	 *              <p/>
-	 *              TODO What if there is more than one such object?
-	 *              <p/>
 	 * @return MasonGeometry with specified attribute otherwise null
 	 */
 	public MasonGeometry getGeometry(String name, Object value) {
