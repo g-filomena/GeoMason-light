@@ -1,14 +1,15 @@
 ## About
-Geomason-light is an optional extension to MASON that adds support for vector and raster geospatial data.
+GeoMason-light is an optional extension to MASON that adds support for vector and raster geospatial data.
 
-You can find the original Manual on the [Geomason Site](https://cs.gmu.edu/~eclab/projects/mason/extensions/geomason/)
+You can find the original manual of Geomason on the [Geomason Site](https://cs.gmu.edu/~eclab/projects/mason/extensions/geomason/).
 
-### Why geomason-light?
+### Why GeoMason-light?
 #### Content:
-* It includes a graph package that supports a way more advanced manipulation of graph components. This allows the users to developed more complex street network-based urban mobility/traffic simulation agent-based models.
+* It includes a `graph` package that supports a way more advanced manipulation of graph components. This allows the users to develop more complex street network-based urban mobility/traffic agent-based models.
+* It includes a `VectorLayer` class that allows for more geometric and spatial operations, usually common for GIS VectorLayers.
 
 #### Support and open software:
-* The structure of the repository allow for smoother devleopments and contributions from users (the mason and geomason repository appear rather close at the moment).
+* The structure of the repository allows for smoother devleopments and contributions from users, compared both to the MASON and GeoMason source repository.
 * It is fully mavenised and available on the [Maven Repository](https://mvnrepository.com).
 * It comes with javadoc and sources.
 
@@ -21,4 +22,4 @@ You can find the original Manual on the [Geomason Site](https://cs.gmu.edu/~ecla
 * javatuples;
 * jts.
 
-geomason-light requires that the jar files for the above dependencies are in the user's java class path or amongst the external libraries of the user's Project in Eclipse.
+GeoMason-light requires that the jar files for the above dependencies are in the user's java class path or amongst the external libraries of the user's Project in Eclipse.
