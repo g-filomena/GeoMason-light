@@ -49,22 +49,6 @@ public class Utilities {
 						));
 	}
 	
-//    /**
-//     * Filters a map based on the keys provided in a Bag. Only entries with keys in the Bag are kept.
-//     *
-//     * @param map    The input map.
-//     * @param filter A Bag containing the desired keys.
-//     * @return A new map containing only the filtered entries.
-//     */
-//	public static HashMap<MasonGeometry, Double> filterMap(HashMap<MasonGeometry, Double> map, Bag filter) {
-//		HashMap<MasonGeometry, Double> mapFiltered = new HashMap<MasonGeometry, Double> (map);
-//		ArrayList<MasonGeometry> result = new ArrayList<MasonGeometry>();
-//		for(MasonGeometry key : mapFiltered.keySet()) 
-//			if(filter.contains(key)) result.add(key);
-//		mapFiltered.keySet().retainAll(result);
-//		return mapFiltered;
-//	}
-
     /**
      * Retrieves the key from a map based on a specified value.
      *
@@ -129,7 +113,14 @@ public class Utilities {
     	return filterMapByThreshold(map, percentileValue);
     }
     
-    // Calculate the threshold value for a given percentile
+    /**
+     * Calculates the percentile threshold of values in a map.
+     *
+     * @param map        The map containing values.
+     * @param percentile The desired percentile (e.g., 0.95 for 95th percentile).
+     * @param <K>        The type of keys in the map.
+     * @return The threshold value corresponding to the specified percentile.
+     */
     private static <K> double calculatePercentileThreshold(Map<K, Double> map, double percentile) {
         // Convert the map values to an array for percentile calculation
         double[] valuesArray = map.values().stream().mapToDouble(Double::doubleValue).toArray();
@@ -143,10 +134,17 @@ public class Utilities {
         // Return the threshold value
         return valuesArray[index];
     }
-    
-    // Filter the map to keep entries below the threshold value
-    private static <K, V extends Comparable<Double>> Map<K, Double> filterMapByThreshold(Map<K, Double> map, 
-    		double thresholdValue) {
+
+    /**
+     * Filters a map to keep entries with values below a specified threshold.
+     *
+     * @param map            The map to be filtered.
+     * @param thresholdValue The threshold value used for filtering.
+     * @param <K>            The type of keys in the map.
+     * @return A new map containing only entries with values below the threshold.
+     */
+    private static <K, V extends Comparable<Double>> Map<K, Double> filterMapByThreshold(Map<K, Double> map,
+            double thresholdValue) {
         return map.entrySet().stream()
                 .filter(entry -> entry.getValue().compareTo(thresholdValue) < 0)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -167,7 +165,6 @@ public class Utilities {
 		    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     	return new HashMap<K, V> (filteredMap);
     }
-
 }
 
 
