@@ -32,7 +32,7 @@ import sim.util.geo.Utilities;
  * components, allowing for faster operations and the creation of "regional" or
  * "district" graphs.
  *
- * Agent navigation within a {@code SubGraph} is straightforward and can be easily
+ * Agent navigation within a SubGraph is straightforward and can be easily
  * retraced to the parent graph.
  */
 public class SubGraph extends Graph {
