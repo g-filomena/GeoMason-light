@@ -23,8 +23,8 @@ import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
 /**
- * An edge that extends the and {@code Edge} (Jts) class. This is one of the two components, 
- * along with {@code NodeGraph}, of graphs belonging to the class {@code Graph}.
+ * An edge that extends the and `Edge` (Jts) class. This is one of the two components, 
+ * along with {@link NodeGraph}, of graphs belonging to the class {@link Graph}.
  */
 public class EdgeGraph extends Edge {
 
