@@ -86,7 +86,23 @@
 					</execution>
 				</executions>
 		   </plugin>
-		
+			
+			<!-- Sign artifact -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
     </build>
 
@@ -97,5 +113,17 @@
 		</repository>
 	</distributionManagement>
 	
+	<licenses>
+    <license>
+        <name>GNU General Public License, Version 3.0</name>
+        <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
+        <distribution>repo</distribution>
+    </license>
+	</licenses>
+
+	<organization>
+		<name>University of Liverpool, Department of Geography and Planning </name>
+		<url>https://www.liverpool.ac.uk/geography-and-planning/</url>
+	</organization>
 	
 </project>
