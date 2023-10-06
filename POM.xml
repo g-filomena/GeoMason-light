@@ -40,7 +40,7 @@
 
     </dependencies>
 
-    <build>
+	<build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
             <plugin>
@@ -50,10 +50,52 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
-					<encoding>UTF-8</encoding>
+                    <encoding>UTF-8</encoding>
                 </configuration>
-            </plugin>	
-        </plugins>	
+            </plugin>
+            
+			<!-- JavaDoc -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.3.0</version> 
+				   <configuration>
+					<doclint>all,-missing</doclint>
+				</configuration>
+				
+				<executions>
+					<execution>
+						<id>attach-javadoc</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Sources -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+		   </plugin>
+		
+		</plugins>
     </build>
+
+	<distributionManagement>
+		<repository>
+			<id>central</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+	
 	
 </project>
