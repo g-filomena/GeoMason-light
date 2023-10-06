@@ -17,7 +17,7 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 
 /**
- * The {@code GraphUtils} class provides utility methods for working {@code NodeGraph} objects.
+ * The `GraphUtils` class provides utility methods for working {@link NodeGraph} objects.
  */
 public class GraphUtils {
 
