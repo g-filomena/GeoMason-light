@@ -31,8 +31,8 @@ import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
 /**
- * A planar graph that extends the {@code PlanarGraph} (JTS) class. Its basic components are {@code NodeGraph} and 
- * {@code EdgeGraph}.
+ * A planar graph that extends the `PlanarGraph` (JTS) class. Its basic components are {@link NodeGraph} and 
+ * {@link EdgeGraph}.
  */
 public class Graph extends PlanarGraph {
 	public ArrayList<EdgeGraph> edgesGraph = new ArrayList<>();
