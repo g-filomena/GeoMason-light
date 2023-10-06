@@ -2,12 +2,12 @@ GNU General Public License
 
 Copyright (c) 2023 Gabriele Filomena
 
-Some classes/files of this software are part of Geomason (https://github.com/eclab/mason/tree/master/contrib/geomason) and are licensed under the Academic Free License version 3.0 
+Some classes/files of this software are part of GeoMason (https://github.com/eclab/mason/tree/master/contrib/geomason) and are licensed under the Academic Free License version 3.0 
 (see https://opensource.org/license/afl-3-0-php/).
 
-geomason-light is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, 
+GeoMason-light is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, 
 either version 3 of the License, or (at your option) any later version.
-geomason-light is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+GeoMason-light is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with geomason-light. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with GeoMason-light. If not, see <https://www.gnu.org/licenses/>.
