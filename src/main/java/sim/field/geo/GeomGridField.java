@@ -76,15 +76,11 @@ public class GeomGridField extends GeomField
 
     /** width of grid point in projection coordinate system
      *
-     * @see GeomGridField.setGrid()
-     * @see GeomGridField.setMBR()
      */
     private double pixelWidth = 0.0;
 
     /** height of grid point in projection coordinate system
      *
-     * @see GeomGridField.setGrid()
-     * @see GeomGridField.setMBR()
      */
     private double pixelHeight = 0.0;
 
@@ -129,11 +125,9 @@ public class GeomGridField extends GeomField
 
     /**
      * Returns width of grid in pixels.
-     * <p>
      * By contrast, super.getWidth() returns width in spatial reference context.
      *
      * @return Returns width in grid points
-     *
      * @throws NullPointerException if grid not assigned
      */
     public final int getGridWidth()
@@ -146,7 +140,6 @@ public class GeomGridField extends GeomField
      * By contrast, super.getHeight() returns width in spatial reference context.
      *
      * @return height of grid in pixels
-     *
      * @throws NullPointerException if grid not assigned
      */
     public final int getGridHeight()
@@ -330,8 +323,6 @@ public class GeomGridField extends GeomField
 
         return polygon;
         }
-
-    
 
     /** Used to create geometry as needed
      *
