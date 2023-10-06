@@ -30,28 +30,20 @@ import sim.util.geo.MasonGeometry;
 /**
  * Portrayal for MasonGeometry objects. The portrayal handles drawing and
  * hit-testing (for inspectors).
- * 
- * 
- * <p>
- * GeomVectorFieldPortrayal overrides getPortrayalForObject to do a different
+ *  GeomVectorFieldPortrayal overrides getPortrayalForObject to do a different
  * thing than normal FieldPortrayals. Specifically:
- * 
- * <p>
- * <ol>
- * <li>The object passed in is expected to be a MasonGeometry. From this we
+ * - The object passed in is expected to be a MasonGeometry. From this we
  * extract USER, the MASON user data of the geometry, and GEOMETRY, the JTS
  * Geometry object.
- * <li>If there is a portrayalForAll, return it.
- * <li>If user exists and is a Portrayal, return user as the Portrayal.
- * <li>If a portrayal is registered for user, return it.
- * <li>If a portrayal is registered for geometry, return it.
- * <li>If a portrayal is registered for user's class, return it.
- * <li>If a portrayal is registered for the geometry's class, return it.
- * <li>If there is a portrayalForRemainder, return it.
- * <li>Else return the getDefaultPortrayal
- * </ol>
- * 
- * <p>
+ * - If there is a portrayalForAll, return it.
+ * - If user exists and is a Portrayal, return user as the Portrayal.
+ * - If a portrayal is registered for user, return it.
+ * - If a portrayal is registered for geometry, return it.
+ * - If a portrayal is registered for user's class, return it.
+ * - If a portrayal is registered for the geometry's class, return it.
+ * - If there is a portrayalForRemainder, return it.
+ * - Else return the getDefaultPortrayal
+
  * Note that nowhere do we return portrayals for null objects: there is no
  * PortrayalForNull and no DefaultNullPortrayal. Indeed, the method
  * setPortrayalForNull will throw an error -- you are not permitted to call it.
