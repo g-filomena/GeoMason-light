@@ -26,7 +26,7 @@ import sim.io.geo.ShapeFileImporter;
 import sim.util.geo.MasonGeometry;
 
 /**
- * VectorLayer is an extension of GeomVectorField that offers advanced geometric, selection,
+ * `VectorLayer` is an extension of GeomVectorField that offers advanced geometric, selection,
  * and filtering capabilities for managing and working with spatial data.
  * It enhances the functionality provided by GeomVectorField.
  */
