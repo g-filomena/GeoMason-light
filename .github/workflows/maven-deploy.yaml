@@ -8,23 +8,21 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     
-
-    
     steps:
-      - name: Check GPG Configuration
-      run: |
-        # Check if GPG is installed
-        if ! command -v gpg &> /dev/null; then
-          echo "GPG is not installed"
-          exit 1
-        fi
+        - name: Check GPG Configuration
+        run: |
+          if ! command -v gpg &> /dev/null; then
+            echo "GPG is not installed"
+            exit 1
+          fi
 
-        # List GPG keys
-        gpg --list-keys
-
-        # Display keyring information
-        gpg --list-config
+          # List GPG keys
+          gpg --list-keys
+  
+          # Display keyring information
+          gpg --list-config
     
+
       - name: Standard Checkout
         uses: actions/checkout@v4
 
