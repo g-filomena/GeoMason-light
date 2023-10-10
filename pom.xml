@@ -102,6 +102,10 @@
 					</execution>
 				</executions>
 				<configuration>
+					<gpgArguments>
+					  <arg>--pinentry-mode</arg>
+					  <arg>loopback</arg>
+					</gpgArguments>
 					<signatory>
 						<name>Gabriele Filomena</name>
 						<email>gfilo@liverpool.ac.uk</email>
