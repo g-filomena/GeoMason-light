@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-        - name: Check GPG Configuration
+      - name: Check GPG Configuration
         run: |
           if ! command -v gpg &> /dev/null; then
             echo "GPG is not installed"
@@ -21,7 +21,6 @@ jobs:
   
           # Display keyring information
           gpg --list-config
-    
 
       - name: Standard Checkout
         uses: actions/checkout@v4
