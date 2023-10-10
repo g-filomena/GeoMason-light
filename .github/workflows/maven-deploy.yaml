@@ -9,19 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Check GPG Configuration
-        run: |
-          if ! command -v gpg &> /dev/null; then
-            echo "GPG is not installed"
-            exit 1
-          fi
-
-          # List GPG keys
-          gpg --list-keys
-  
-          # Display keyring information
-          gpg --list-config
-
       - name: Standard Checkout
         uses: actions/checkout@v4
 
@@ -36,7 +23,7 @@ jobs:
 
       - name: Publish package
         run:
-          mvn --batch-mode deploy -e
+          mvn --batch-mode deploy -e -X
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
