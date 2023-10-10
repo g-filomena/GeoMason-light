@@ -6,12 +6,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Change working directory to root
-        run: |
-          cd $GITHUB_WORKSPACE
+      - name: Standard Checkout
+        uses: actions/checkout@v2
         
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v3
