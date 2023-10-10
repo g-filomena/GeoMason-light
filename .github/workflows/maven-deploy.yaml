@@ -11,11 +11,10 @@ jobs:
     steps:
       - name: Debugging - List Directory Content
         run: |
-          ls -al $GITHUB_WORKSPACE
-          ls -al $GITHUB_WORKSPACE/*  # List content of the workspace directory
-          cd $GITHUB_WORKSPACE
           ls -al  # List content of the current directory
-          
+          ls -al $GITHUB_WORKSPACE
+          cd $GITHUB_WORKSPACE
+
       - name: Standard Checkout
         uses: actions/checkout@v4
         
