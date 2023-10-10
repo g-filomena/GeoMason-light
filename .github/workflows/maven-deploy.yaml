@@ -9,6 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - id: install-secret-key
+        name: Install GPG secret key
+        run: |
+          # Install GPG secret key
+          cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
+          # Verify GPG secret key
+          gpg --list-secret-keys --keyid-format LONG
+
       - name: Standard Checkout
         uses: actions/checkout@v4
 
@@ -22,8 +30,15 @@ jobs:
           server-password: MAVEN_PASSWORD
 
       - name: Publish package
-        run:
-          mvn --batch-mode deploy -e
+        run: |
+          # Import GPG secret key from GitHub Actions secrets
+          echo "${{ secrets.OSSRH_GPG_SECRET_KEY }}" | gpg --batch --passphrase-fd 0 --import
+  
+          # Set up GPG passphrase
+          GPG_PASSPHRASE="${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}"
+
+          # Run Maven deploy with GPG signing
+          mvn --batch-mode deploy -e -Dgpg.passphrase="$GPG_PASSPHRASE"
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
