@@ -8,10 +8,7 @@ jobs:
     steps:
       - name: Standard Checkout
         uses: actions/checkout@v4
-      
-      - name: Change working directory to root
-        run: cd $GITHUB_WORKSPACE  # Change the working directory to the root of your repository  
-        
+         
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v3
         with:
@@ -22,7 +19,7 @@ jobs:
           server-password: MAVEN_PASSWORD
       
       - name: Publish package
-        run: mvn --batch-mode deploy
+        run: mvn --batch-mode deploy $GITHUB_WORKSPACE/pom.xml
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
