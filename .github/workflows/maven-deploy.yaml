@@ -1,14 +1,29 @@
 name: Publish package to the Maven Central Repository
+
 on:
   release:
     types: [created]
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+
     steps:
+      - name: Debugging - List Directory Content
+        run: |
+          ls -al $GITHUB_WORKSPACE
+          ls -al $GITHUB_WORKSPACE/*  # List content of the workspace directory
+          cd $GITHUB_WORKSPACE
+          ls -al  # List content of the current directory
+          
       - name: Standard Checkout
         uses: actions/checkout@v4
-         
+        
+      - name: Debugging - Check Working Directory
+        run: |
+          pwd  # Print current working directory
+          ls -al  # List content of the current directory
+
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v3
         with:
@@ -18,10 +33,14 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
       
+      - name: Debugging - Check Maven Configuration
+        run: |
+          cat pom.xml  # Display the content of the pom.xml file
+
       - name: Publish package
         run: |
           cd $GITHUB_WORKSPACE
-          mvn --batch-mode deploy
+          mvn --batch-mode deploy -f pom.xml
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
