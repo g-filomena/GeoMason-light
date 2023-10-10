@@ -104,6 +104,7 @@
 				<configuration>
 					<signatory>
 						<name>Gabriele Filomena</name>
+						<email>gfilo@liverpool.ac.uk</email>
 						<keyId>EC4D65A1CBE36119B0CA8CE4E878CACBC31A10ED</keyId>
 					</signatory>
 				</configuration>
