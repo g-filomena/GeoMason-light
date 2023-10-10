@@ -10,7 +10,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Change working directory to root
-        run: cd $GITHUB_WORKSPACE
+        run: |
+          cd $GITHUB_WORKSPACE
         
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v3
