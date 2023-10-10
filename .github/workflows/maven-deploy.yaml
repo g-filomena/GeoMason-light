@@ -21,10 +21,9 @@ jobs:
           architecture: x64
           check-latest: false
 
-    - name: Build and Deploy
-      run: |
-        mvn clean deploy --settings .github/settings.xml
-      env:
-        MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
-        MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
-
+      - name: Build and Deploy
+        run: |
+          mvn clean deploy --settings .github/settings.xml
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
