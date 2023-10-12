@@ -33,7 +33,7 @@ jobs:
           server-password: ${{ secrets.MAVEN_PASSWORD }}
 
       - name: Publish to the Maven Central Repository
-        run: mvn --batch-mode deploy -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+        run: mvn --batch-mode deploy -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} -X
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
