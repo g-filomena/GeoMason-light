@@ -13,7 +13,7 @@ jobs:
         name: Install GPG secret key
         run: |
           # Install GPG secret key
-          cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --import
+          cat <(echo -e "${{ secrets.OSSRH_GPG_SECRET_KEY }}") | gpg --batch --pinentry-mode loopback --import
           # Verify GPG secret key
           gpg --list-secret-keys --keyid-format LONG
 
