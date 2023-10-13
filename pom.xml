@@ -8,6 +8,35 @@
     <groupId>uk.ac.liverpool</groupId>
     <artifactId>geomason-light</artifactId>
     <version>1.0</version>
+	
+	<profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -28,21 +57,22 @@
             <artifactId>jts-core</artifactId>
             <version>1.19.0</version>
         </dependency>
-		
+
         <!-- Mason -->
         <dependency>
             <groupId>edu.gmu.eclab</groupId>
             <artifactId>mason</artifactId>
             <version>21</version>
             <scope>system</scope>
-			<systemPath>${project.basedir}/lib/mason-21.jar</systemPath>
+            <systemPath>${project.basedir}/lib/mason-21.jar</systemPath>
         </dependency>
-
     </dependencies>
 
-	<build>
+    <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
+		
+            <!-- Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -53,41 +83,100 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-            
-			<!-- JavaDoc -->
+
+            <!-- Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <doclint>all,-missing</doclint>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Sources -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+			
+			<!-- Copy POM to target -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.3.0</version> 
-				   <configuration>
-					<doclint>all,-missing</doclint>
-				</configuration>
-				
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.2.0</version>
 				<executions>
 					<execution>
-						<id>attach-javadoc</id>
+						<id>copy-pom</id>
+						<phase>initialize</phase>
 						<goals>
-							<goal>jar</goal>
+							<goal>copy-resources</goal>
 						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.basedir}</directory>
+									<includes>
+										<include>pom.xml</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
 			
-			<!-- Sources -->
+			<!-- Checksum -->
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
+				<groupId>net.ju-n.maven.plugins</groupId>
+				<artifactId>checksum-maven-plugin</artifactId>
+				<version>1.4</version>
 				<executions>
 					<execution>
-						<id>attach-sources</id>
+						<id>generate-artifact-checksum</id>
+						<phase>package</phase>
 						<goals>
-							<goal>jar</goal>
+							<goal>files</goal>
 						</goals>
 					</execution>
 				</executions>
-		   </plugin>
-			
-			<!-- Sign artifact -->
+				<configuration>
+					<algorithms>
+						<algorithm>MD5</algorithm>
+						<algorithm>SHA-1</algorithm>
+					</algorithms>
+					<fileSets>
+						<fileSet>
+							<directory>${project.build.directory}</directory>
+							<includes>
+                                <include>${project.build.finalName}.jar</include>
+                                <include>${project.build.finalName}.pom</include>
+                                <include>${project.build.finalName}-javadoc.jar</include>
+                                <include>${project.build.finalName}-sources.jar</include>
+                            </includes>
+						</fileSet>
+					</fileSets>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
@@ -103,38 +192,39 @@
 				</executions>
 				<configuration>
 					<gpgArguments>
-					  <arg>--pinentry-mode</arg>
-					  <arg>loopback</arg>
+						<arg>--pinentry-mode</arg>
+						<arg>loopback</arg>
 					</gpgArguments>
+					<skip>false</skip> <!-- Enable signing during local build -->
 					<signatory>
 						<name>Gabriele Filomena</name>
 						<email>gfilo@liverpool.ac.uk</email>
-						<keyId>E878CACBC31A10ED</keyId>
+						<keyId>EC4D65A1CBE36119B0CA8CE4E878CACBC31A10ED</keyId>
 					</signatory>
 				</configuration>
 			</plugin>
+			
+        </plugins>
+   </build>
 
-		</plugins>
-    </build>
-	
-	<distributionManagement>
-	  <repository>
-		<id>ossrh</id>
-		<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-	  </repository>
-	</distributionManagement>
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
-	<licenses>
-    <license>
-        <name>GNU General Public License, Version 3.0</name>
-        <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
-        <distribution>repo</distribution>
-    </license>
-	</licenses>
+    <licenses>
+        <license>
+            <name>GNU General Public License, Version 3.0</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<organization>
-		<name>University of Liverpool, Department of Geography and Planning </name>
-		<url>https://www.liverpool.ac.uk/geography-and-planning/</url>
-	</organization>
-	
+    <organization>
+        <name>University of Liverpool, Department of Geography and Planning</name>
+        <url>https://www.liverpool.ac.uk/geography-and-planning/</url>
+    </organization>
+
 </project>
