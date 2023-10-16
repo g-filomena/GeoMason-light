@@ -34,15 +34,16 @@ jobs:
           gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           gpg-passphrase:  ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
        
+      - name: Create settings-security.xml
+        run: |
+          echo "<settingsSecurity><master>${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}</master></settingsSecurity>" > $HOME/.m2/settings-security.xml
+
       - name: Echo secret keys
         run: |
           echo "MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}"
           echo "MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}"
           echo "OSSRH_GPG_SECRET_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}"
           echo "OSSRH_GPG_SECRET_KEY_PASSWORD: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}"
-          
-      - name: Create settings-security.xml
-        run: echo "<settingsSecurity><master>${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}</master></settingsSecurity>" > $HOME/.m2/settings-security.xml
       
       - name: build artifact
         run: mvn clean package
