@@ -7,7 +7,7 @@
 
     <groupId>uk.ac.liv.gdsl</groupId>
     <artifactId>GeoMason-light</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 	
 	<profiles>
         <profile>
@@ -220,10 +220,10 @@
    </build>
 
 	<distributionManagement>
-	  <snapshotRepository>
+	  <repository>
 		<id>ossrh</id>
-		<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-	  </snapshotRepository>
+		<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+	  </repository>
 	</distributionManagement>
 
     <licenses>
