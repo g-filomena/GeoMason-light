@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>uk.ac.liverpool</groupId>
+    <groupId>uk.ac.liv.gdsl</groupId>
     <artifactId>geomason-light</artifactId>
     <version>1.0</version>
 	
@@ -223,7 +223,7 @@
     </licenses>
 
     <organization>
-        <name>University of Liverpool, Department of Geography and Planning</name>
+        <name>University of Liverpool, Department of Geography and Planning, Geographic Data Science Lab</name>
         <url>https://www.liverpool.ac.uk/geography-and-planning/</url>
     </organization>
 
