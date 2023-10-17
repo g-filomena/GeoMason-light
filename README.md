@@ -1,4 +1,5 @@
-[![GitHub Action Status](https://github.com/g-filomena/GeoMason-light/workflows/GitHub%20CI/badge.svg)](https://github.com/g-filomena/GeoMason-light/actions) 
+
+![GitHub Action Status](https://github.com/g-filomena/GeoMason-light/actions) 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 ## About
