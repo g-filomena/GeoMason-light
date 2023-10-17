@@ -37,8 +37,9 @@ jobs:
       - name: Publish to the Maven Central Repository
         run: mvn clean deploy --settings $GITHUB_WORKSPACE/.m2/settings.xml -X
         env:
-          SIGN_KEY_ID:    ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          SIGN_KEY_PASS:  ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+          SIGN_KEY_ID: E878CACBC31A10ED
+          SIGN_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+          SIGN_KEY_PASS: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
           OSSRH_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
           
