@@ -35,7 +35,7 @@ jobs:
           gpg-passphrase:  ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
              
       - name: Publish to the Maven Central Repository
-        run: mvn -U -B clean deploy -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} -e
+        run: mvn -U -B clean deploy --settings $GITHUB_WORKSPACE/.m2/settings.xml
         env:
           SIGN_KEY_ID:    ${{ secrets.OSSRH_GPG_SECRET_KEY }}
           SIGN_KEY_PASS:  ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
