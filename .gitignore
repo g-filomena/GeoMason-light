@@ -26,3 +26,6 @@ tmp/
 *.swp
 *~.nib
 .recommenders
+
+.m2/local_settings.xml
+.m2/local_signature.asc
