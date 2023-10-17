@@ -1,5 +1,5 @@
 
-[![GitHub Action Status](https://github.com/g-filomena/GeoMason-light/actions/workflows/maven-deploy.yml/badge.svg)](https://github.com/g-filomena/GeoMason-light/actions) 
+[![GitHub Action Status](https://github.com/g-filomena/GeoMason-light/actions/workflows/maven-deploy.yaml/badge.svg)](https://github.com/g-filomena/GeoMason-light/actions/workflows/maven-deploy.yaml)
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 ## About
