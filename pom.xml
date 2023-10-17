@@ -181,7 +181,6 @@
 							<goal>sign</goal>
 						</goals>
 						<configuration>
-							<!-- the same id as in settings.xml -->
 							<serverId>sign-key-id</serverId>
 						</configuration>
 					</execution>
