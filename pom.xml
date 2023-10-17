@@ -9,6 +9,28 @@
     <artifactId>GeoMason-light</artifactId>
     <version>1.1</version>
 	
+	<name>${project.groupId}:${project.artifactId}</name>
+    <description>
+	GeoMason-light is an optional extension to MASON that adds support for vector and raster geospatial data. 
+	It extends the capabilities of its predecessor (GeoMason) making it lighter and more versatile.
+    </description>
+    <url>https://github.com/g-filomena/GeoMason-light</url>
+	
+	<developers>
+		<developer>
+		  <name>Gabriele Filomena</name>
+		  <email>gabriele.filomena@liverpool.ac.uk</email>
+		  <organization>University of Liverpool, Geographic Data Science Lab</organization>
+		  <organizationUrl>https://www.liverpool.ac.uk/geographic-data-science/</organizationUrl>
+		</developer>
+	 </developers>
+	 
+	<scm>
+	  <connection>scm:git:git://github.com/g-filomena/GeoMason-light.git</connection>
+	  <developerConnection>scm:git:ssh://github.com:g-filomena/GeoMason-light.git</developerConnection>
+	  <url>http://github.com/g-filomena/GeomMason-light/tree/master</url>
+	</scm>
+	
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
