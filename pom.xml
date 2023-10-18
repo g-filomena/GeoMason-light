@@ -11,8 +11,9 @@
 	
 	<name>${project.groupId}:${project.artifactId}</name>
     <description>
-	GeoMason-light is an optional extension to MASON that adds support for vector and raster geospatial data. 
-	It extends the capabilities of its predecessor (GeoMason) making it lighter and more versatile.
+		GeoMason-light is an advanced and optional extension of MASON, a popular agent-based modeling toolkit. 
+		This extension enriches MASON's capabilities by introducing robust support for both vector and raster geospatial data. 
+		By building upon the functionality of its predecessor, GeoMason, the new GeoMason-light framework offers a lighter, more efficient, and versatile approach to integrate geospatial data into agent-based simulations
     </description>
     <url>https://github.com/g-filomena/GeoMason-light</url>
 	
