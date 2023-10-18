@@ -1,6 +1,6 @@
 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/uk.ac.liv.gdsl/GeoMason-light/badge.svg?style=plastic](https://maven-badges.herokuapp.com/maven-central/uk.ac.liv.gdsl/GeoMason-light)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/uk.ac.liv.gdsl/GeoMason-light/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/uk.ac.liv.gdsl/GeoMason-light)
 
 ## About
 GeoMason-light is an optional extension to MASON that adds support for vector and raster geospatial data.
