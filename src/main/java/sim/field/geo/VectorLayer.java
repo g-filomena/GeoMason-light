@@ -56,16 +56,15 @@ public class VectorLayer extends Layer {
 	 * The convex hull of all the geometries in this field.
 	 */
 	private PreparedPolygon convexHull = null;
+	/**
+	 * Defines the outer shell of all the geometries within this field.
+	 */
+	private PreparedPolygon union;
 
 	/**
 	 * Helper factory for computing the union or convex hull.
 	 */
 	private GeometryFactory geomFactory = new GeometryFactory();
-
-	/**
-	 * Defines the outer shell of all the geometries within this field.
-	 */
-	private PreparedPolygon globalUnion;
 
 	/**
 	 * Creates an empty VectorLayer with no initial geometries.
@@ -99,7 +98,6 @@ public class VectorLayer extends Layer {
 
 		for (final MasonGeometry masonGeometry : masonGeometries)
 			addGeometry(masonGeometry);
-
 	}
 
 	/**
@@ -128,14 +126,9 @@ public class VectorLayer extends Layer {
 	/**
 	 * Removes the given geometry
 	 * 
-	 * @note removing geometry can be computationally expensive as the significant
-	 *       chunks of the spatial index may have to be rebuilt depending on the
-	 *       removed geometry. Therefore the spatial index is not updated to reflect
-	 *       that the geometry no longer exists. You must explicitly invoke
-	 *       updateSpatialIndex() to get the spatial index in sync.
+	 * @param masonGeometry The MasonGeometry to be removed from the VectorLayer.
 	 */
 	public void removeGeometry(final MasonGeometry masonGeometry) {
-
 		geometriesList.remove(masonGeometry);
 	}
 
@@ -220,7 +213,7 @@ public class VectorLayer extends Layer {
 	 * function calculates the convex hull, which is the smallest convex polygon
 	 * that encloses all the geometries in this VectorLayer.
 	 */
-	public void computeConvexHull() {
+	private void computeConvexHull() {
 		final ArrayList<Coordinate> points = new ArrayList<>();
 
 		if (geometriesList.isEmpty()) {
@@ -242,7 +235,7 @@ public class VectorLayer extends Layer {
 	 * Compute the union of the VectorLayer geometries. The resulting Geometry is
 	 * the outside points of the layer geometries.
 	 */
-	public void computeUnion() {
+	private void computeUnion() {
 		Geometry polygon = new Polygon(null, null, geomFactory);
 
 		if (geometriesList.isEmpty())
@@ -254,7 +247,34 @@ public class VectorLayer extends Layer {
 		}
 
 		polygon = polygon.union();
-		globalUnion = new PreparedPolygon((Polygon) polygon);
+		union = new PreparedPolygon((Polygon) polygon);
+	}
+
+	/**
+	 * Computes and retrieves the convex hull of the geometries within this
+	 * VectorLayer. The convex hull is the smallest convex polygon that encloses all
+	 * the geometries in this VectorLayer.
+	 *
+	 * @return the convex hull geometry of the geometries in this VectorLayer
+	 */
+	public Geometry getConvexHull() {
+		if (convexHull == null)
+			computeConvexHull();
+		return convexHull.getGeometry();
+	}
+
+	/**
+	 * Computes and retrieves the union of the geometries within this VectorLayer.
+	 * The resulting Geometry represents the outside points of the field's
+	 * geometries.
+	 *
+	 * @return the union geometry of the geometries in this VectorLayer
+	 */
+	public Geometry getUnion() {
+
+		if (union == null)
+			computeUnion();
+		return union.getGeometry();
 	}
 
 	/**
@@ -356,9 +376,9 @@ public class VectorLayer extends Layer {
 	public boolean isInsideUnion(final Coordinate coordinate) {
 
 		Point point = geomFactory.createPoint(coordinate);
-		if (globalUnion == null)
+		if (union == null)
 			computeUnion();
-		if (globalUnion.intersects(point))
+		if (union.intersects(point))
 			return true;
 		return false;
 	}
