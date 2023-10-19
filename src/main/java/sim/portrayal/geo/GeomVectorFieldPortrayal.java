@@ -13,12 +13,13 @@ import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 
-import sim.field.geo.GeomVectorField;
+import sim.field.geo.VectorLayer;
 import sim.portrayal.DrawInfo2D;
 import sim.portrayal.FieldPortrayal2D;
 import sim.portrayal.LocationWrapper;
@@ -29,21 +30,17 @@ import sim.util.geo.MasonGeometry;
 
 /**
  * Portrayal for MasonGeometry objects. The portrayal handles drawing and
- * hit-testing (for inspectors).
- *  GeomVectorFieldPortrayal overrides getPortrayalForObject to do a different
- * thing than normal FieldPortrayals. Specifically:
- * - The object passed in is expected to be a MasonGeometry. From this we
- * extract USER, the MASON user data of the geometry, and GEOMETRY, the JTS
- * Geometry object.
- * - If there is a portrayalForAll, return it.
- * - If user exists and is a Portrayal, return user as the Portrayal.
- * - If a portrayal is registered for user, return it.
- * - If a portrayal is registered for geometry, return it.
- * - If a portrayal is registered for user's class, return it.
- * - If a portrayal is registered for the geometry's class, return it.
- * - If there is a portrayalForRemainder, return it.
- * - Else return the getDefaultPortrayal
-
+ * hit-testing (for inspectors). GeomVectorFieldPortrayal overrides
+ * getPortrayalForObject to do a different thing than normal FieldPortrayals.
+ * Specifically: - The object passed in is expected to be a MasonGeometry. From
+ * this we extract USER, the MASON user data of the geometry, and GEOMETRY, the
+ * JTS Geometry object. - If there is a portrayalForAll, return it. - If user
+ * exists and is a Portrayal, return user as the Portrayal. - If a portrayal is
+ * registered for user, return it. - If a portrayal is registered for geometry,
+ * return it. - If a portrayal is registered for user's class, return it. - If a
+ * portrayal is registered for the geometry's class, return it. - If there is a
+ * portrayalForRemainder, return it. - Else return the getDefaultPortrayal
+ * 
  * Note that nowhere do we return portrayals for null objects: there is no
  * PortrayalForNull and no DefaultNullPortrayal. Indeed, the method
  * setPortrayalForNull will throw an error -- you are not permitted to call it.
@@ -68,9 +65,9 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 			return portrayalForAll;
 		}
 
-		MasonGeometry mg = (MasonGeometry) obj;
-		Geometry geometry = mg.getGeometry();
-		Object user = mg.getUserData();
+		MasonGeometry masonGeometry = (MasonGeometry) obj;
+		Geometry geometry = masonGeometry.getGeometry();
+		Object user = masonGeometry.getUserData();
 
 		Portrayal tmp;
 
@@ -164,7 +161,7 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 		// associated field is immutable.
 		if (graphics != null && immutableField && !info.precise) {
 
-			GeomVectorField geomField = (GeomVectorField) field;
+			VectorLayer geomField = (VectorLayer) field;
 			double x = info.clip.x;
 			double y = info.clip.y;
 			boolean dirty = false;
@@ -231,7 +228,7 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 	 * 
 	 */
 	void hitOrDraw2(Graphics2D graphics, DrawInfo2D info, Bag putInHere) {
-		GeomVectorField geomField = (GeomVectorField) field;
+		VectorLayer geomField = (VectorLayer) field;
 		if (geomField == null) {
 			return;
 		}
@@ -240,8 +237,7 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 
 		geomField.updateTransform(info);
 
-		Bag geometries;
-
+		ArrayList<MasonGeometry> geometries;
 		geometries = geomField.queryField(geomField.clipEnvelope);
 
 		if (geometries == null || geometries.isEmpty()) {
@@ -254,10 +250,6 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 				return;
 			}
 		}
-//        else
-//        {
-//            System.out.println("clipped: " + geometries.size());
-//        }
 
 		GeomInfo2D gInfo = new GeomInfo2D(info, geomField.worldToScreen);
 
@@ -268,48 +260,48 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 				geomField.worldToScreen);
 		newinfo.fieldPortrayal = this;
 
-		for (int i = 0; i < geometries.size(); i++) {
-			MasonGeometry gm = (MasonGeometry) geometries.objs[i];
+		for (MasonGeometry masonGeometry : geometries) {
 
 			// FIXME: *Why* the hell would this happen?
-			if (gm == null) {
+			if (masonGeometry == null) {
 				continue;
 			}
 
-			Geometry geom = gm.getGeometry();
+			Geometry geom = masonGeometry.getGeometry();
 
 			if (geomField.clipEnvelope.intersects(geom.getEnvelopeInternal())) {
-				Portrayal p = getPortrayalForObject(gm);
+				Portrayal p = getPortrayalForObject(masonGeometry);
 
 				if (!(p instanceof SimplePortrayal2D)) {
-					throw new RuntimeException("Unexpected Portrayal " + p + " for object " + gm
+					throw new RuntimeException("Unexpected Portrayal " + p + " for object " + masonGeometry
 							+ " -- expected a SimplePortrayal2D or a GeomPortrayal");
 				}
 
 				SimplePortrayal2D portrayal = (SimplePortrayal2D) p;
 
 				if (graphics == null) {
-					if (portrayal.hitObject(gm, info)) {
+					if (portrayal.hitObject(masonGeometry, info)) {
 						// XXX getGeometryLocation merely returns the centroid of
 						// the MasonGeometry object once it finds it in the GeomVectorField;
 						// however, we *just got it* from that same field, so why
 						// do we need to find it again? Just directly get the
 						// centroid of the object and be done with it.
 //                                              putInHere.add(new LocationWrapper(gm, geomField.getGeometryLocation(gm), this));
-						putInHere.add(new LocationWrapper(gm, gm.getGeometry().getCentroid(), this));
+						putInHere.add(
+								new LocationWrapper(masonGeometry, masonGeometry.getGeometry().getCentroid(), this));
 					}
 				} else {
 					if (portrayal instanceof GeomPortrayal) {
-						portrayal.draw(gm, graphics, gInfo);
+						portrayal.draw(masonGeometry, graphics, gInfo);
 					} else { // have a SimplePortrayal2D,
-						Point pt = gm.geometry.getCentroid();
+						Point pt = masonGeometry.getGeometry().getCentroid();
 						pt.apply(geomField.jtsTransform);
 						pt.geometryChanged();
 
-						newinfo.selected = (objectSelected && selectedWrappers.get(gm) != null);
+						newinfo.selected = (objectSelected && selectedWrappers.get(masonGeometry) != null);
 						newinfo.draw.x = pt.getX();
 						newinfo.draw.y = pt.getY();
-						portrayal.draw(gm, graphics, newinfo);
+						portrayal.draw(masonGeometry, graphics, newinfo);
 					}
 				}
 			}
@@ -319,7 +311,7 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 	/** Sets the underlying field, after ensuring its a GeomVectorField. */
 	@Override
 	public void setField(Object field) {
-		if (field instanceof GeomVectorField) {
+		if (field instanceof VectorLayer) {
 			super.setField(field);
 		} // sets dirty field already
 		else {
