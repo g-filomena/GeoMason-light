@@ -8,15 +8,13 @@
  */
 package sim.io.geo;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -32,13 +30,12 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
-import sim.field.geo.GeomVectorField;
-import sim.util.Bag;
+import sim.field.geo.VectorLayer;
 import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
 /**
- * Writes a GeomVectorField to a Shape file.
+ * Writes a VectorLayer to a Shape file.
  *
  * TODO: consider writing a coordinate reference system/projection file
  *
@@ -54,7 +51,7 @@ public class ShapeFileExporter {
 	 * @param baseFileName is the prefix for the ".shp", ".shx", and ".dbf" files
 	 * @param field        to be exported
 	 */
-	public static void write(String baseFileName, GeomVectorField field) {
+	public static void write(String baseFileName, VectorLayer vectorLayer) {
 		try {
 			String shpFileName = baseFileName + ".shp";
 			RandomAccessFile shpFile = new RandomAccessFile(new File(shpFileName), "rw");
@@ -71,9 +68,8 @@ public class ShapeFileExporter {
 			headerBig.putInt(9994);
 
 			// bytes 4 - 23 are five unused int32
-			for (int i = 0; i < 5; i++) {
+			for (int i = 0; i < 5; i++)
 				headerBig.putInt(0);
-			}
 
 			// bytes 24 - 27 are the file length
 			// don't know this yet, so write a placeholder value, and we'll
@@ -92,29 +88,27 @@ public class ShapeFileExporter {
 
 			// bytes 32 - 35 are the shapefile type
 			int shapeType = 0;
-
-			Bag geometries = field.getGeometries();
+			ArrayList<MasonGeometry> geometries = vectorLayer.getGeometries();
 
 			// Determine the geometry associated with this file by arbitrarily
 			// looking at the first geometry.
-			Geometry g = ((MasonGeometry) geometries.objs[0]).geometry;
+			Geometry firstGeometry = geometries.get(0).getGeometry();
 
-			if (g instanceof Point) {
+			if (firstGeometry instanceof Point) {
 				shapeType = 1;
-			} else if (g instanceof LineString) {
+			} else if (firstGeometry instanceof LineString) {
 				shapeType = 3;
-			} else if (g instanceof Polygon) {
+			} else if (firstGeometry instanceof Polygon) {
 				shapeType = 5;
 			}
-
 			headerLittle.putInt(shapeType);
 
 			// bytes 36 - 67 are the MBR in min x, min y, max x, max y format (double)
-			Envelope e = field.getMBR();
-			headerLittle.putDouble(e.getMinX());
-			headerLittle.putDouble(e.getMinY());
-			headerLittle.putDouble(e.getMaxX());
-			headerLittle.putDouble(e.getMaxY());
+			Envelope envelope = vectorLayer.getMBR();
+			headerLittle.putDouble(envelope.getMinX());
+			headerLittle.putDouble(envelope.getMinY());
+			headerLittle.putDouble(envelope.getMaxX());
+			headerLittle.putDouble(envelope.getMaxY());
 
 			// bytes 68 - 83 are range of Z in min z, max z (double)
 			// current not used, so put artitrary values
@@ -148,34 +142,31 @@ public class ShapeFileExporter {
 			// Initialized to size of header; this will be incremented by
 			// record size for each record.
 			int fileSize = 100;
+			int counter = 0;
 
-			// TreeSet<String> uniqueAttributes = new TreeSet<String>();
+			for (MasonGeometry masonGeometry : geometries) {
 
-			for (int i = 0; i < geometries.size(); i++) {
-				MasonGeometry wrapper = (MasonGeometry) geometries.objs[i];
-				Geometry geometry = wrapper.getGeometry();
+				Geometry geometry = masonGeometry.getGeometry();
 
-				/////////
 				// first store the record header, in big-endian format
 				ByteBuffer recordHeader = ByteBuffer.allocate(8);
 				recordHeader.order(ByteOrder.BIG_ENDIAN);
-
 				// record number, 1-based
-				recordHeader.putInt(i + 1);
+				recordHeader.putInt(counter + 1);
+				counter += 1;
 
 				// content size, 48 is from p8 of the ESRI shapefile spec
 				int size = 20;
 				if (geometry instanceof LineString) {
-					LineString line = (LineString) wrapper.getGeometry();
+					LineString line = (LineString) masonGeometry.getGeometry();
 					size = line.getCoordinates().length * 16 + 48;
 				} else if (geometry instanceof Polygon) {
-					Polygon poly = (Polygon) wrapper.getGeometry();
+					Polygon poly = (Polygon) masonGeometry.getGeometry();
 					size = poly.getCoordinates().length * 16 + 48;
 				} else if (geometry instanceof MultiPolygon) {
-					MultiPolygon poly = (MultiPolygon) wrapper.getGeometry();
+					MultiPolygon poly = (MultiPolygon) masonGeometry.getGeometry();
 					size = poly.getCoordinates().length * 16 + 48;
 				}
-
 				shxFile.writeInt(fileSize / 2);
 				shxFile.writeInt(size / 2);
 
@@ -191,21 +182,21 @@ public class ShapeFileExporter {
 					// type of record
 					pointBufferLittle.putInt(1);
 
-					Point p = (Point) wrapper.getGeometry();
-					pointBufferLittle.putDouble(p.getX());
-					pointBufferLittle.putDouble(p.getY());
+					Point point = (Point) masonGeometry.getGeometry();
+					pointBufferLittle.putDouble(point.getX());
+					pointBufferLittle.putDouble(point.getY());
 
 					shpFile.write(pointBufferLittle.array());
 				} else {
-					g = wrapper.getGeometry();
-					Coordinate coords[] = g.getCoordinates();
-					Envelope en = g.getEnvelopeInternal();
+
+					Coordinate coords[] = geometry.getCoordinates();
+					Envelope en = geometry.getEnvelopeInternal();
 
 					ByteBuffer polyBufferLittle = ByteBuffer.allocate(size);
 					polyBufferLittle.order(ByteOrder.LITTLE_ENDIAN);
 
 					// record type, from spec
-					if (g instanceof LineString) {
+					if (geometry instanceof LineString) {
 						polyBufferLittle.putInt(3);
 					} else {
 						polyBufferLittle.putInt(5);
@@ -221,14 +212,14 @@ public class ShapeFileExporter {
 					polyBufferLittle.putInt(1);
 
 					// number of points
-					polyBufferLittle.putInt(g.getNumPoints());
+					polyBufferLittle.putInt(geometry.getNumPoints());
 
 					// start of the one and only part
 					polyBufferLittle.putInt(0);
 
-					for (int k = 0; k < coords.length; k++) {
-						polyBufferLittle.putDouble(coords[k].x);
-						polyBufferLittle.putDouble(coords[k].y);
+					for (Coordinate coord : coords) {
+						polyBufferLittle.putDouble(coord.x);
+						polyBufferLittle.putDouble(coord.y);
 					}
 					shpFile.write(polyBufferLittle.array());
 				}
@@ -276,8 +267,7 @@ public class ShapeFileExporter {
 			// (Presuming all the geometries have the same attribute sets, we
 			// can arbitrarily pick the first geometry and ask the number of
 			// attributes it has.)
-			int numAttributes = ((MasonGeometry) geometries.objs[0]).getAttributes().size();
-
+			int numAttributes = geometries.get(0).getAttributes().size();
 			headerBuffer.putShort((short) (32 + numAttributes * 32 + 1));
 
 			// This associates the storage needed for each attribute. We need
@@ -352,10 +342,9 @@ public class ShapeFileExporter {
 				// the first record, finding the current attribute for which
 				// we want the type, identifying the type, and then writing
 				// that out
-				MasonGeometry w = (MasonGeometry) geometries.objs[0];
 
 				// Directly get the attribute value
-				AttributeValue value = (AttributeValue) w.getAttribute(key);
+				AttributeValue value = (AttributeValue) geometries.get(0).getAttribute(key);
 
 				// And then ask what type it is
 				if (value.getValue() instanceof String) {
@@ -415,19 +404,16 @@ public class ShapeFileExporter {
 
 			/////////
 			// now write the individual records
-
-			for (int j = 0; j < geometries.size(); j++) {
-				MasonGeometry wrapper = (MasonGeometry) geometries.objs[j];
+			for (MasonGeometry masonGeometry : geometries) {
 
 				ByteBuffer recordBuff = ByteBuffer.allocate(1 + recordSize);
-
 				// 0x20 in the first byte indicates that this record is valid.
 				// (I.e., it hasn't been deleted.)
 				recordBuff.put((byte) 0x20);
 
 				for (String attributeName : attributeSizes.keySet()) {
 
-					AttributeValue f = (AttributeValue) wrapper.getAttribute(attributeName);
+					AttributeValue f = (AttributeValue) masonGeometry.getAttribute(attributeName);
 					Object value = f.getValue();
 
 					if (value instanceof Boolean) {
@@ -470,49 +456,26 @@ public class ShapeFileExporter {
 	}
 
 	/**
-	 * Convert the given object into a byte stream.
-	 *
-	 * @param obj
-	 * @return byte array containing object
-	 */
-	private static byte[] getBytes(Object obj) {
-		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(bos);
-			oos.writeObject(obj);
-			oos.flush();
-			oos.close();
-			bos.close();
-			byte[] data = bos.toByteArray();
-			return data;
-		} catch (IOException e) {
-			System.out.println(e);
-		}
-		return null;
-	}
-
-	/**
 	 * Calculate the space needed for each attribute type
 	 * 
 	 * @param geometries through which we'll be scanning
 	 *
 	 * @return map of attribute name to its respective size requirements
 	 */
-	private static Map<String, Integer> determineAttributeSizes(Bag geometries) {
+	private static Map<String, Integer> determineAttributeSizes(ArrayList<MasonGeometry> geometries) {
 		Map<String, Integer> attributeSizes = new HashMap<String, Integer>();
 
-		for (int i = 0; i < geometries.size(); i++) {
-			MasonGeometry mg = (MasonGeometry) geometries.objs[i];
+		for (MasonGeometry masonGeometry : geometries) {
 
 			// Update the attribute sizes by iterating through all the attributes
 			// and taking their string conversion lengths as their sizes; if the
 			// stored size for that attribute is smaller, then update that size
 			// with the larger.
-			for (String attributeName : mg.getAttributes().keySet()) {
+			for (String attributeName : masonGeometry.getAttributes().keySet()) {
 				Integer attributeSize = null;
 
 				try {
-					AttributeValue av = (AttributeValue) mg.getAttribute(attributeName);
+					AttributeValue av = (AttributeValue) masonGeometry.getAttribute(attributeName);
 
 					if (av.getValue() instanceof Boolean) {
 						attributeSize = 1;
@@ -550,10 +513,7 @@ public class ShapeFileExporter {
 					attributeSizes.put(attributeName, attributeSize);
 				}
 			}
-
 		}
-
 		return attributeSizes;
 	}
-
 }
