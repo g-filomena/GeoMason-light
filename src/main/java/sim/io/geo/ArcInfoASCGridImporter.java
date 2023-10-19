@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Envelope;
 
-import sim.field.geo.GeomGridField;
+import sim.field.geo.GridLayer;
 import sim.field.grid.AbstractGrid2D;
 import sim.field.grid.DoubleGrid2D;
 import sim.field.grid.IntGrid2D;
@@ -45,7 +45,7 @@ public class ArcInfoASCGridImporter // extends GeomImporter
 	 * 
 	 * 
 	 */
-	public static void read(InputStream source, final GeomGridField.GridDataType type, GeomGridField field) {
+	public static void read(InputStream source, final GridLayer.GridDataType type, GridLayer field) {
 		try {
 			int width = 0;
 			int height = 0;
