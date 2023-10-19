@@ -31,8 +31,8 @@ import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
 /**
- * A planar graph that extends the `PlanarGraph` (JTS) class. Its basic components are {@link NodeGraph} and 
- * {@link EdgeGraph}.
+ * A planar graph that extends the `PlanarGraph` (JTS) class. Its basic
+ * components are {@link NodeGraph} and {@link EdgeGraph}.
  */
 public class Graph extends PlanarGraph {
 	public ArrayList<EdgeGraph> edgesGraph = new ArrayList<>();
@@ -43,24 +43,25 @@ public class Graph extends PlanarGraph {
 	public HashMap<Pair<NodeGraph, NodeGraph>, EdgeGraph> adjacencyMatrix = new HashMap<>();
 	public HashMap<Pair<NodeGraph, NodeGraph>, DirectedEdge> adjacencyMatrixDirected = new HashMap<>();
 	public Map<NodeGraph, Double> salientNodes;
-	
-    /**
-     * Constructs a new empty Graph.
-     */
+
+	/**
+	 * Constructs a new empty Graph.
+	 */
 	public Graph() {
 		super();
 	}
 
 	/**
-	 * Populates the graph from street junctions and segments. This method adds LineStrings
-	 * from the provided street segments to the graph and associates them with nodes from
-	 * the street junctions. It also sets the junctions field to the provided street junctions.
+	 * Populates the graph from street junctions and segments. This method adds
+	 * LineStrings from the provided street segments to the graph and associates
+	 * them with nodes from the street junctions. It also sets the junctions field
+	 * to the provided street junctions.
 	 *
 	 * @param streetJunctions The VectorLayer containing street junction geometries.
 	 * @param streetSegments  The VectorLayer containing street segment geometries.
 	 */
 	public void fromStreetJunctionsSegments(VectorLayer streetJunctions, VectorLayer streetSegments) {
-		ArrayList<MasonGeometry> geometries = streetSegments.geometriesList;
+		ArrayList<MasonGeometry> geometries = streetSegments.getGeometries();
 		for (final MasonGeometry masonGeometry : geometries)
 			if (masonGeometry.geometry instanceof LineString)
 				addLineString(masonGeometry);
@@ -68,10 +69,11 @@ public class Graph extends PlanarGraph {
 	}
 
 	/**
-	 * Adds a LineString as an EdgeGraph to the graph, creating corresponding nodes if needed.
-	 * This method processes the given LineString, removes repeated points, and creates
-	 * nodes for the LineString's start and end coordinates. It then constructs an EdgeGraph
-	 * representing the LineString and adds it to the graph.
+	 * Adds a LineString as an EdgeGraph to the graph, creating corresponding nodes
+	 * if needed. This method processes the given LineString, removes repeated
+	 * points, and creates nodes for the LineString's start and end coordinates. It
+	 * then constructs an EdgeGraph representing the LineString and adds it to the
+	 * graph.
 	 *
 	 * @param wrappedLine The MasonGeometry object containing the LineString to add.
 	 */
@@ -108,11 +110,13 @@ public class Graph extends PlanarGraph {
 
 	/**
 	 * Searches for and retrieves a NodeGraph object in the graph based on the given
-	 * coordinate. This method uses the provided coordinate to find a node within the
-	 * graph, returning the corresponding NodeGraph object if found, or null if not found.
+	 * coordinate. This method uses the provided coordinate to find a node within
+	 * the graph, returning the corresponding NodeGraph object if found, or null if
+	 * not found.
 	 *
 	 * @param coordinate The coordinate used to search for the node.
-	 * @return The NodeGraph object found at the specified coordinate, or null if not found.
+	 * @return The NodeGraph object found at the specified coordinate, or null if
+	 *         not found.
 	 */
 	@Override
 	public NodeGraph findNode(Coordinate coordinate) {
@@ -138,23 +142,25 @@ public class Graph extends PlanarGraph {
 		}
 		return node;
 	}
-	
+
 	/**
-	 * Generates structures for the graph. This method generates essential structures, 
-	 * including the node mapping (nodesMap) and adjacency matrix (adjacencyMatrix) 
-	 * that represent relationships between nodes and edges.
+	 * Generates structures for the graph. This method generates essential
+	 * structures, including the node mapping (nodesMap) and adjacency matrix
+	 * (adjacencyMatrix) that represent relationships between nodes and edges.
 	 */
 	public void generateGraphStructures() {
 		generateNodesMap();
 		generateAdjacencyMatrix();
 	}
-	
+
 	/**
 	 * Finds and stores the salient nodes in the graph based on a given percentile.
-	 * This method calculates the salient nodes by selecting nodes with centrality values
-	 * above a specified percentile and stores them in the 'salientNodes' map.
+	 * This method calculates the salient nodes by selecting nodes with centrality
+	 * values above a specified percentile and stores them in the 'salientNodes'
+	 * map.
 	 *
-	 * @param salientNodesPercentile The percentile threshold for determining salient nodes.
+	 * @param salientNodesPercentile The percentile threshold for determining
+	 *                               salient nodes.
 	 */
 	public void setGraphSalientNodes(double salientNodesPercentile) {
 		salientNodes = graphSalientNodes(salientNodesPercentile);
@@ -171,8 +177,8 @@ public class Graph extends PlanarGraph {
 
 	/**
 	 * Generates the centrality map for nodes in the graph. This method computes the
-	 * centrality values for each node in the graph and stores them in a LinkedHashMap.
-	 * It also rescales the centrality values to the range [0, 1].
+	 * centrality values for each node in the graph and stores them in a
+	 * LinkedHashMap. It also rescales the centrality values to the range [0, 1].
 	 */
 	public void generateCentralityMap() {
 
@@ -188,7 +194,7 @@ public class Graph extends PlanarGraph {
 			node.centrality_sc = rescaled;
 		}
 	}
-	
+
 	/**
 	 * Generates the adjacency matrix and directed adjacency matrix for the graph.
 	 * This method populates the adjacency matrix with edges and their corresponding
@@ -221,7 +227,8 @@ public class Graph extends PlanarGraph {
 	/**
 	 * Retrieves the list of edges in the graph.
 	 *
-	 * @return An ArrayList of EdgeGraph objects representing the edges in the graph.
+	 * @return An ArrayList of EdgeGraph objects representing the edges in the
+	 *         graph.
 	 */
 	@Override
 	public ArrayList<NodeGraph> getNodes() {
@@ -231,7 +238,8 @@ public class Graph extends PlanarGraph {
 	/**
 	 * Retrieves the list of edges in the graph.
 	 *
-	 * @return An ArrayList of EdgeGraph objects representing the edges in the graph.
+	 * @return An ArrayList of EdgeGraph objects representing the edges in the
+	 *         graph.
 	 */
 	@Override
 	public ArrayList<EdgeGraph> getEdges() {
@@ -277,12 +285,13 @@ public class Graph extends PlanarGraph {
 	}
 
 	/**
-	 * Retrieves the edge between two nodes, if it exists in the graph's adjacency matrix.
+	 * Retrieves the edge between two nodes, if it exists in the graph's adjacency
+	 * matrix.
 	 *
 	 * @param fromNode The source node of the edge.
 	 * @param toNode   The target node of the edge.
-	 * @return The EdgeGraph object representing the edge between the specified source
-	 *         and target nodes, or null if no such edge exists.
+	 * @return The EdgeGraph object representing the edge between the specified
+	 *         source and target nodes, or null if no such edge exists.
 	 */
 	public EdgeGraph getEdgeBetween(NodeGraph fromNode, NodeGraph toNode) {
 		EdgeGraph edge = null;
@@ -308,14 +317,16 @@ public class Graph extends PlanarGraph {
 	}
 
 	/**
-	 * Filters a LinkedHashMap of centrality values to include only nodes that are present
-	 * in the given list of nodes. This method retains entries in the original map for
-	 * nodes that are also present in the filter list and returns the filtered map.
+	 * Filters a LinkedHashMap of centrality values to include only nodes that are
+	 * present in the given list of nodes. This method retains entries in the
+	 * original map for nodes that are also present in the filter list and returns
+	 * the filtered map.
 	 *
-	 * @param map    The LinkedHashMap containing centrality values associated with nodes.
+	 * @param map    The LinkedHashMap containing centrality values associated with
+	 *               nodes.
 	 * @param filter The list of nodes to use for filtering the map.
-	 * @return A filtered LinkedHashMap containing centrality values for nodes present in
-	 *         both the original map and the filter list.
+	 * @return A filtered LinkedHashMap containing centrality values for nodes
+	 *         present in both the original map and the filter list.
 	 */
 	public static LinkedHashMap<NodeGraph, Double> filterCentralityMap(LinkedHashMap<NodeGraph, Double> map,
 			ArrayList<NodeGraph> filter) {
@@ -330,15 +341,15 @@ public class Graph extends PlanarGraph {
 	}
 
 	/**
-	 * Retrieves salient nodes from the graph based on a specified percentile threshold
-	 * of centrality values. This method calculates the boundary value for centrality
-	 * based on the specified percentile and filters nodes with centrality values exceeding
-	 * that threshold.
+	 * Retrieves salient nodes from the graph based on a specified percentile
+	 * threshold of centrality values. This method calculates the boundary value for
+	 * centrality based on the specified percentile and filters nodes with
+	 * centrality values exceeding that threshold.
 	 *
-	 * @param percentile The percentile threshold for selecting salient nodes
-	 *                   (e.g., 0.75 for the top 25% centrality).
-	 * @return A map of salient nodes and their centrality values exceeding the specified
-	 *         percentile threshold.
+	 * @param percentile The percentile threshold for selecting salient nodes (e.g.,
+	 *                   0.75 for the top 25% centrality).
+	 * @return A map of salient nodes and their centrality values exceeding the
+	 *         specified percentile threshold.
 	 */
 	protected Map<NodeGraph, Double> graphSalientNodes(double percentile) {
 		int position;
@@ -357,15 +368,15 @@ public class Graph extends PlanarGraph {
 
 	/**
 	 * Retrieves salient nodes within the spatial proximity of two reference nodes
-	 * based on a specified percentile threshold. This method calculates the smallest
-	 * enclosing circle around the reference nodes and filters nodes within that spatial
-	 * area. It then filters nodes based on their centrality values and returns a map
-	 * of salient nodes exceeding the specified percentile threshold.
+	 * based on a specified percentile threshold. This method calculates the
+	 * smallest enclosing circle around the reference nodes and filters nodes within
+	 * that spatial area. It then filters nodes based on their centrality values and
+	 * returns a map of salient nodes exceeding the specified percentile threshold.
 	 *
 	 * @param node       The first reference node for spatial calculations.
 	 * @param otherNode  The second reference node for spatial calculations.
-	 * @param percentile The percentile threshold for selecting salient nodes
-	 *                   (e.g., 0.75 for the top 25% centrality).
+	 * @param percentile The percentile threshold for selecting salient nodes (e.g.,
+	 *                   0.75 for the top 25% centrality).
 	 * @return A map of salient nodes and their centrality values within the spatial
 	 *         proximity of the reference nodes, exceeding the specified percentile
 	 *         threshold.
@@ -396,14 +407,15 @@ public class Graph extends PlanarGraph {
 	}
 
 	/**
-	 * Retrieves edges within the spatial proximity of two nodes. This method calculates
-	 * a spatial buffer based on the distance between two nodes and retrieves edges
-	 * that fall within the combined spatial buffer of the two nodes.
+	 * Retrieves edges within the spatial proximity of two nodes. This method
+	 * calculates a spatial buffer based on the distance between two nodes and
+	 * retrieves edges that fall within the combined spatial buffer of the two
+	 * nodes.
 	 *
-	 * @param node       The first node used for spatial reference.
-	 * @param otherNode  The second node used for spatial reference.
-	 * @return A list of edges that are located within the combined spatial buffer of
-	 *         the two nodes.
+	 * @param node      The first node used for spatial reference.
+	 * @param otherNode The second node used for spatial reference.
+	 * @return A list of edges that are located within the combined spatial buffer
+	 *         of the two nodes.
 	 */
 	public ArrayList<EdgeGraph> edgesInNodesSpace(NodeGraph node, NodeGraph otherNode) {
 
@@ -423,7 +435,8 @@ public class Graph extends PlanarGraph {
 	 *
 	 * @param nodes    The list of nodes to filter.
 	 * @param regionID The ID of the region to exclude nodes from.
-	 * @return A new list containing nodes that do not belong to the specified region.
+	 * @return A new list containing nodes that do not belong to the specified
+	 *         region.
 	 */
 	public ArrayList<NodeGraph> nodesInRegion(ArrayList<NodeGraph> nodes, int regionID) {
 		final ArrayList<NodeGraph> newNodes = new ArrayList<>(nodes);
