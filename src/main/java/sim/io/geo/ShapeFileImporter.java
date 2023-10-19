@@ -182,7 +182,7 @@ public class ShapeFileImporter {
 	 *
 	 * @param shpFile to be read from
 	 * @param dbFile  to be read from
-	 * @param field   to contain read in data
+	 * @param vectorLayer   to contain read in data
 	 * @throws FileNotFoundException
 	 */
 	public static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer)
@@ -200,7 +200,7 @@ public class ShapeFileImporter {
 	 *
 	 * @param shpFile to be read from
 	 * @param dbFile  to be read from
-	 * @param field   to contain read in data
+	 * @param vectorLayer   to contain read in data
 	 * @param masked  dictates the subset of attributes we want
 	 * @throws FileNotFoundException
 	 */
@@ -219,7 +219,7 @@ public class ShapeFileImporter {
 	 *
 	 * @param shpFile            to be read from
 	 * @param dbFile             to be read from
-	 * @param field              to contain read in data
+	 * @param vectorLayer              to contain read in data
 	 * @param masonGeometryClass allows us to over-ride the default MasonGeometry
 	 *                           wrapper
 	 * @throws FileNotFoundException
@@ -551,8 +551,7 @@ public class ShapeFileImporter {
 	 * Populate field from the shape file given in fileName
 	 *
 	 * @param shpFile            to be read from
-	 * @param field              is GeomVectorField that will contain the
-	 *                           ShapeFile's contents
+	 * @param vectorLayer        VectorLayer that will contain the ShapeFile's contents
 	 * @param masked             dictates the subset of attributes we want
 	 * @param masonGeometryClass allows us to over-ride the default MasonGeometry
 	 *                           wrapper
