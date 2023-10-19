@@ -31,7 +31,7 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
-import sim.field.geo.GeomVectorField;
+import sim.field.geo.VectorLayer;
 import sim.util.Bag;
 import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
@@ -185,14 +185,14 @@ public class ShapeFileImporter {
 	 * @param field   to contain read in data
 	 * @throws FileNotFoundException
 	 */
-	public static void read(final URL shpFile, final URL dbFile, final GeomVectorField field)
+	public static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer)
 			throws FileNotFoundException, IOException, Exception {
-		read(shpFile, dbFile, field, null, MasonGeometry.class);
+		read(shpFile, dbFile, vectorLayer, null, MasonGeometry.class);
 	}
 
-	public static void read(final String shpPath, final String dbPath, final GeomVectorField field)
+	public static void read(final String shpPath, final String dbPath, final VectorLayer vectorLayer)
 			throws FileNotFoundException, IOException, Exception {
-		read((new URI(shpPath)).toURL(), (new URI(dbPath)).toURL(), field, null, MasonGeometry.class);
+		read((new URI(shpPath)).toURL(), (new URI(dbPath)).toURL(), vectorLayer, null, MasonGeometry.class);
 	}
 
 	/**
@@ -204,14 +204,14 @@ public class ShapeFileImporter {
 	 * @param masked  dictates the subset of attributes we want
 	 * @throws FileNotFoundException
 	 */
-	public static void read(final URL shpFile, final URL dbFile, final GeomVectorField field, final Bag masked)
+	public static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer, final Bag masked)
 			throws FileNotFoundException, IOException, Exception {
-		read(shpFile, dbFile, field, masked, MasonGeometry.class);
+		read(shpFile, dbFile, vectorLayer, masked, MasonGeometry.class);
 	}
 
-	public static void read(final String shpPath, final String dbPath, final GeomVectorField field, final Bag masked)
+	public static void read(final String shpPath, final String dbPath, final VectorLayer vectorLayer, final Bag masked)
 			throws FileNotFoundException, IOException, Exception {
-		read((new URI(shpPath)).toURL(), (new URI(dbPath)).toURL(), field, masked, MasonGeometry.class);
+		read((new URI(shpPath)).toURL(), (new URI(dbPath)).toURL(), vectorLayer, masked, MasonGeometry.class);
 	}
 
 	/**
@@ -224,21 +224,21 @@ public class ShapeFileImporter {
 	 *                           wrapper
 	 * @throws FileNotFoundException
 	 */
-	public static void read(final URL shpFile, final URL dbFile, final GeomVectorField field,
+	public static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer,
 			final Class<?> masonGeometryClass) throws FileNotFoundException, IOException, Exception {
-		read(shpFile, dbFile, field, null, masonGeometryClass);
+		read(shpFile, dbFile, vectorLayer, null, masonGeometryClass);
 	}
 
-	public static void read(final String shpPath, final String dbPath, final GeomVectorField field,
+	public static void read(final String shpPath, final String dbPath, final VectorLayer vectorLayer,
 			final Class<?> masonGeometryClass) throws FileNotFoundException, IOException, Exception {
-		read((new URI(shpPath)).toURL(), (new URI(dbPath)).toURL(), field, null, masonGeometryClass);
+		read((new URI(shpPath)).toURL(), (new URI(dbPath)).toURL(), vectorLayer, null, masonGeometryClass);
 	}
 
 	public static void read(final Class theClass, final String shpFilePathRelativeToClass,
-			final String dbFilePathRelativeToClass, final GeomVectorField field, final Bag masked,
+			final String dbFilePathRelativeToClass, final VectorLayer vectorLayer, final Bag masked,
 			final Class<?> masonGeometryClass) throws IOException, Exception {
-		read(theClass.getResource(shpFilePathRelativeToClass), theClass.getResource(dbFilePathRelativeToClass), field,
-				masked, masonGeometryClass);
+		read(theClass.getResource(shpFilePathRelativeToClass), theClass.getResource(dbFilePathRelativeToClass),
+				vectorLayer, masked, masonGeometryClass);
 	}
 
 	public static void skip(final InputStream in, final int num) throws RuntimeException, IOException {
@@ -306,7 +306,7 @@ public class ShapeFileImporter {
 //        return urlStream;
 //    }
 
-	public static void read(final URL shpFile, final URL dbFile, final GeomVectorField field, final Bag masked,
+	public static void read(final URL shpFile, final URL dbFile, final VectorLayer field, final Bag masked,
 			final Class<?> masonGeometryClass) throws FileNotFoundException, IOException, Exception {
 		if (!MasonGeometry.class.isAssignableFrom(masonGeometryClass)) // Not a subclass? No go
 		{
@@ -385,7 +385,6 @@ public class ShapeFileImporter {
 				// Read the attributes
 
 				final byte r[] = new byte[recordSize];
-				final int chk = dbFileInputStream.read(r);
 
 				// Why is this start1 = 1?
 				int start1 = 1;
@@ -561,7 +560,7 @@ public class ShapeFileImporter {
 	 * @throws IOException           if problem reading files
 	 *
 	 */
-	public static void readOld(final URL shpFile, final URL dbFile, final GeomVectorField field, final Bag masked,
+	public static void readOld(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer, final Bag masked,
 			final Class<?> masonGeometryClass) throws FileNotFoundException, IOException, Exception {
 		if (shpFile == null) {
 			throw new IllegalArgumentException("shpFile is null; likely file not found");
@@ -573,11 +572,6 @@ public class ShapeFileImporter {
 
 		try {
 			final FileInputStream shpFileInputStream = new FileInputStream(shpFile.getFile());
-
-			if (shpFileInputStream == null) {
-				throw new FileNotFoundException(shpFile.getFile());
-			}
-
 			final FileChannel channel = shpFileInputStream.getChannel();
 			final ByteBuffer byteBuf = channel.map(FileChannel.MapMode.READ_ONLY, 0, (int) channel.size());
 			channel.close();
@@ -606,11 +600,6 @@ public class ShapeFileImporter {
 			final FieldDirEntry fields[] = new FieldDirEntry[fieldCnt];
 
 			final RandomAccessFile inFile = new RandomAccessFile(dbfFilename, "r");
-
-			if (inFile == null) {
-				throw new FileNotFoundException(dbfFilename);
-			}
-
 			inFile.seek(32);
 
 			final byte c[] = new byte[32];
@@ -829,7 +818,7 @@ public class ShapeFileImporter {
 						masonGeometry.addAttributes(attributes);
 					}
 
-					field.addGeometry(masonGeometry);
+					vectorLayer.addGeometry(masonGeometry);
 				}
 			}
 		} catch (final IOException e) {
