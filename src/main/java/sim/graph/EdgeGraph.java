@@ -23,8 +23,9 @@ import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
 /**
- * An edge that extends the and `Edge` (Jts) class. This is one of the two components, 
- * along with {@link NodeGraph}, of graphs belonging to the class {@link Graph}.
+ * An edge that extends the and `Edge` (Jts) class. This is one of the two
+ * components, along with {@link NodeGraph}, of graphs belonging to the class
+ * {@link Graph}.
  */
 public class EdgeGraph extends Edge {
 
@@ -163,9 +164,9 @@ public class EdgeGraph extends Edge {
 	 *         is not connected to this edge.
 	 */
 	public NodeGraph getOtherNode(NodeGraph node) {
-		if (fromNode == node)
+		if (fromNode.equals(node))
 			return toNode;
-		else if (toNode == node)
+		else if (toNode.equals(node))
 			return fromNode;
 		else
 			return null;
@@ -180,9 +181,9 @@ public class EdgeGraph extends Edge {
 	 */
 	public NodeGraph getCommonNode(EdgeGraph edge) {
 
-		if (fromNode == edge.toNode || fromNode == edge.fromNode)
+		if (fromNode.equals(edge.toNode) || fromNode.equals(edge.fromNode))
 			return fromNode;
-		if (toNode == edge.toNode || toNode == edge.fromNode)
+		if (toNode.equals(edge.toNode) || toNode.equals(edge.fromNode))
 			return toNode;
 		else
 			return null;
