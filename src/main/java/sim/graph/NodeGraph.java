@@ -25,18 +25,20 @@ import sim.util.geo.Utilities;
 /**
  * A node of a planar graph that extends the `Node` class (JTS), with additional
  * and more straightforward functions. This class is one of the two components,
- * along with {@link EdgeGraph}, of the graphs belonging to the {@link Graph} class.
+ * along with {@link EdgeGraph}, of the graphs belonging to the {@link Graph}
+ * class.
  */
 public class NodeGraph extends Node {
 
-    /**
-     * Constructs a new NodeGraph instance with the specified coordinate.
-     *
-     * @param pt The coordinate associated with this node.
-     */
-    public NodeGraph(Coordinate pt) {
-        super(pt);
-    }
+	/**
+	 * Constructs a new NodeGraph instance with the specified coordinate.
+	 *
+	 * @param pt The coordinate associated with this node.
+	 */
+	public NodeGraph(Coordinate pt) {
+		super(pt);
+	}
+
 	public int nodeID;
 	public int regionID = -1;
 	public boolean gateway;
@@ -64,7 +66,7 @@ public class NodeGraph extends Node {
 	 * @param nodeID The ID to set for the node.
 	 */
 	public void setID(int nodeID) {
-	    this.nodeID = nodeID;
+		this.nodeID = nodeID;
 	}
 
 	/**
@@ -73,7 +75,7 @@ public class NodeGraph extends Node {
 	 * @return The ID of the node.
 	 */
 	public Integer getID() {
-	    return nodeID;
+		return nodeID;
 	}
 
 	/**
@@ -82,7 +84,7 @@ public class NodeGraph extends Node {
 	 * @return The list of edges departing from the node.
 	 */
 	public ArrayList<EdgeGraph> getEdges() {
-	    return edges;
+		return edges;
 	}
 
 	/**
@@ -91,7 +93,7 @@ public class NodeGraph extends Node {
 	 * @return The list of nodes that can be reached from this node.
 	 */
 	public ArrayList<NodeGraph> getAdjacentNodes() {
-	    return adjacentNodes;
+		return adjacentNodes;
 	}
 
 	/**
@@ -99,70 +101,72 @@ public class NodeGraph extends Node {
 	 * This method initializes the edge and adjacent node lists.
 	 */
 	public void setNeighbouringComponents() {
-	    setEdgesNode();
-	    setAdjacentNodes();
+		setEdgesNode();
+		setAdjacentNodes();
 	}
 
 	/**
-	 * Returns the list of directed edges that depart from the node (out-going edges).
+	 * Returns the list of directed edges that depart from the node (out-going
+	 * edges).
 	 *
 	 * @return The list of out-going directed edges from the node.
 	 */
-	public ArrayList<DirectedEdge> getOutsDirectedEdges() {
-	    return outEdges;
+	public ArrayList<DirectedEdge> getOutDirectedEdges() {
+		return outEdges;
 	}
 
 	/**
-	 * Identifies and sets the list of all the edges (non-directed) that depart from this node.
-	 * This method initializes the 'edges' list with non-duplicated edges.
+	 * Identifies and sets the list of all the edges (non-directed) that depart from
+	 * this node. This method initializes the 'edges' list with non-duplicated
+	 * edges.
 	 */
 	private void setEdgesNode() {
-	    final ArrayList<EdgeGraph> edges = new ArrayList<>();
-	    this.outEdges = new ArrayList<DirectedEdge>(this.getOutEdges().getEdges());
-
-	    for (final DirectedEdge outEdge : outEdges) {
-	        final EdgeGraph edge = (EdgeGraph) outEdge.getEdge();
-	        if (!edges.contains(edge))
-	            edges.add(edge);
-	    }
-	    this.edges = edges;
+		final ArrayList<EdgeGraph> edges = new ArrayList<>();
+		this.outEdges = new ArrayList<DirectedEdge>(this.getOutEdges().getEdges());
+		for (final DirectedEdge outEdge : outEdges) {
+			final EdgeGraph edge = (EdgeGraph) outEdge.getEdge();
+			if (!edges.contains(edge))
+				edges.add(edge);
+		}
+		this.edges = edges;
 	}
 
 	/**
-	 * Identifies a list of all the nodes adjacent to this node (i.e., sharing an edge with this node).
-	 * This method initializes the 'adjacentNodes' list.
+	 * Identifies a list of all the nodes adjacent to this node (i.e., sharing an
+	 * edge with this node). This method initializes the 'adjacentNodes' list.
 	 */
 	private void setAdjacentNodes() {
-	    final ArrayList<NodeGraph> adjacentNodes = new ArrayList<>();
+		final ArrayList<NodeGraph> adjacentNodes = new ArrayList<>();
 
-	    for (final EdgeGraph edge : edges) {
-	        final NodeGraph opposite = (NodeGraph) edge.getOppositeNode(this);
-	        adjacentNodes.add(opposite);
-	    }
-	    this.adjacentNodes = adjacentNodes;
+		for (final EdgeGraph edge : edges) {
+			final NodeGraph opposite = (NodeGraph) edge.getOppositeNode(this);
+			adjacentNodes.add(opposite);
+		}
+		this.adjacentNodes = adjacentNodes;
 	}
 
 	/**
-	 * Returns a list of integers representing all the adjacent regions to this node, if any.
-	 * If this node is not a gateway, it returns null.
+	 * Returns a list of integers representing all the adjacent regions to this
+	 * node, if any. If this node is not a gateway, it returns null.
 	 *
-	 * @return A list of integers representing adjacent regions, or null if this node is not a gateway.
+	 * @return A list of integers representing adjacent regions, or null if this
+	 *         node is not a gateway.
 	 */
 	public ArrayList<Integer> getAdjacentRegion() {
-	    if (!gateway)
-	        return null;
+		if (!gateway)
+			return null;
 
-	    final ArrayList<NodeGraph> oppositeNodes = new ArrayList<>(adjacentNodes);
-	    final ArrayList<Integer> adjacentRegions = new ArrayList<>();
+		final ArrayList<NodeGraph> oppositeNodes = new ArrayList<>(adjacentNodes);
+		final ArrayList<Integer> adjacentRegions = new ArrayList<>();
 
-	    for (final NodeGraph opposite : oppositeNodes) {
-	        final int regionID = opposite.regionID;
-	        if (regionID != this.regionID) {
-	            adjacentRegions.add(regionID);
-	            adjacentEntries.add(opposite);
-	        }
-	    }
-	    return adjacentRegions;
+		for (final NodeGraph opposite : oppositeNodes) {
+			final int regionID = opposite.regionID;
+			if (regionID != this.regionID) {
+				adjacentRegions.add(regionID);
+				adjacentEntries.add(opposite);
+			}
+		}
+		return adjacentRegions;
 	}
 
 	/**
@@ -175,8 +179,10 @@ public class NodeGraph extends Node {
 	 *
 	 * @param originNode            The origin node of the desired route.
 	 * @param destinationNode       The destination node of the desired route.
-	 * @param regionBasedNavigation Indicates if the agent is navigating through regions.
-	 * @param previousJunction      Node to avoid choosing dual nodes representing segments that should not be traversed.
+	 * @param regionBasedNavigation Indicates if the agent is navigating through
+	 *                              regions.
+	 * @param previousJunction      Node to avoid choosing dual nodes representing
+	 *                              segments that should not be traversed.
 	 * @return The selected dual node representing a street segment.
 	 */
 	public NodeGraph getDualNode(NodeGraph originNode, NodeGraph destinationNode, boolean regionBasedNavigation,
@@ -229,11 +235,11 @@ public class NodeGraph extends Node {
 	 * Returns a map of nodes in the dual representation of the graph, which
 	 * represent segments departing from this node (a node in a dual graph
 	 * represents an actual street segment). When the node for which the dual-nodes
-	 * are desired is the originNode of a desired route, the map is sorted on the basis
-	 * of the distance from the dual nodes (segments' centroids) to the destination
-	 * node (~ towards it). When the node for which the dual-nodes are desired is
-	 * the destinationNode, the map is sorted on the basis of the distance from the
-	 * dual nodes (segments' centroids) to the origin node.
+	 * are desired is the originNode of a desired route, the map is sorted on the
+	 * basis of the distance from the dual nodes (segments' centroids) to the
+	 * destination node (~ towards it). When the node for which the dual-nodes are
+	 * desired is the destinationNode, the map is sorted on the basis of the
+	 * distance from the dual nodes (segments' centroids) to the origin node.
 	 *
 	 * This function is preferable to the one above as it allows considering
 	 * multiple segments as possible "departures" for route planning algorithms.
@@ -242,9 +248,12 @@ public class NodeGraph extends Node {
 	 *
 	 * @param originNode            The origin node of the desired route.
 	 * @param destinationNode       The destination node of the desired route.
-	 * @param regionBasedNavigation Indicates if the agent is navigating through regions.
-	 * @param previousJunction      Node to avoid choosing dual nodes representing segments that should not be traversed.
-	 * @return A map of selected dual nodes representing street segments, sorted by distance.
+	 * @param regionBasedNavigation Indicates if the agent is navigating through
+	 *                              regions.
+	 * @param previousJunction      Node to avoid choosing dual nodes representing
+	 *                              segments that should not be traversed.
+	 * @return A map of selected dual nodes representing street segments, sorted by
+	 *         distance.
 	 */
 	public Map<NodeGraph, Double> getDualNodes(NodeGraph originNode, NodeGraph destinationNode,
 			boolean regionBasedNavigation, NodeGraph previousJunction) {
