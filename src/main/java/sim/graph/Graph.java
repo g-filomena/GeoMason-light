@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,6 +44,7 @@ public class Graph extends PlanarGraph {
 	public HashMap<Pair<NodeGraph, NodeGraph>, EdgeGraph> adjacencyMatrix = new HashMap<>();
 	public HashMap<Pair<NodeGraph, NodeGraph>, DirectedEdge> adjacencyMatrixDirected = new HashMap<>();
 	public Map<NodeGraph, Double> salientNodes;
+	public HashSet<DirectedEdge> directedEdges = new HashSet<>();
 
 	/**
 	 * Constructs a new empty Graph.
@@ -91,11 +93,6 @@ public class Graph extends PlanarGraph {
 		final NodeGraph fromNode = this.getNode(fromCoord);
 		final NodeGraph toNode = this.getNode(toCoord);
 
-		nodesMap.put(fromNode.getID(), fromNode);
-		nodesMap.put(toNode.getID(), toNode);
-		nodesGraph.add(fromNode);
-		nodesGraph.add(toNode);
-
 		final EdgeGraph edge = new EdgeGraph(line);
 		final DirectedEdge directedEdge0 = new DirectedEdge(fromNode, toNode, coords[1], true);
 		final DirectedEdge directedEdge1 = new DirectedEdge(toNode, fromNode, coords[coords.length - 2], false);
@@ -104,8 +101,13 @@ public class Graph extends PlanarGraph {
 		edge.setAttributes(wrappedLine.getAttributes());
 		edge.setNodes(fromNode, toNode);
 		edge.masonGeometry = wrappedLine;
-		add(edge);
+		addEdge(edge);
+
+	}
+
+	protected void addEdge(EdgeGraph edge) {
 		edgesGraph.add(edge);
+		add(edge);
 	}
 
 	/**
@@ -139,6 +141,7 @@ public class Graph extends PlanarGraph {
 			node = new NodeGraph(coordinate);
 			// ensure node is only added once to graph
 			add(node);
+			nodesGraph.add(node);
 		}
 		return node;
 	}
