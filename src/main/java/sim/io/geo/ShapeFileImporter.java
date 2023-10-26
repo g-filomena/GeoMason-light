@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.locationtech.jts.algorithm.CGAlgorithms;
-//import org.geotools.data.shapefile.ShapefileDataStore;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -180,9 +179,9 @@ public class ShapeFileImporter {
 	/**
 	 * Populate field from the shape file given in fileName
 	 *
-	 * @param shpFile to be read from
-	 * @param dbFile  to be read from
-	 * @param vectorLayer   to contain read in data
+	 * @param shpFile     to be read from
+	 * @param dbFile      to be read from
+	 * @param vectorLayer to contain read in data
 	 * @throws FileNotFoundException
 	 */
 	public static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer)
@@ -198,10 +197,10 @@ public class ShapeFileImporter {
 	/**
 	 * Populate field from the shape file given in fileName
 	 *
-	 * @param shpFile to be read from
-	 * @param dbFile  to be read from
-	 * @param vectorLayer   to contain read in data
-	 * @param masked  dictates the subset of attributes we want
+	 * @param shpFile     to be read from
+	 * @param dbFile      to be read from
+	 * @param vectorLayer to contain read in data
+	 * @param masked      dictates the subset of attributes we want
 	 * @throws FileNotFoundException
 	 */
 	public static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer, final Bag masked)
@@ -219,7 +218,7 @@ public class ShapeFileImporter {
 	 *
 	 * @param shpFile            to be read from
 	 * @param dbFile             to be read from
-	 * @param vectorLayer              to contain read in data
+	 * @param vectorLayer        to contain read in data
 	 * @param masonGeometryClass allows us to over-ride the default MasonGeometry
 	 *                           wrapper
 	 * @throws FileNotFoundException
@@ -296,17 +295,7 @@ public class ShapeFileImporter {
 		return ByteBuffer.wrap(b).order((littleEndian) ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN).getDouble();
 	}
 
-//    public static InputStream open(URL url) throws IllegalArgumentException, RuntimeException, IOException
-//    {
-//        if(url == null)
-//            throw new IllegalArgumentException("url is null; file is probably not found");
-//        InputStream urlStream = new BufferedInputStream(url.openStream());
-//        if(urlStream == null)
-//            throw new RuntimeException("Cannot load URL " + url);
-//        return urlStream;
-//    }
-
-	public static void read(final URL shpFile, final URL dbFile, final VectorLayer field, final Bag masked,
+	public static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer, final Bag masked,
 			final Class<?> masonGeometryClass) throws FileNotFoundException, IOException, Exception {
 		if (!MasonGeometry.class.isAssignableFrom(masonGeometryClass)) // Not a subclass? No go
 		{
@@ -385,6 +374,7 @@ public class ShapeFileImporter {
 				// Read the attributes
 
 				final byte r[] = new byte[recordSize];
+				final int chk = dbFileInputStream.read(r);
 
 				// Why is this start1 = 1?
 				int start1 = 1;
@@ -535,7 +525,7 @@ public class ShapeFileImporter {
 						masonGeometry.addAttributes(attributes);
 					}
 
-					field.addGeometry(masonGeometry);
+					vectorLayer.addGeometry(masonGeometry);
 				}
 			}
 			dbFileInputStream.close();
@@ -551,7 +541,8 @@ public class ShapeFileImporter {
 	 * Populate field from the shape file given in fileName
 	 *
 	 * @param shpFile            to be read from
-	 * @param vectorLayer        VectorLayer that will contain the ShapeFile's contents
+	 * @param vectorLayer        is GeomVectorField that will contain the
+	 *                           ShapeFile's contents
 	 * @param masked             dictates the subset of attributes we want
 	 * @param masonGeometryClass allows us to over-ride the default MasonGeometry
 	 *                           wrapper
@@ -571,6 +562,11 @@ public class ShapeFileImporter {
 
 		try {
 			final FileInputStream shpFileInputStream = new FileInputStream(shpFile.getFile());
+
+			if (shpFileInputStream == null) {
+				throw new FileNotFoundException(shpFile.getFile());
+			}
+
 			final FileChannel channel = shpFileInputStream.getChannel();
 			final ByteBuffer byteBuf = channel.map(FileChannel.MapMode.READ_ONLY, 0, (int) channel.size());
 			channel.close();
@@ -599,6 +595,11 @@ public class ShapeFileImporter {
 			final FieldDirEntry fields[] = new FieldDirEntry[fieldCnt];
 
 			final RandomAccessFile inFile = new RandomAccessFile(dbfFilename, "r");
+
+			if (inFile == null) {
+				throw new FileNotFoundException(dbfFilename);
+			}
+
 			inFile.seek(32);
 
 			final byte c[] = new byte[32];
