@@ -12,7 +12,6 @@ package sim.graph;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -28,6 +27,7 @@ import org.locationtech.jts.planargraph.DirectedEdge;
 import org.locationtech.jts.planargraph.PlanarGraph;
 
 import sim.field.geo.VectorLayer;
+import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
@@ -36,15 +36,18 @@ import sim.util.geo.Utilities;
  * components are {@link NodeGraph} and {@link EdgeGraph}.
  */
 public class Graph extends PlanarGraph {
-	public ArrayList<EdgeGraph> edgesGraph = new ArrayList<>();
+
 	public ArrayList<NodeGraph> nodesGraph = new ArrayList<>();
-	public LinkedHashMap<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
+	public ArrayList<EdgeGraph> edgesGraph = new ArrayList<>();
 	public HashMap<Integer, NodeGraph> nodesMap = new HashMap<>();
+	public LinkedHashMap<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
 	public VectorLayer junctions = new VectorLayer();
+	
 	public HashMap<Pair<NodeGraph, NodeGraph>, EdgeGraph> adjacencyMatrix = new HashMap<>();
 	public HashMap<Pair<NodeGraph, NodeGraph>, DirectedEdge> adjacencyMatrixDirected = new HashMap<>();
 	public Map<NodeGraph, Double> salientNodes;
 	public HashSet<DirectedEdge> directedEdges = new HashSet<>();
+	public Map<String, AttributeValue> attributes;
 
 	/**
 	 * Constructs a new empty Graph.
@@ -191,11 +194,11 @@ public class Graph extends PlanarGraph {
 		this.centralityMap = (LinkedHashMap<NodeGraph, Double>) Utilities.sortByValue(centralityMap, false);
 
 		// rescale
-		for (final NodeGraph node : nodesGraph) {
-			final double rescaled = (node.centrality - Collections.min(centralityMap.values()))
-					/ (Collections.max(centralityMap.values()) - Collections.min(centralityMap.values()));
-			node.centrality_sc = rescaled;
-		}
+//		for (final NodeGraph node : nodesGraph) {
+//			final double rescaled = (node.centrality - Collections.min(centralityMap.values()))
+//					/ (Collections.max(centralityMap.values()) - Collections.min(centralityMap.values()));
+//			node.centrality_sc = rescaled;
+//		}
 	}
 
 	/**
