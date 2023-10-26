@@ -10,9 +10,7 @@
  */
 package sim.graph;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -37,12 +35,6 @@ public class EdgeGraph extends Edge {
 
 	public NodeGraph fromNode, toNode;
 	public NodeGraph dualNode;
-
-	public List<Integer> positiveBarriers = new ArrayList<>();
-	public List<Integer> negativeBarriers = new ArrayList<>();
-	public List<Integer> barriers = new ArrayList<>(); // all the barriers
-	public List<Integer> waterBodies = new ArrayList<>();
-	public List<Integer> parks = new ArrayList<>();
 
 	public HashMap<String, Integer> volumes = new HashMap<>();
 	public Map<String, AttributeValue> attributes;
@@ -187,36 +179,5 @@ public class EdgeGraph extends Edge {
 			return toNode;
 		else
 			return null;
-	}
-
-	/**
-	 * Gets an integer attribute, given the name of the field.
-	 *
-	 * @param name The name of the field for which to retrieve the integer
-	 *             attribute.
-	 * @return The integer attribute associated with the specified field name.
-	 */
-	public Integer getIntegerAttribute(String name) {
-		return attributes.get(name).getInteger();
-	}
-
-	/**
-	 * Gets a double attribute, given the name of the field.
-	 *
-	 * @param name The name of the field for which to retrieve the double attribute.
-	 * @return The double attribute associated with the specified field name.
-	 */
-	public Double getDoubleAttribute(String name) {
-		return this.attributes.get(name).getDouble();
-	}
-
-	/**
-	 * Get a string attribute, given the name of the field.
-	 *
-	 * @param name The name of the field for which to retrieve the string attribute.
-	 * @return The string attribute associated with the specified field name.
-	 */
-	public String getStringAttribute(String name) {
-		return attributes.get(name).getString();
 	}
 }
