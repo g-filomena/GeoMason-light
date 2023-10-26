@@ -13,10 +13,8 @@ package sim.graph;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -36,9 +34,9 @@ import sim.util.geo.Utilities;
  * retraced to the parent graph.
  */
 public class SubGraph extends Graph {
+	
 	private final SubGraphNodesMap subGraphNodesMap = new SubGraphNodesMap();
 	private final SubGraphEdgesMap subGraphEdgesMap = new SubGraphEdgesMap();
-	private ArrayList<Integer> graphBarriers = new ArrayList<>();
 	LinkedHashMap<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
 	Graph parentGraph = new Graph();
 
@@ -72,6 +70,7 @@ public class SubGraph extends Graph {
 	 * @param parentEdge  The edge to be added to the subgraph.
 	 */
 	public void addFromOtherGraph(Graph parentGraph, EdgeGraph parentEdge) {
+		
 		final NodeGraph fromNode = parentEdge.fromNode;
 		final NodeGraph toNode = parentEdge.toNode;
 		final Coordinate fromNodeCoord = fromNode.getCoordinate();
@@ -320,25 +319,6 @@ public class SubGraph extends Graph {
 	}
 
 	/**
-	 * It stores information about the barriers within this SubGraph.
-	 *
-	 */
-	public void setSubGraphBarriers() {
-
-		final ArrayList<Integer> graphBarriers = new ArrayList<>();
-		for (final EdgeGraph childEdge : this.getEdges()) {
-			childEdge.barriers = this.getParentEdge(childEdge).barriers;
-			childEdge.positiveBarriers = this.getParentEdge(childEdge).positiveBarriers;
-			childEdge.negativeBarriers = this.getParentEdge(childEdge).negativeBarriers;
-			childEdge.waterBodies = this.getParentEdge(childEdge).waterBodies;
-			childEdge.parks = this.getParentEdge(childEdge).parks;
-			graphBarriers.addAll(childEdge.barriers);
-		}
-		final Set<Integer> setBarriers = new HashSet<>(graphBarriers);
-		this.graphBarriers = new ArrayList<>(setBarriers);
-	}
-
-	/**
 	 * Sets landmarks and visibility attributes for nodes within the current
 	 * subgraph. This method copies landmarks and visibility attributes from the
 	 * corresponding parent graph's nodes to the nodes within the subgraph.
@@ -348,23 +328,12 @@ public class SubGraph extends Graph {
 
 		for (final NodeGraph node : childNodes) {
 			final NodeGraph parentNode = this.getParentNode(node);
-			node.visible2d = parentNode.visible2d;
-			node.localLandmarks = parentNode.localLandmarks;
-			node.distantLandmarks = parentNode.distantLandmarks;
+			node.visibleBuildings2d = parentNode.visibleBuildings2d;
+			node.visibleBuildings3d = parentNode.visibleBuildings3d;
+			node.adjacentBuildings = parentNode.adjacentBuildings;
 			node.anchors = parentNode.anchors;
 			node.distances = parentNode.distances;
 		}
-	}
-
-	/**
-	 * Returns the list of barrier IDs associated with the current subgraph. These
-	 * barriers represent physical obstacles or features within the subgraph that
-	 * shape movement and agent's cognitive maps.
-	 *
-	 * @return The list of barrier IDs within the subgraph.
-	 */
-	public ArrayList<Integer> getSubGraphBarriers() {
-		return this.graphBarriers;
 	}
 
 	/**
