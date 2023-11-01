@@ -47,7 +47,7 @@ public class Graph extends PlanarGraph {
 	public HashMap<Pair<NodeGraph, NodeGraph>, DirectedEdge> adjacencyMatrixDirected = new HashMap<>();
 	public Map<NodeGraph, Double> salientNodes;
 	public HashSet<DirectedEdge> directedEdges = new HashSet<>();
-	public Map<String, AttributeValue> attributes;
+	public Map<String, AttributeValue> attributes = new HashMap<>();
 
 	/**
 	 * Constructs a new empty Graph.
