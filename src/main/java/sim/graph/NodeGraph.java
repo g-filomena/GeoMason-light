@@ -19,6 +19,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.planargraph.DirectedEdge;
 import org.locationtech.jts.planargraph.Node;
 
+import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
@@ -45,20 +46,19 @@ public class NodeGraph extends Node {
 
 	public MasonGeometry masonGeometry;
 	public EdgeGraph primalEdge;
-	public double centrality, centrality_sc;
+	public double centrality;
 
-	public ArrayList<Building> visible2d = new ArrayList<>();
-	public ArrayList<Building> localLandmarks = new ArrayList<>();
-	public ArrayList<Building> distantLandmarks = new ArrayList<>();
-	public ArrayList<Building> anchors = new ArrayList<>();
-	public List<Double> distances = new ArrayList<>();
+	public ArrayList<Building> visibleBuildings2d = new ArrayList<>();
+	public ArrayList<Building> adjacentBuildings = new ArrayList<>();
+	public ArrayList<Building> visibleBuildings3d = new ArrayList<>();
 
 	public List<Integer> adjacentRegions = new ArrayList<>();
 	public ArrayList<NodeGraph> adjacentEntries = new ArrayList<>();
 	private ArrayList<NodeGraph> adjacentNodes = new ArrayList<>();
 	private ArrayList<EdgeGraph> edges = new ArrayList<>();
 	private ArrayList<DirectedEdge> outEdges = new ArrayList<>();
-	public String DMA = "";
+	public String DMA = ""; // land use categorisation
+	public Map<String, AttributeValue> attributes = new HashMap<>();
 
 	/**
 	 * Sets the ID of the node.
@@ -257,34 +257,32 @@ public class NodeGraph extends Node {
 	 */
 	public Map<NodeGraph, Double> getDualNodes(NodeGraph originNode, NodeGraph destinationNode,
 			boolean regionBasedNavigation, NodeGraph previousJunction) {
+
 		final HashMap<NodeGraph, Double> dualNodes = new HashMap<>();
 		NodeGraph dualNode = null;
-		final ArrayList<EdgeGraph> edges = new ArrayList<>(this.edges);
 
 		for (final EdgeGraph edge : edges) {
+			// gateway
 			if (edge.regionID == -1 && regionBasedNavigation)
 				continue;
 			dualNode = edge.getDual();
-			if (dualNode == null)
-				continue;
 
 			if (this.equals(destinationNode)) {
-				final double cost = GraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
+				double cost = GraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
 				dualNodes.put(dualNode, cost);
 			} else {
-				final double cost = GraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
-
-				if (previousJunction != null && (previousJunction == dualNode.primalEdge.fromNode
-						|| previousJunction == dualNode.primalEdge.toNode))
+				double cost = GraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
+				if (checkPreviousJunction(previousJunction, dualNode))
 					continue;
 				if (regionBasedNavigation) {
-					final ArrayList<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(originNode).getEdges());
+					// avoid edges that lead to gateways
+					ArrayList<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(originNode).getEdges());
 					nextEdges.remove(edge);
-					boolean bridges = true;
-					for (final EdgeGraph next : nextEdges)
+					boolean bridge = true;
+					for (EdgeGraph next : nextEdges)
 						if (next.regionID != -1)
-							bridges = false;
-					if (bridges)
+							bridge = false;
+					if (bridge)
 						continue;
 				}
 				dualNodes.put(dualNode, cost);
@@ -292,5 +290,12 @@ public class NodeGraph extends Node {
 		}
 
 		return Utilities.sortByValue(dualNodes, false);
+	}
+
+	private boolean checkPreviousJunction(NodeGraph previousJunction, NodeGraph dualNode) {
+
+		EdgeGraph primalEdge = dualNode.primalEdge;
+		return (previousJunction != null)
+				&& (previousJunction.equals(primalEdge.fromNode) || previousJunction.equals(primalEdge.toNode));
 	}
 }
