@@ -26,8 +26,7 @@ import sim.util.geo.Utilities;
 /**
  * A node of a planar graph that extends the `Node` class (JTS), with additional
  * and more straightforward functions. This class is one of the two components,
- * along with {@link EdgeGraph}, of the graphs belonging to the {@link Graph}
- * class.
+ * along with `EdgeGraph`, of the graphs belonging to the `Graph` class.
  */
 public class NodeGraph extends Node {
 
@@ -292,6 +291,15 @@ public class NodeGraph extends Node {
 		return Utilities.sortByValue(dualNodes, false);
 	}
 
+	/**
+	 * Checks whether the previous junction is the same as the one this dualNode
+	 * leads to.
+	 *
+	 * @param previousJunction The previous junction to compare.
+	 * @param dualNode         The dual node to check against.
+	 * @return True if the previous junction matches either the "from" or "to" node
+	 *         of the primal edge connected to the dual node.
+	 */
 	private boolean checkPreviousJunction(NodeGraph previousJunction, NodeGraph dualNode) {
 
 		EdgeGraph primalEdge = dualNode.primalEdge;
