@@ -16,6 +16,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
@@ -469,17 +470,16 @@ public class VectorLayer extends Layer {
 	 */
 	public final ArrayList<MasonGeometry> intersectingFeatures(Geometry inputGeometry) {
 
-		ArrayList<MasonGeometry> intersectingFeatures = new ArrayList<>();
+		ConcurrentLinkedQueue<MasonGeometry> intersectingFeatures = new ConcurrentLinkedQueue<>();
 		final Envelope envelope = inputGeometry.getEnvelopeInternal();
 		envelope.expandBy(java.lang.Math.max(envelope.getHeight(), envelope.getWidth()) * 0.01);
 		final List<?> geometriesList = spatialIndex.query(envelope);
 
-		for (final Object geometry : geometriesList) {
-			final MasonGeometry otherMasonGeometry = (MasonGeometry) geometry;
-			if (inputGeometry.intersects(otherMasonGeometry.getGeometry()))
-				intersectingFeatures.add(otherMasonGeometry);
-		}
-		return intersectingFeatures;
+		geometriesList.parallelStream().map(geometry -> (MasonGeometry) geometry)
+				.filter(otherMasonGeometry -> inputGeometry.intersects(otherMasonGeometry.getGeometry()))
+				.forEach(intersectingFeatures::add);
+
+		return new ArrayList<>(intersectingFeatures);
 	}
 
 	/**
@@ -493,6 +493,7 @@ public class VectorLayer extends Layer {
 	public final ArrayList<MasonGeometry> containingFeautures(Geometry inputGeometry) {
 		ArrayList<MasonGeometry> getContainingFeautures = new ArrayList<MasonGeometry>();
 		Envelope envelope = inputGeometry.getEnvelopeInternal();
+		envelope.expandBy(java.lang.Math.max(envelope.getHeight(), envelope.getWidth()) * 0.01);
 		List<?> geometriesList = spatialIndex.query(envelope);
 
 		for (final Object geometry : geometriesList) {
@@ -815,9 +816,6 @@ public class VectorLayer extends Layer {
 	 */
 	public void updateTransform(DrawInfo2D info) {
 
-		// if (info.draw.width == 4800)
-		// System.out.println("here");
-
 		// need to update the transform
 		if (!info.equals(myInfo)) {
 			myInfo = info;
@@ -855,6 +853,7 @@ public class VectorLayer extends Layer {
 		return new Steppable() {
 			private static final long serialVersionUID = 1808772743124538274L;
 
+			@Override
 			public void step(SimState state) {
 				updateSpatialIndex();
 			}
