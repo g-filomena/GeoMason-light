@@ -319,24 +319,6 @@ public class SubGraph extends Graph {
 	}
 
 	/**
-	 * Sets landmarks and visibility attributes for nodes within the current
-	 * subgraph. This method copies landmarks and visibility attributes from the
-	 * corresponding parent graph's nodes to the nodes within the subgraph.
-	 */
-	public void setSubGraphLandmarks() {
-		final ArrayList<NodeGraph> childNodes = this.getNodesList();
-
-		for (final NodeGraph node : childNodes) {
-			final NodeGraph parentNode = this.getParentNode(node);
-			node.visibleBuildings2d = parentNode.visibleBuildings2d;
-			node.visibleBuildings3d = parentNode.visibleBuildings3d;
-			node.adjacentBuildings = parentNode.adjacentBuildings;
-			node.anchors = parentNode.anchors;
-			node.distances = parentNode.distances;
-		}
-	}
-
-	/**
 	 * Generates the centrality map for the current subgraph by calculating the
 	 * centrality values of its nodes based on the centrality values of their
 	 * corresponding parent nodes in the parent graph. The resulting centrality
