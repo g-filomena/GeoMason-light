@@ -78,7 +78,6 @@ public class MasonGeometry implements sim.util.Proxiable, java.io.Serializable {
 	 * @return attributes associated with this geometry
 	 */
 	public Map<String, AttributeValue> getAttributes() {
-//        return Collections.unmodifiableMap(attributes);
 		return attributes;
 	}
 
