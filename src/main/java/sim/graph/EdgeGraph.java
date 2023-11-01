@@ -37,7 +37,7 @@ public class EdgeGraph extends Edge {
 	public NodeGraph dualNode;
 
 	public HashMap<String, Integer> volumes = new HashMap<>();
-	public Map<String, AttributeValue> attributes;
+	public Map<String, AttributeValue> attributes = new HashMap<>();
 	private Coordinate centroidCoords;
 	private Double length;
 	public boolean isKnown = false;
