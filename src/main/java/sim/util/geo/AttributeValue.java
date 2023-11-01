@@ -104,7 +104,7 @@ public class AttributeValue implements java.io.Serializable {
 	}
 
 	public void setInteger(int value) {
-		setValue(new Integer(value));
+		setValue(Integer.valueOf(value));
 	}
 
 	public Integer getInteger() {
@@ -112,7 +112,7 @@ public class AttributeValue implements java.io.Serializable {
 	}
 
 	public void setDouble(double value) {
-		setValue(new Double(value));
+		setValue(Double.valueOf(value));
 	}
 
 	public Double getDouble() {
@@ -127,6 +127,10 @@ public class AttributeValue implements java.io.Serializable {
 		return (String) getValue();
 	}
 
+	public <T> void setArray(ArrayList<T> array) {
+		setValue(array);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public <T> ArrayList<T> getArray() {
 		return (ArrayList<T>) getValue();
