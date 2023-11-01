@@ -49,7 +49,7 @@ public class ShapeFileExporter {
 	 * using the given base file name prefix.
 	 * 
 	 * @param baseFileName is the prefix for the ".shp", ".shx", and ".dbf" files
-	 * @param vectorLayer        to be exported
+	 * @param vectorLayer  to be exported
 	 */
 	public static void write(String baseFileName, VectorLayer vectorLayer) {
 		try {
