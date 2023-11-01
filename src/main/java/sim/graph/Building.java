@@ -9,6 +9,10 @@
  * See the file "LICENSE" for more information
  */
 package sim.graph;
+import java.util.HashMap;
+import java.util.Map;
+
+import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
 /**
@@ -21,12 +25,13 @@ import sim.util.geo.MasonGeometry;
  * geographical context, facilitating various spatial analysis and modeling tasks.
  */
 public class Building {
-    public int buildingID;           // Unique identifier for the building
+    
+	public int buildingID;           // Unique identifier for the building
     public String landUse;           // Classification of land use for the building
     public MasonGeometry geometry;   // Geographic geometry representing the building
     public NodeGraph node;           // Associated node in a graph (if applicable)
-    public double localLandmarkness; // Local landmarkness score
-    public double globalLandmarkness;// Global landmarkness score
     public String DMA;               //  Urban DMA categorisation
+    
+	public Map<String, AttributeValue> attributes = new HashMap<>();
 }
 
