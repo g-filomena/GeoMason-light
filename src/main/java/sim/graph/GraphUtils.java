@@ -10,6 +10,10 @@
  */
 package sim.graph;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.javatuples.Pair;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -17,15 +21,16 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 
 /**
- * The `GraphUtils` class provides utility methods for working {@link NodeGraph} objects.
+ * The `GraphUtils` class provides utility methods for working {@link NodeGraph}
+ * objects.
  */
 public class GraphUtils {
 
 	/**
 	 * Calculates the Euclidean distance between two nodes in a graph.
 	 *
-	 * @param node       The first node.
-	 * @param otherNode  The second node.
+	 * @param node      The first node.
+	 * @param otherNode The second node.
 	 * @return The Euclidean distance between the two nodes' coordinates.
 	 */
 	public static double nodesDistance(NodeGraph node, NodeGraph otherNode) {
@@ -35,9 +40,11 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Calculates the minimum enclosing circle (smallest circle that completely encloses a collection of nodes).
+	 * Calculates the minimum enclosing circle (smallest circle that completely
+	 * encloses a collection of nodes).
 	 *
-	 * @param nodes The collection of nodes for which to calculate the enclosing circle.
+	 * @param nodes The collection of nodes for which to calculate the enclosing
+	 *              circle.
 	 * @return A geometry representing the minimum enclosing circle.
 	 */
 	public static Geometry enclosingCircleFromNodes(Iterable<NodeGraph> nodes) {
@@ -52,12 +59,12 @@ public class GraphUtils {
 		Geometry enclosingCircle = circleCenter.buffer(radius);
 		return enclosingCircle;
 	}
-	
+
 	/**
 	 * Calculates the smallest enclosing circle for two nodes in a graph.
 	 *
-	 * @param node       The first node.
-	 * @param otherNode  The second node.
+	 * @param node      The first node.
+	 * @param otherNode The second node.
 	 * @return The smallest enclosing circle as a geometry.
 	 */
 	public static Geometry enclosingCircleBetweenNodes(NodeGraph node, NodeGraph otherNode) {
@@ -67,78 +74,80 @@ public class GraphUtils {
 		return smallestEnclosingCircle;
 	}
 
-    /**
-     * Calculates the center point (centroid) of a collection of nodes.
-     *
-     * @param nodes The collection of nodes for which to calculate the center point.
-     * @return The center point coordinate.
-     */
-    private static Coordinate calculateCenterPointNodes(Iterable<NodeGraph> nodes) {
-        double totalX = 0.0;
-        double totalY = 0.0;
-        int count = 0;
+	/**
+	 * Calculates the center point (centroid) of a collection of nodes.
+	 *
+	 * @param nodes The collection of nodes for which to calculate the center point.
+	 * @return The center point coordinate.
+	 */
+	private static Coordinate calculateCenterPointNodes(Iterable<NodeGraph> nodes) {
+		double totalX = 0.0;
+		double totalY = 0.0;
+		int count = 0;
 
-        for (NodeGraph node : nodes) {
-            totalX += node.getCoordinate().getX();
-            totalY += node.getCoordinate().getY();
-            count++;
-        }
+		for (NodeGraph node : nodes) {
+			totalX += node.getCoordinate().getX();
+			totalY += node.getCoordinate().getY();
+			count++;
+		}
 
-        return new Coordinate(totalX / count, totalY / count);
-    }
+		return new Coordinate(totalX / count, totalY / count);
+	}
 
-    /**
-     * Calculates the radius of a collection of nodes relative to a center point.
-     *
-     * @param center The center point coordinate.
-     * @param nodes  The collection of nodes for which to calculate the radius.
-     * @return The maximum distance from the center point to any node.
-     */
-    private static double calculateRadius(Coordinate center, Iterable<NodeGraph> nodes) {
-        double maxDistance = 0.0;
+	/**
+	 * Calculates the radius of a collection of nodes relative to a center point.
+	 *
+	 * @param center The center point coordinate.
+	 * @param nodes  The collection of nodes for which to calculate the radius.
+	 * @return The maximum distance from the center point to any node.
+	 */
+	private static double calculateRadius(Coordinate center, Iterable<NodeGraph> nodes) {
+		double maxDistance = 0.0;
 
-        for (NodeGraph node : nodes) {
-            double distance = center.distance(node.getCoordinate());
-            if (distance > maxDistance) {
-                maxDistance = distance;
-            }
-        }
-        return maxDistance;
-    }
+		for (NodeGraph node : nodes) {
+			double distance = center.distance(node.getCoordinate());
+			if (distance > maxDistance) {
+				maxDistance = distance;
+			}
+		}
+		return maxDistance;
+	}
 
-    /**
-     * Finds the closest node to a target coordinate from a collection of nodes.
-     *
-     * @param targetCoordinates The target coordinate to which to find the closest node.
-     * @param nodes             The collection of nodes to search for the closest node.
-     * @return The closest node to the target coordinate.
-     */
-    public static NodeGraph findClosestNode(Coordinate targetCoordinates, Iterable<NodeGraph> nodes) {
-        NodeGraph closestNode = null;
-        double minDistance = Double.MAX_VALUE;
+	/**
+	 * Finds the closest node to a target coordinate from a collection of nodes.
+	 *
+	 * @param targetCoordinates The target coordinate to which to find the closest
+	 *                          node.
+	 * @param nodes             The collection of nodes to search for the closest
+	 *                          node.
+	 * @return The closest node to the target coordinate.
+	 */
+	public static NodeGraph findClosestNode(Coordinate targetCoordinates, Iterable<NodeGraph> nodes) {
+		NodeGraph closestNode = null;
+		double minDistance = Double.MAX_VALUE;
 
-        for (NodeGraph node : nodes) {
-            double distance = targetCoordinates.distance(node.getCoordinate());
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestNode = node;
-            }
-        }
-        return closestNode;
-    }
-    
-    /**
+		for (NodeGraph node : nodes) {
+			double distance = targetCoordinates.distance(node.getCoordinate());
+			if (distance < minDistance) {
+				minDistance = distance;
+				closestNode = node;
+			}
+		}
+		return closestNode;
+	}
+
+	/**
 	 * It returns a LineString between two given nodes.
 	 *
 	 * @param node      a node;
 	 * @param otherNode an other node;
 	 */
 	public static LineString LineStringBetweenNodes(NodeGraph node, NodeGraph otherNode) {
-		final Coordinate[] coords = {node.getCoordinate(), otherNode.getCoordinate()};
+		final Coordinate[] coords = { node.getCoordinate(), otherNode.getCoordinate() };
 		final LineString line = new GeometryFactory().createLineString(coords);
 		return line;
 	}
-	
+
 	/**
 	 * Computes the Euclidean distance between two locations
 	 *
@@ -148,5 +157,24 @@ public class GraphUtils {
 	public static double euclideanDistance(Coordinate originCoord, Coordinate destinationCoord) {
 		return Math.sqrt(
 				Math.pow(originCoord.x - destinationCoord.x, 2) + Math.pow(originCoord.y - destinationCoord.y, 2));
+	}
+
+	// Introduce a HashMap to cache previously computed distances
+	public static Map<Pair<NodeGraph, NodeGraph>, Double> distanceCache = new HashMap<>();
+
+	// Method to compute the distance between two nodes, with caching
+	synchronized public static double getCachedNodesDistance(NodeGraph node, NodeGraph otherNode) {
+		Pair<NodeGraph, NodeGraph> pair = new Pair<>(node, otherNode);
+		Pair<NodeGraph, NodeGraph> otherPair = new Pair<>(otherNode, node);
+
+		if (distanceCache.containsKey(pair))
+			return distanceCache.get(pair);
+		else if (distanceCache.containsKey(otherPair))
+			return distanceCache.get(otherPair);
+		else {
+			double distance = GraphUtils.nodesDistance(node, otherNode);
+			distanceCache.put(pair, distance);
+			return distance;
+		}
 	}
 }
