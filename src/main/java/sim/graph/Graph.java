@@ -42,7 +42,7 @@ public class Graph extends PlanarGraph {
 	public HashMap<Integer, NodeGraph> nodesMap = new HashMap<>();
 	public LinkedHashMap<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
 	public VectorLayer junctions = new VectorLayer();
-	
+
 	public HashMap<Pair<NodeGraph, NodeGraph>, EdgeGraph> adjacencyMatrix = new HashMap<>();
 	public HashMap<Pair<NodeGraph, NodeGraph>, DirectedEdge> adjacencyMatrixDirected = new HashMap<>();
 	public Map<NodeGraph, Double> salientNodes;
@@ -362,14 +362,11 @@ public class Graph extends PlanarGraph {
 		position = (int) (centralityMap.size() * percentile);
 		final double boundary = new ArrayList<>(centralityMap.values()).get(position);
 
-		final Map<NodeGraph, Double> filteredMap = centralityMap.entrySet().stream()
-				.filter(entry -> entry.getValue() >= boundary)
+		Map<NodeGraph, Double> filteredMap = new HashMap<NodeGraph, Double>();
+		filteredMap = centralityMap.entrySet().stream().filter(entry -> entry.getValue() >= boundary)
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
 
-		if (filteredMap.isEmpty() || filteredMap == null)
-			return null;
-		else
-			return filteredMap;
+		return filteredMap;
 	}
 
 	/**
@@ -390,26 +387,23 @@ public class Graph extends PlanarGraph {
 	public Map<NodeGraph, Double> salientNodesWithinSpace(NodeGraph node, NodeGraph otherNode, double percentile) {
 
 		ArrayList<NodeGraph> containedNodes = new ArrayList<>();
-		final Geometry smallestEnclosingCircle = GraphUtils.enclosingCircleBetweenNodes(node, otherNode);
+		Geometry smallestEnclosingCircle = GraphUtils.enclosingCircleBetweenNodes(node, otherNode);
 		containedNodes = this.getContainedNodes(smallestEnclosingCircle);
 
-		if (containedNodes.isEmpty())
-			return null;
 		LinkedHashMap<NodeGraph, Double> spatialfilteredMap = new LinkedHashMap<>();
+		if (containedNodes.isEmpty())
+			return spatialfilteredMap;
 		spatialfilteredMap = filterCentralityMap(centralityMap, containedNodes);
-		if (spatialfilteredMap.isEmpty() || spatialfilteredMap == null)
-			return null;
+		if (spatialfilteredMap.isEmpty())
+			return spatialfilteredMap;
 
-		final int position = (int) (spatialfilteredMap.size() * percentile);
-		final double boundary = new ArrayList<>(spatialfilteredMap.values()).get(position);
-		final Map<NodeGraph, Double> valueFilteredMap = spatialfilteredMap.entrySet().stream()
+		int position = (int) (spatialfilteredMap.size() * percentile);
+		double boundary = new ArrayList<>(spatialfilteredMap.values()).get(position);
+		Map<NodeGraph, Double> valueFilteredMap = spatialfilteredMap.entrySet().stream()
 				.filter(entry -> entry.getValue() >= boundary)
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
 
-		if (valueFilteredMap.isEmpty() || valueFilteredMap == null)
-			return null;
-		else
-			return valueFilteredMap;
+		return valueFilteredMap;
 	}
 
 	/**
