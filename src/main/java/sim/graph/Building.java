@@ -50,7 +50,7 @@ public class Building {
 	 * @param destinationNode The second node.
 	 * @return A list of buildings.
 	 */
-	public static ArrayList<MasonGeometry> getBuildings(NodeGraph originNode, NodeGraph destinationNode) {
+	public ArrayList<MasonGeometry> getBuildings(NodeGraph originNode, NodeGraph destinationNode) {
 
 		Geometry smallestCircle = GraphUtils.enclosingCircleBetweenNodes(originNode, destinationNode);
 		return PedSimCity.buildings.containedFeatures(smallestCircle);
@@ -63,7 +63,7 @@ public class Building {
 	 * @return An ArrayList of MasonGeometry objects representing buildings within
 	 *         the region.
 	 */
-	public static ArrayList<MasonGeometry> getBuildingsWithinRegion(Region region) {
+	public ArrayList<MasonGeometry> getBuildingsWithinRegion(Region region) {
 		VectorLayer regionNetwork = region.regionNetwork;
 		Geometry convexHull = regionNetwork.getConvexHull();
 		return PedSimCity.buildings.containedFeatures(convexHull);
