@@ -139,16 +139,6 @@ public class EdgeGraph extends Edge {
 	}
 
 	/**
-	 * Resets the volumes when called during the simulation (e.g., at the start of a
-	 * new run).
-	 */
-	public void resetVolumes() {
-
-		for (final String key : volumes.keySet())
-			volumes.replace(key, 0);
-	}
-
-	/**
 	 * Given one of the nodes of this edge, it returns the other one.
 	 *
 	 * @param node One of the nodes connected to this edge.
