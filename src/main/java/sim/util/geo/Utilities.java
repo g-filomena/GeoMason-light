@@ -30,7 +30,6 @@ public class Utilities {
 		if (descending)
 			return map.entrySet().stream().sorted(Map.Entry.comparingByValue(Collections.reverseOrder())).collect(
 					Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
 		else
 			return map.entrySet().stream().sorted(Map.Entry.comparingByValue()).collect(
 					Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
