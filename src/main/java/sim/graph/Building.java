@@ -10,15 +10,9 @@
  */
 package sim.graph;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.locationtech.jts.geom.Geometry;
-
-import pedSim.cognitiveMap.Region;
-import pedSim.engine.PedSimCity;
-import sim.field.geo.VectorLayer;
 import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
@@ -42,30 +36,4 @@ public class Building {
 	public String DMA; // Urban DMA categorisation
 
 	public Map<String, AttributeValue> attributes = new HashMap<>();
-
-	/**
-	 * Returns all the buildings enclosed between two nodes.
-	 *
-	 * @param originNode      The first node.
-	 * @param destinationNode The second node.
-	 * @return A list of buildings.
-	 */
-	public ArrayList<MasonGeometry> getBuildings(NodeGraph originNode, NodeGraph destinationNode) {
-
-		Geometry smallestCircle = GraphUtils.enclosingCircleBetweenNodes(originNode, destinationNode);
-		return PedSimCity.buildings.containedFeatures(smallestCircle);
-	}
-
-	/**
-	 * Get buildings within a specified region.
-	 *
-	 * @param region The region for which buildings are to be retrieved.
-	 * @return An ArrayList of MasonGeometry objects representing buildings within
-	 *         the region.
-	 */
-	public ArrayList<MasonGeometry> getBuildingsWithinRegion(Region region) {
-		VectorLayer regionNetwork = region.regionNetwork;
-		Geometry convexHull = regionNetwork.getConvexHull();
-		return PedSimCity.buildings.containedFeatures(convexHull);
-	}
 }
