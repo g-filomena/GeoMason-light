@@ -295,7 +295,7 @@ public class ShapeFileImporter {
 		return ByteBuffer.wrap(b).order((littleEndian) ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN).getDouble();
 	}
 
-	public static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer, final Bag masked,
+	private static void read(final URL shpFile, final URL dbFile, final VectorLayer vectorLayer, final Bag masked,
 			final Class<?> masonGeometryClass) throws FileNotFoundException, IOException, Exception {
 		if (!MasonGeometry.class.isAssignableFrom(masonGeometryClass)) // Not a subclass? No go
 		{
