@@ -795,12 +795,9 @@ public class VectorLayer extends Layer {
 	 * @throws Exception If there is an error during Shapefile reading or geometry
 	 *                   population.
 	 */
-	public static void readShapefile(String inputDirectory, VectorLayer vectorLayer) throws Exception {
+	public static void readShapefile(URL urlShp, URL urlDbf, VectorLayer vectorLayer) throws Exception {
 
-		String baseURL = "file:";
-		final URL shp = new URL(baseURL + inputDirectory + ".shp");
-		final URL dbf = new URL(baseURL + inputDirectory + ".dbf");
-		ShapeFileImporter.read(shp, dbf, vectorLayer);
+		ShapeFileImporter.read(urlShp, urlDbf, vectorLayer, MasonGeometry.class);
 	}
 
 	public Envelope clipEnvelope;
