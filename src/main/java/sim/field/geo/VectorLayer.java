@@ -788,10 +788,8 @@ public class VectorLayer extends Layer {
 	 * attribute data. The function reads both files and adds the geometries to the
 	 * VectorLayer.
 	 *
-	 * @param inputDirectory The directory path where the Shapefile (.shp and .dbf)
-	 *                       is located.
-	 * @param vectorLayer    The VectorLayer to populate with the geometries from
-	 *                       the Shapefile.
+	 * @param urlShp The URL referring to the path to the .shp input file.
+	 * @param urlDbf The URL referring to the path to the .dbf input file.
 	 * @throws Exception If there is an error during Shapefile reading or geometry
 	 *                   population.
 	 */
