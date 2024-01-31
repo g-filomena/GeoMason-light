@@ -14,10 +14,10 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,10 +43,9 @@ import sim.util.geo.MasonGeometry;
 public class ShapeFileExporter {
 
 	/**
-	 * Write the given vector field to a shape file.
-	 * <p>
-	 * The three mandatory shape files (".shp", ".shx", and ".dbf") will be created
-	 * using the given base file name prefix.
+	 * Write the given vector field to a shape file. The three mandatory shape files
+	 * (".shp", ".shx", and ".dbf") will be created using the given base file name
+	 * prefix.
 	 * 
 	 * @param baseFileName is the prefix for the ".shp", ".shx", and ".dbf" files
 	 * @param vectorLayer  to be exported
@@ -88,7 +87,7 @@ public class ShapeFileExporter {
 
 			// bytes 32 - 35 are the shapefile type
 			int shapeType = 0;
-			ArrayList<MasonGeometry> geometries = vectorLayer.getGeometries();
+			List<MasonGeometry> geometries = vectorLayer.getGeometries();
 
 			// Determine the geometry associated with this file by arbitrarily
 			// looking at the first geometry.
@@ -462,7 +461,7 @@ public class ShapeFileExporter {
 	 *
 	 * @return map of attribute name to its respective size requirements
 	 */
-	private static Map<String, Integer> determineAttributeSizes(ArrayList<MasonGeometry> geometries) {
+	private static Map<String, Integer> determineAttributeSizes(List<MasonGeometry> geometries) {
 		Map<String, Integer> attributeSizes = new HashMap<String, Integer>();
 
 		for (MasonGeometry masonGeometry : geometries) {
