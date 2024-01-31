@@ -11,17 +11,19 @@
 package sim.graph;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.javatuples.Pair;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateArrays;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.planargraph.DirectedEdge;
 import org.locationtech.jts.planargraph.PlanarGraph;
@@ -32,21 +34,22 @@ import sim.util.geo.MasonGeometry;
 import sim.util.geo.Utilities;
 
 /**
- * A planar graph that extends the `PlanarGraph` (JTS) class. Its basic
- * components are {@link NodeGraph} and {@link EdgeGraph}.
+ * Represents a planar graph that extends the JTS (Java Topology Suite)
+ * PlanarGraph class. Its basic components are {@link NodeGraph} and
+ * {@link EdgeGraph}. This class provides functionalities to construct and
+ * manipulate a graph from street junctions and segments.
  */
 public class Graph extends PlanarGraph {
 
-	public ArrayList<NodeGraph> nodesGraph = new ArrayList<>();
-	public ArrayList<EdgeGraph> edgesGraph = new ArrayList<>();
-	public HashMap<Integer, NodeGraph> nodesMap = new HashMap<>();
-	public LinkedHashMap<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
-	public VectorLayer junctions = new VectorLayer();
+	public List<NodeGraph> nodesGraph = new ArrayList<>();
+	protected List<EdgeGraph> edgesGraph = new ArrayList<>();
+	protected Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
+	protected VectorLayer junctions = new VectorLayer();
 
-	public HashMap<Pair<NodeGraph, NodeGraph>, EdgeGraph> adjacencyMatrix = new HashMap<>();
-	public HashMap<Pair<NodeGraph, NodeGraph>, DirectedEdge> adjacencyMatrixDirected = new HashMap<>();
-	public Map<NodeGraph, Double> salientNodes;
-	public HashSet<DirectedEdge> directedEdges = new HashSet<>();
+	protected Map<Pair<NodeGraph, NodeGraph>, EdgeGraph> adjacencyMatrix = new HashMap<>();
+	protected Map<Pair<NodeGraph, NodeGraph>, DirectedEdge> adjacencyMatrixDirected = new HashMap<>();
+	protected Map<NodeGraph, Double> salientNodes = new HashMap<>();
+	protected Set<DirectedEdge> directedEdges = new HashSet<>();
 	public Map<String, AttributeValue> attributes = new HashMap<>();
 
 	/**
@@ -57,30 +60,32 @@ public class Graph extends PlanarGraph {
 	}
 
 	/**
-	 * Populates the graph from street junctions and segments. This method adds
-	 * LineStrings from the provided street segments to the graph and associates
-	 * them with nodes from the street junctions. It also sets the junctions field
-	 * to the provided street junctions.
-	 *
+	 * Populates the graph with nodes and edges based on street junctions and
+	 * segments. Adds LineStrings from the street segments to the graph and creates
+	 * nodes at the junctions. Also sets the 'junctions' field with the provided
+	 * street junctions.
+	 * 
 	 * @param streetJunctions The VectorLayer containing street junction geometries.
 	 * @param streetSegments  The VectorLayer containing street segment geometries.
 	 */
 	public void fromStreetJunctionsSegments(VectorLayer streetJunctions, VectorLayer streetSegments) {
-		ArrayList<MasonGeometry> geometries = streetSegments.getGeometries();
+		List<MasonGeometry> geometries = streetSegments.getGeometries();
 		for (final MasonGeometry masonGeometry : geometries)
 			if (masonGeometry.geometry instanceof LineString)
 				addLineString(masonGeometry);
-		junctions = streetJunctions;
+		for (final NodeGraph node : nodesGraph)
+			node.setNeighbouringComponents();
+		generateAdjacencyMatrix();
 	}
 
 	/**
-	 * Adds a LineString as an EdgeGraph to the graph, creating corresponding nodes
-	 * if needed. This method processes the given LineString, removes repeated
-	 * points, and creates nodes for the LineString's start and end coordinates. It
-	 * then constructs an EdgeGraph representing the LineString and adds it to the
-	 * graph.
-	 *
-	 * @param wrappedLine The MasonGeometry object containing the LineString to add.
+	 * Populates the graph with nodes and edges based on street junctions and
+	 * segments. Adds LineStrings from the street segments to the graph and creates
+	 * nodes at the junctions. Also sets the 'junctions' field with the provided
+	 * street junctions.
+	 * 
+	 * @param streetJunctions The VectorLayer containing street junction geometries.
+	 * @param streetSegments  The VectorLayer containing street segment geometries.
 	 */
 	private void addLineString(MasonGeometry wrappedLine) {
 		final LineString line = (LineString) wrappedLine.geometry;
@@ -93,8 +98,8 @@ public class Graph extends PlanarGraph {
 
 		final Coordinate fromCoord = coords[0];
 		final Coordinate toCoord = coords[coords.length - 1];
-		final NodeGraph fromNode = this.getNode(fromCoord);
-		final NodeGraph toNode = this.getNode(toCoord);
+		final NodeGraph fromNode = getNode(fromCoord);
+		final NodeGraph toNode = getNode(toCoord);
 
 		final EdgeGraph edge = new EdgeGraph(line);
 		final DirectedEdge directedEdge0 = new DirectedEdge(fromNode, toNode, coords[1], true);
@@ -105,9 +110,16 @@ public class Graph extends PlanarGraph {
 		edge.setNodes(fromNode, toNode);
 		edge.masonGeometry = wrappedLine;
 		addEdge(edge);
-
 	}
 
+	/**
+	 * Adds an EdgeGraph to the graph. This method includes the EdgeGraph in the
+	 * list of graph edges and adds it to the PlanarGraph structure. It ensures the
+	 * edge is part of the graph's edge collection and its planar graph
+	 * representation.
+	 *
+	 * @param edge The EdgeGraph to be added to the graph.
+	 */
 	protected void addEdge(EdgeGraph edge) {
 		edgesGraph.add(edge);
 		add(edge);
@@ -142,63 +154,29 @@ public class Graph extends PlanarGraph {
 		NodeGraph node = findNode(coordinate);
 		if (node == null) {
 			node = new NodeGraph(coordinate);
+
 			// ensure node is only added once to graph
-			add(node);
+			final GeometryFactory fact = new GeometryFactory();
+			// in case
+			node.masonGeometry = new MasonGeometry(fact.createPoint(coordinate));
 			nodesGraph.add(node);
+			add(node);
+			junctions.addGeometry(node.masonGeometry);
 		}
 		return node;
 	}
 
 	/**
-	 * Generates structures for the graph. This method generates essential
-	 * structures, including the node mapping (nodesMap) and adjacency matrix
-	 * (adjacencyMatrix) that represent relationships between nodes and edges.
-	 */
-	public void generateGraphStructures() {
-		generateNodesMap();
-		generateAdjacencyMatrix();
-	}
-
-	/**
-	 * Finds and stores the salient nodes in the graph based on a given percentile.
-	 * This method calculates the salient nodes by selecting nodes with centrality
-	 * values above a specified percentile and stores them in the 'salientNodes'
-	 * map.
-	 *
-	 * @param salientNodesPercentile The percentile threshold for determining
-	 *                               salient nodes.
-	 */
-	public void setGraphSalientNodes(double salientNodesPercentile) {
-		salientNodes = graphSalientNodes(salientNodesPercentile);
-	}
-
-	/**
-	 * Generates a map of nodes using their IDs as keys. This method creates a
-	 * mapping of node IDs to NodeGraph objects for quick and efficient lookup.
-	 */
-	private void generateNodesMap() {
-		for (final NodeGraph node : nodesGraph)
-			nodesMap.put(node.getID(), node);
-	}
-
-	/**
 	 * Generates the centrality map for nodes in the graph. This method computes the
 	 * centrality values for each node in the graph and stores them in a
-	 * LinkedHashMap. It also rescales the centrality values to the range [0, 1].
+	 * LinkedHashMap.
 	 */
 	public void generateCentralityMap() {
 
-		final LinkedHashMap<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
+		Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
 		for (final NodeGraph node : nodesGraph)
 			centralityMap.put(node, node.centrality);
 		this.centralityMap = (LinkedHashMap<NodeGraph, Double>) Utilities.sortByValue(centralityMap, false);
-
-		// rescale
-//		for (final NodeGraph node : nodesGraph) {
-//			final double rescaled = (node.centrality - Collections.min(centralityMap.values()))
-//					/ (Collections.max(centralityMap.values()) - Collections.min(centralityMap.values()));
-//			node.centrality_sc = rescaled;
-//		}
 	}
 
 	/**
@@ -207,7 +185,7 @@ public class Graph extends PlanarGraph {
 	 * directed edges, considering both the original and opposite directed edges.
 	 * The adjacency matrix stores relationships between nodes and edges.
 	 */
-	private void generateAdjacencyMatrix() {
+	protected void generateAdjacencyMatrix() {
 
 		// Populate the adjacency list with edges from your graph
 		for (EdgeGraph edgeGraph : edgesGraph) {
@@ -233,37 +211,34 @@ public class Graph extends PlanarGraph {
 	/**
 	 * Retrieves the list of edges in the graph.
 	 *
-	 * @return An ArrayList of EdgeGraph objects representing the edges in the
-	 *         graph.
+	 * @return A List of EdgeGraph objects representing the edges in the graph.
 	 */
 	@Override
-	public ArrayList<NodeGraph> getNodes() {
+	public List<NodeGraph> getNodes() {
 		return nodesGraph;
 	}
 
 	/**
 	 * Retrieves the list of edges in the graph.
 	 *
-	 * @return An ArrayList of EdgeGraph objects representing the edges in the
-	 *         graph.
+	 * @return A List of EdgeGraph objects representing the edges in the graph.
 	 */
 	@Override
-	public ArrayList<EdgeGraph> getEdges() {
+	public List<EdgeGraph> getEdges() {
 		return edgesGraph;
 	}
 
 	/**
-	 * Retrieves a list of graph's nodes contained within the specified Geometry.
+	 * Retrieves a List of graph's nodes contained within the specified Geometry.
 	 *
 	 * @param geometry The Geometry object used for containment checks.
-	 * @return An ArrayList of NodeGraph objects representing nodes that are
-	 *         contained within the specified Geometry.
+	 * @return A List of NodeGraph objects representing nodes that are contained
+	 *         within the specified Geometry.
 	 */
-	public ArrayList<NodeGraph> getContainedNodes(Geometry geometry) {
+	public List<NodeGraph> getContainedNodes(Geometry geometry) {
 		final ArrayList<NodeGraph> containedNodes = new ArrayList<>();
-		final Collection<NodeGraph> nodes = nodesMap.values();
 
-		for (final NodeGraph node : nodes) {
+		for (final NodeGraph node : nodesGraph) {
 			final Geometry geoNode = node.masonGeometry.geometry;
 			if (geometry.contains(geoNode))
 				containedNodes.add(node);
@@ -272,18 +247,18 @@ public class Graph extends PlanarGraph {
 	}
 
 	/**
-	 * Retrieves a list of graph's edges contained within the specified Geometry.
+	 * Retrieves a List of graph's edges contained within the specified Geometry.
 	 *
 	 * @param geometry The Geometry object used for containment checks.
-	 * @return An ArrayList of EdgeGraph objects representing edges that are
-	 *         contained within the specified Geometry.
+	 * @return A List of EdgeGraph objects representing edges that are contained
+	 *         within the specified Geometry.
 	 */
-	public ArrayList<EdgeGraph> getContainedEdges(Geometry geometry) {
-		final ArrayList<EdgeGraph> containedEdges = new ArrayList<>();
-		final ArrayList<EdgeGraph> edges = edgesGraph;
+	public List<EdgeGraph> getContainedEdges(Geometry geometry) {
+		final List<EdgeGraph> containedEdges = new ArrayList<>();
+		final List<EdgeGraph> edges = edgesGraph;
 
-		for (final EdgeGraph edge : edges) {
-			final Geometry edgeGeometry = edge.masonGeometry.geometry;
+		for (EdgeGraph edge : edges) {
+			Geometry edgeGeometry = edge.masonGeometry.geometry;
 			if (geometry.contains(edgeGeometry))
 				containedEdges.add(edge);
 		}
@@ -334,10 +309,9 @@ public class Graph extends PlanarGraph {
 	 * @return A filtered LinkedHashMap containing centrality values for nodes
 	 *         present in both the original map and the filter list.
 	 */
-	public static LinkedHashMap<NodeGraph, Double> filterCentralityMap(LinkedHashMap<NodeGraph, Double> map,
-			ArrayList<NodeGraph> filter) {
+	public static Map<NodeGraph, Double> filterCentralityMap(Map<NodeGraph, Double> map, List<NodeGraph> filter) {
 
-		final LinkedHashMap<NodeGraph, Double> mapFiltered = new LinkedHashMap<>(map);
+		final Map<NodeGraph, Double> mapFiltered = new LinkedHashMap<>(map);
 		final ArrayList<NodeGraph> result = new ArrayList<>();
 		for (final NodeGraph key : mapFiltered.keySet())
 			if (filter.contains(key))
@@ -357,9 +331,10 @@ public class Graph extends PlanarGraph {
 	 * @return A map of salient nodes and their centrality values exceeding the
 	 *         specified percentile threshold.
 	 */
-	protected Map<NodeGraph, Double> graphSalientNodes(double percentile) {
+	public Map<NodeGraph, Double> getSalientNodes(double percentile) {
 		int position;
 		position = (int) (centralityMap.size() * percentile);
+
 		final double boundary = new ArrayList<>(centralityMap.values()).get(position);
 
 		Map<NodeGraph, Double> filteredMap = new HashMap<NodeGraph, Double>();
@@ -384,13 +359,13 @@ public class Graph extends PlanarGraph {
 	 *         proximity of the reference nodes, exceeding the specified percentile
 	 *         threshold.
 	 */
-	public Map<NodeGraph, Double> salientNodesWithinSpace(NodeGraph node, NodeGraph otherNode, double percentile) {
+	public Map<NodeGraph, Double> getSalientNodesWithinSpace(NodeGraph node, NodeGraph otherNode, double percentile) {
 
-		ArrayList<NodeGraph> containedNodes = new ArrayList<>();
+		List<NodeGraph> containedNodes = new ArrayList<>();
 		Geometry smallestEnclosingCircle = GraphUtils.enclosingCircleBetweenNodes(node, otherNode);
 		containedNodes = this.getContainedNodes(smallestEnclosingCircle);
 
-		LinkedHashMap<NodeGraph, Double> spatialfilteredMap = new LinkedHashMap<>();
+		Map<NodeGraph, Double> spatialfilteredMap = new LinkedHashMap<>();
 		if (containedNodes.isEmpty())
 			return spatialfilteredMap;
 		spatialfilteredMap = filterCentralityMap(centralityMap, containedNodes);
@@ -407,6 +382,37 @@ public class Graph extends PlanarGraph {
 	}
 
 	/**
+	 * Returns a List of nodes in the graph whose distance from the given node falls
+	 * within the specified range and have centrality values above the specified
+	 * percentile.
+	 *
+	 * @param graph      The input graph.
+	 * @param junctions  The vector layer representing junctions.
+	 * @param node       The reference node.
+	 * @param lowerLimit The minimum distance from the reference node.
+	 * @param upperLimit The maximum distance from the reference node.
+	 * @param percentile The percentile used as a threshold for centrality values.
+	 * @return A List of nodes that meet the distance and centrality criteria.
+	 */
+	public List<NodeGraph> getSalientNodesBetweenDistanceInterval(NodeGraph node, double lowerLimit, double upperLimit,
+			double percentile) {
+
+		final List<NodeGraph> containedNodes = new ArrayList<>();
+		final List<NodeGraph> containedSalientNodes = new ArrayList<>();
+		final MasonGeometry originGeometry = node.masonGeometry;
+		final List<MasonGeometry> containedGeometries = junctions.featuresBetweenLimits(originGeometry.geometry,
+				lowerLimit, upperLimit);
+		for (final MasonGeometry masonGeometry : containedGeometries)
+			containedNodes.add(findNode(masonGeometry.geometry.getCoordinate()));
+		final List<NodeGraph> salientNodes = new ArrayList<>(getSalientNodes(percentile).keySet());
+
+		for (final NodeGraph otherNode : containedNodes)
+			if (salientNodes.contains(otherNode))
+				containedSalientNodes.add(otherNode);
+		return containedSalientNodes;
+	}
+
+	/**
 	 * Retrieves edges within the spatial proximity of two nodes. This method
 	 * calculates a spatial buffer based on the distance between two nodes and
 	 * retrieves edges that fall within the combined spatial buffer of the two
@@ -414,10 +420,10 @@ public class Graph extends PlanarGraph {
 	 *
 	 * @param node      The first node used for spatial reference.
 	 * @param otherNode The second node used for spatial reference.
-	 * @return A list of edges that are located within the combined spatial buffer
+	 * @return A List of edges that are located within the combined spatial buffer
 	 *         of the two nodes.
 	 */
-	public ArrayList<EdgeGraph> edgesInNodesSpace(NodeGraph node, NodeGraph otherNode) {
+	public List<EdgeGraph> edgesInNodesSpace(NodeGraph node, NodeGraph otherNode) {
 
 		Double radius = GraphUtils.nodesDistance(node, otherNode) * 1.50;
 		if (radius < 500)
@@ -426,20 +432,21 @@ public class Graph extends PlanarGraph {
 		final Geometry bufferDestination = otherNode.masonGeometry.geometry.buffer(radius);
 		final Geometry convexHull = bufferOrigin.union(bufferDestination).convexHull();
 
-		final ArrayList<EdgeGraph> containedEdges = this.getContainedEdges(convexHull);
+		final List<EdgeGraph> containedEdges = this.getContainedEdges(convexHull);
 		return containedEdges;
 	}
 
 	/**
-	 * Filters a list of nodes to exclude nodes belonging to a specific region.
+	 * Filters out nodes belonging to a specified region from a List of nodes.
+	 * Returns a new list containing nodes not associated with the specified region
+	 * ID.
 	 *
-	 * @param nodes    The list of nodes to filter.
+	 * @param nodes    The original list of nodes to filter.
 	 * @param regionID The ID of the region to exclude nodes from.
-	 * @return A new list containing nodes that do not belong to the specified
-	 *         region.
+	 * @return A List of nodes not belonging to the specified region.
 	 */
-	public ArrayList<NodeGraph> nodesInRegion(ArrayList<NodeGraph> nodes, int regionID) {
-		final ArrayList<NodeGraph> newNodes = new ArrayList<>(nodes);
+	public List<NodeGraph> nodesInRegion(List<NodeGraph> nodes, int regionID) {
+		final List<NodeGraph> newNodes = new ArrayList<>(nodes);
 		for (final NodeGraph node : nodes)
 			if (node.regionID == regionID)
 				newNodes.remove(node);
