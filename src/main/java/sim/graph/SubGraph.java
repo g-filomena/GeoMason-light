@@ -11,9 +11,9 @@
 package sim.graph;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -34,11 +34,10 @@ import sim.util.geo.Utilities;
  * retraced to the parent graph.
  */
 public class SubGraph extends Graph {
-	
+
 	private final SubGraphNodesMap subGraphNodesMap = new SubGraphNodesMap();
 	private final SubGraphEdgesMap subGraphEdgesMap = new SubGraphEdgesMap();
-	LinkedHashMap<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
-	Graph parentGraph = new Graph();
+	Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
 
 	/**
 	 * Constructs a subgraph from a parent graph by copying a specified list of
@@ -47,13 +46,27 @@ public class SubGraph extends Graph {
 	 * @param parentGraph The parent graph from which the edges are copied.
 	 * @param edges       The list of edges to be included in the subgraph.
 	 */
-	public SubGraph(Graph parentGraph, ArrayList<EdgeGraph> edges) {
-		this.parentGraph = parentGraph;
-		for (final EdgeGraph edge : edges)
-			this.addFromOtherGraph(parentGraph, edge);
-		for (final NodeGraph node : this.getNodesList())
+	public SubGraph(Graph graph) {
+		this.edgesGraph = graph.getEdges();
+		this.nodesGraph = graph.getNodes();
+		for (NodeGraph node : this.nodesGraph)
 			node.setNeighbouringComponents();
-		generateGraphStructures();
+		generateAdjacencyMatrix();
+	}
+
+	/**
+	 * Constructs a subgraph from a parent graph by copying a specified list of
+	 * edges.
+	 *
+	 * @param parentGraph The parent graph from which the edges are copied.
+	 * @param edges       The list of edges to be included in the subgraph.
+	 */
+	public SubGraph(List<EdgeGraph> edges) {
+		for (final EdgeGraph edge : edges)
+			addFromParentGraph(edge);
+		for (final NodeGraph node : nodesGraph)
+			node.setNeighbouringComponents();
+		generateAdjacencyMatrix();
 	}
 
 	/**
@@ -65,37 +78,46 @@ public class SubGraph extends Graph {
 	/**
 	 * Adds an edge and its corresponding nodes to the subgraph from the parent
 	 * graph.
-	 *
-	 * @param parentGraph The parent graph from which the edge is copied.
-	 * @param parentEdge  The edge to be added to the subgraph.
+	 * 
+	 * @param ParentEdge The edge to be added to the subgraph, which is originally
+	 *                   from the parent graph.
 	 */
-	public void addFromOtherGraph(Graph parentGraph, EdgeGraph parentEdge) {
-		
-		final NodeGraph fromNode = parentEdge.fromNode;
-		final NodeGraph toNode = parentEdge.toNode;
+	public void addFromParentGraph(EdgeGraph parentEdge) {
+
+		final NodeGraph fromNode = parentEdge.getFromNode();
+		final NodeGraph toNode = parentEdge.getToNode();
 		final Coordinate fromNodeCoord = fromNode.getCoordinate();
 		final Coordinate toNodeCoord = toNode.getCoordinate();
 
 		final NodeGraph childFromNode = getNode(fromNodeCoord);
 		final NodeGraph childToNode = getNode(toNodeCoord);
-		childFromNode.nodeID = fromNode.getID();
-		childToNode.nodeID = toNode.getID();
 
-		final LineString line = parentEdge.getLine();
+		final LineString line = (LineString) parentEdge.getMasonGeometry().geometry;
 		final Coordinate[] coords = CoordinateArrays.removeRepeatedPoints(line.getCoordinates());
 		final EdgeGraph childEdge = new EdgeGraph(line);
 
-		final DirectedEdge de0 = new DirectedEdge(childFromNode, childToNode, coords[1], true);
-		final DirectedEdge de1 = new DirectedEdge(childToNode, childFromNode, coords[coords.length - 2], false);
-		childEdge.setDirectedEdges(de0, de1);
+		try {
+			final DirectedEdge de0 = new DirectedEdge(childFromNode, childToNode, coords[1], true);
+			final DirectedEdge de1 = new DirectedEdge(childToNode, childFromNode, coords[coords.length - 2], false);
+			childEdge.setDirectedEdges(de0, de1);
+			// Rest of your code if no exception is thrown
+		} catch (IllegalArgumentException e) {
+			// Handle the exception (e.g., log the coordinates)
+			System.err.println("IllegalArgumentException caught while creating DirectedEdge:");
+			System.err.println("Coordinates causing the issue:");
+			for (Coordinate coord : coords) {
+				System.err.println(coord);
+			}
+		}
+
 		childEdge.setNodes(childFromNode, childToNode);
 		setAttributesChildEdge(childEdge, parentEdge);
+		setAttributesChildNode(childFromNode, fromNode);
+		setAttributesChildNode(childToNode, toNode);
 
 		subGraphNodesMap.addChildParentPair(childFromNode, fromNode);
 		subGraphNodesMap.addChildParentPair(childToNode, toNode);
 		subGraphEdgesMap.add(childEdge, parentEdge);
-		childFromNode.primalEdge = fromNode.primalEdge;
-		childToNode.primalEdge = toNode.primalEdge;
 		addEdge(childEdge);
 	}
 
@@ -104,12 +126,12 @@ public class SubGraph extends Graph {
 	 * subgraph.
 	 */
 	private class SubGraphNodesMap {
-		public HashMap<NodeGraph, NodeGraph> childParentMap = new HashMap<>();
+		public Map<NodeGraph, NodeGraph> childParentMap = new HashMap<>();
 
 		/**
 		 * Adds a mapping between a child node and its parent node in the subgraph.
 		 *
-		 * @param node       The child node to be added to the subgraph.
+		 * @param childNode  The child node to be added to the subgraph.
 		 * @param parentNode The parent node corresponding to the child node.
 		 */
 		private void addChildParentPair(NodeGraph childNode, NodeGraph parentNode) {
@@ -120,8 +142,7 @@ public class SubGraph extends Graph {
 		 * Retrieves the parent node corresponding to a given child node in the
 		 * subgraph.
 		 *
-		 * @param nodeSubGraph The child node for which the parent node is to be
-		 *                     retrieved.
+		 * @param childNode The child node for which the parent node is to be retrieved.
 		 * @return The parent node corresponding to the provided child node, or null if
 		 *         not found.
 		 */
@@ -133,7 +154,8 @@ public class SubGraph extends Graph {
 		 * Retrieves the child node corresponding to a given parent node in the
 		 * subgraph.
 		 *
-		 * @param nodeGraph The parent node for which the child node is to be retrieved.
+		 * @param parentNode The parent node for which the child node is to be
+		 *                   retrieved.
 		 * @return The child node corresponding to the provided parent node, or null if
 		 *         not found.
 		 */
@@ -148,7 +170,7 @@ public class SubGraph extends Graph {
 	 */
 	private class SubGraphEdgesMap {
 
-		private final HashMap<EdgeGraph, EdgeGraph> map = new HashMap<>();
+		private final Map<EdgeGraph, EdgeGraph> childParentMap = new HashMap<>();
 
 		/**
 		 * Adds a mapping between a child edge and its parent edge in the subgraph.
@@ -156,8 +178,8 @@ public class SubGraph extends Graph {
 		 * @param edge       The child edge to be added to the subgraph.
 		 * @param parentEdge The parent edge corresponding to the child edge.
 		 */
-		public void add(EdgeGraph edge, EdgeGraph parentEdge) {
-			this.map.put(edge, parentEdge);
+		public void add(EdgeGraph childEdge, EdgeGraph parentEdge) {
+			childParentMap.put(childEdge, parentEdge);
 		}
 
 		/**
@@ -169,8 +191,8 @@ public class SubGraph extends Graph {
 		 * @return The parent edge corresponding to the provided child edge, or null if
 		 *         not found.
 		 */
-		private EdgeGraph findParent(EdgeGraph edgeSubGraph) {
-			return this.map.get(edgeSubGraph);
+		private EdgeGraph findParent(EdgeGraph childEdge) {
+			return childParentMap.get(childEdge);
 		}
 
 		/**
@@ -182,8 +204,8 @@ public class SubGraph extends Graph {
 		 * @return The child edge corresponding to the provided parent edge, or null if
 		 *         not found.
 		 */
-		private EdgeGraph findChild(EdgeGraph edgeSubGraph) {
-			return Utilities.getKeyFromValue(this.map, edgeSubGraph);
+		private EdgeGraph findChild(EdgeGraph parentGraph) {
+			return Utilities.getKeyFromValue(childParentMap, parentGraph);
 		}
 	}
 
@@ -199,67 +221,27 @@ public class SubGraph extends Graph {
 	}
 
 	/**
-	 * Retrieves a list of all parent nodes within the current subgraph.
+	 * Retrieves a List of all parent nodes within the current subgraph.
 	 *
-	 * @return A list of all parent nodes present in the current subgraph.
+	 * @return A List of all parent nodes present in the current subgraph.
 	 */
-	public ArrayList<NodeGraph> getParentNodes() {
-		final ArrayList<NodeGraph> parentNodes = new ArrayList<>();
-		parentNodes.addAll(this.subGraphNodesMap.childParentMap.values());
+	public List<NodeGraph> getParentNodes() {
+		final List<NodeGraph> parentNodes = new ArrayList<>();
+		parentNodes.addAll(subGraphNodesMap.childParentMap.values());
 		return parentNodes;
 	}
 
 	/**
-	 * Retrieves a list of parent nodes corresponding to the provided list of child
-	 * nodes.
+	 * Retrieves the child node corresponding to the provided parent node.
 	 *
-	 * @param childNodes The list of child nodes for which parent nodes are to be
+	 * @param parentNode The parent node for which the child node is to be
 	 *                   retrieved.
-	 * @return A list of parent nodes corresponding to the provided child nodes.
+	 * @return The child node corresponding to the provided parent node.
 	 */
-	public ArrayList<NodeGraph> getParentNodes(ArrayList<NodeGraph> childNodes) {
-		final ArrayList<NodeGraph> parentNodes = new ArrayList<>();
-		for (final NodeGraph child : childNodes) {
-			final NodeGraph parent = this.subGraphNodesMap.findParent(child);
-			if (parent != null)
-				parentNodes.add(parent);
-		}
-		return parentNodes;
-	}
+	public NodeGraph getChildNode(NodeGraph parentNode) {
 
-	/**
-	 * Retrieves a list of child nodes corresponding to the provided list of parent
-	 * nodes.
-	 *
-	 * @param parentNodes The list of parent nodes for which child nodes are to be
-	 *                    retrieved.
-	 * @return A list of child nodes corresponding to the provided parent nodes.
-	 */
-	public ArrayList<NodeGraph> getChildNodes(ArrayList<NodeGraph> parentNodes) {
-		final ArrayList<NodeGraph> childNodes = new ArrayList<>();
-		for (final NodeGraph parent : parentNodes) {
-			final NodeGraph child = this.subGraphNodesMap.findChild(parent);
-			if (child != null)
-				childNodes.add(child);
-		}
-		return childNodes;
-	}
-
-	/**
-	 * Retrieves the child edges corresponding to the provided parent edges.
-	 *
-	 * @param parentEdges The list of parent edges for which child edges are to be
-	 *                    retrieved.
-	 * @return A list of child edges corresponding to the provided parent edges.
-	 */
-	public ArrayList<EdgeGraph> getChildEdges(ArrayList<EdgeGraph> parentEdges) {
-		final ArrayList<EdgeGraph> childEdges = new ArrayList<>();
-		for (final EdgeGraph parent : parentEdges) {
-			final EdgeGraph child = this.subGraphEdgesMap.findChild(parent);
-			if (child != null)
-				childEdges.add(child);
-		}
-		return childEdges;
+		final NodeGraph childNode = subGraphNodesMap.findChild(parentNode);
+		return childNode;
 	}
 
 	/**
@@ -270,20 +252,80 @@ public class SubGraph extends Graph {
 	 *         not found.
 	 */
 	public EdgeGraph getParentEdge(EdgeGraph childEdge) {
-		return this.subGraphEdgesMap.findParent(childEdge);
+		return subGraphEdgesMap.findParent(childEdge);
+	}
+
+	/**
+	 * Retrieves a List of all parent edges within the current subgraph.
+	 *
+	 * @return A List of all parent edges present in the current subgraph.
+	 */
+	public List<EdgeGraph> getParentEdges() {
+		final List<EdgeGraph> parentEdges = new ArrayList<>();
+		parentEdges.addAll(subGraphEdgesMap.childParentMap.values());
+		return parentEdges;
+	}
+
+	/**
+	 * Retrieves the child edge corresponding to the provided parent edge.
+	 *
+	 * @param parentEdge The parent edge for which the child edge is to be
+	 *                   retrieved.
+	 * @return The child edge corresponding to the provided parent edge.
+	 */
+	public EdgeGraph getChildEdge(EdgeGraph parentEdge) {
+
+		final EdgeGraph childEdge = subGraphEdgesMap.findChild(parentEdge);
+		return childEdge;
+	}
+
+	/**
+	 * Retrieves a List of parent nodes corresponding to the provided list of child
+	 * nodes.
+	 *
+	 * @param childNodes The List of child nodes for which parent nodes are to be
+	 *                   retrieved.
+	 * @return A List of parent nodes corresponding to the provided child nodes.
+	 */
+	public List<NodeGraph> getParentNodes(List<NodeGraph> childNodes) {
+		final List<NodeGraph> parentNodes = new ArrayList<>();
+		for (final NodeGraph child : childNodes) {
+			final NodeGraph parent = subGraphNodesMap.findParent(child);
+			if (parent != null)
+				parentNodes.add(parent);
+		}
+		return parentNodes;
+	}
+
+	/**
+	 * Retrieves a List of child nodes corresponding to the provided list of parent
+	 * nodes.
+	 *
+	 * @param parentNodes The List of parent nodes for which child nodes are to be
+	 *                    retrieved.
+	 * @return A List of child nodes corresponding to the provided parent nodes.
+	 */
+	public List<NodeGraph> getChildNodes(List<NodeGraph> parentNodes) {
+		final List<NodeGraph> childNodes = new ArrayList<>();
+		for (final NodeGraph parent : parentNodes) {
+			final NodeGraph child = subGraphNodesMap.findChild(parent);
+			if (child != null)
+				childNodes.add(child);
+		}
+		return childNodes;
 	}
 
 	/**
 	 * Retrieves the parent edges corresponding to the provided child edges.
 	 *
-	 * @param childEdges The list of child edges for which parent edges are to be
+	 * @param childEdges The List of child edges for which parent edges are to be
 	 *                   retrieved.
-	 * @return A list of parent edges corresponding to the provided child edges.
+	 * @return A List of parent edges corresponding to the provided child edges.
 	 */
-	public ArrayList<EdgeGraph> getParentEdges(ArrayList<EdgeGraph> childEdges) {
-		final ArrayList<EdgeGraph> parentEdges = new ArrayList<>();
+	public List<EdgeGraph> getParentEdges(List<EdgeGraph> childEdges) {
+		final List<EdgeGraph> parentEdges = new ArrayList<>();
 		for (final EdgeGraph child : childEdges) {
-			final EdgeGraph parent = this.subGraphEdgesMap.findParent(child);
+			final EdgeGraph parent = subGraphEdgesMap.findParent(child);
 			if (parent != null)
 				parentEdges.add(parent);
 		}
@@ -291,14 +333,48 @@ public class SubGraph extends Graph {
 	}
 
 	/**
-	 * Retrieves a list of nodes within the current subgraph.
+	 * Retrieves the child edges corresponding to the provided parent edges.
 	 *
-	 * @return A list of nodes present in the current subgraph.
+	 * @param parentEdges The List of parent edges for which child edges are to be
+	 *                    retrieved.
+	 * @return A List of child edges corresponding to the provided parent edges.
 	 */
-	public ArrayList<NodeGraph> getNodesList() {
-		final ArrayList<NodeGraph> nodesList = new ArrayList<>();
-		nodesList.addAll(this.subGraphNodesMap.childParentMap.keySet());
-		return nodesList;
+	public List<EdgeGraph> getChildEdges(List<EdgeGraph> parentEdges) {
+		final List<EdgeGraph> childEdges = new ArrayList<>();
+		for (final EdgeGraph parent : parentEdges) {
+			final EdgeGraph child = subGraphEdgesMap.findChild(parent);
+			if (child != null)
+				childEdges.add(child);
+		}
+		return childEdges;
+	}
+
+	/**
+	 * Sets attributes of a child node based on the attributes of the parentNode.
+	 *
+	 * This method is used to propagate certain attributes from a parent node to its
+	 * child node.
+	 *
+	 * @param childNode  The child node to which attributes will be set.
+	 * @param parentNode The parent node from which attributes will be copied.
+	 */
+	public void setAttributesChildNode(NodeGraph childNode, NodeGraph parentNode) {
+
+		childNode.nodeID = parentNode.getID();
+		childNode.attributes = parentNode.attributes;
+		// since this contains further attributes
+		childNode.masonGeometry = parentNode.masonGeometry;
+		childNode.regionID = parentNode.regionID;
+
+		// for primalGraph only
+		childNode.visibleBuildings2d = parentNode.visibleBuildings2d;
+		childNode.adjacentBuildings = parentNode.adjacentBuildings;
+		childNode.visibleBuildings3d = parentNode.visibleBuildings3d;
+		childNode.adjacentRegions = parentNode.adjacentRegions;
+		childNode.DMA = parentNode.DMA;
+
+		// for dualGraph only
+		childNode.primalEdge = parentNode.primalEdge;
 	}
 
 	/**
@@ -312,59 +388,34 @@ public class SubGraph extends Graph {
 	 */
 	public void setAttributesChildEdge(EdgeGraph childEdge, EdgeGraph parentEdge) {
 
-		childEdge.setID(parentEdge.getID());
-		childEdge.dualNode = parentEdge.getDual();
+		childEdge.edgeID = parentEdge.getID();
+		childEdge.attributes = parentEdge.attributes;
+		childEdge.regionID = parentEdge.regionID;
+		childEdge.masonGeometry = parentEdge.masonGeometry;
+
+		// for primal edges:
+		childEdge.dualNode = parentEdge.getDualNode();
+
 		// for dual edges:
-		childEdge.deflectionDegrees = parentEdge.deflectionDegrees;
+		childEdge.deflectionAngle = parentEdge.deflectionAngle;
 	}
 
 	/**
-	 * Generates the centrality map for the current subgraph by calculating the
-	 * centrality values of its nodes based on the centrality values of their
-	 * corresponding parent nodes in the parent graph. The resulting centrality
-	 * values for nodes in the subgraph are sorted in descending order and stored as
-	 * the subgraph's centrality map.
+	 * Generates the centrality map for the nodes of the current subgraph nodes from
+	 * the centrality values of their corresponding parent nodes in the parent
+	 * graph. The resulting centrality values for nodes in the subgraph are sorted
+	 * in descending order and stored as the subgraph's centrality map.
 	 */
 	public void generateSubGraphCentralityMap() {
-		final LinkedHashMap<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
-		final Collection<NodeGraph> nodes = this.subGraphNodesMap.childParentMap.keySet();
-		for (final NodeGraph n : nodes) {
-			final NodeGraph parentNode = this.getParentNode(n);
-			centralityMap.put(n, parentNode.centrality);
+		final Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
+		final List<NodeGraph> nodes = nodesGraph;
+		for (final NodeGraph node : nodes) {
+			final NodeGraph parentNode = getParentNode(node);
+			if (parentNode.centrality == Double.MAX_VALUE)
+				return;
+			centralityMap.put(node, parentNode.centrality);
 		}
 		this.centralityMap = (LinkedHashMap<NodeGraph, Double>) Utilities.sortByValue(centralityMap, false);
-	}
-
-	/**
-	 * Identifies and returns the global salient nodes within the current subgraph
-	 * based on a specified percentile of centrality values in the parent graph.
-	 * This method calculates salient nodes within the parent graph, filters them to
-	 * retain only those that are parent nodes of the current subgraph, and returns
-	 * the resulting list of global salient nodes in the subgraph.
-	 *
-	 * @param percentile The percentile value used to determine salient nodes in the
-	 *                   parent graph.
-	 * @return A list of global salient nodes within the current subgraph based on
-	 *         the specified percentile in the parent graph.
-	 */
-	public ArrayList<NodeGraph> globalSalientNodesInSubGraph(double percentile) {
-		final Map<NodeGraph, Double> parentGraphSalientNodesMap = parentGraph.graphSalientNodes(percentile);
-		final ArrayList<NodeGraph> parentGraphSalientNodes = new ArrayList<>(parentGraphSalientNodesMap.keySet());
-		parentGraphSalientNodes.retainAll(this.getParentNodes());
-		return parentGraphSalientNodes;
-	}
-
-	/**
-	 * Sets the salient nodes within the current subgraph based on a specified
-	 * percentile of centrality values. This method calculates and stores the
-	 * salient nodes within the subgraph by invoking the subGraphSalientNodes method
-	 * with the provided percentile.
-	 *
-	 * @param salientNodesPercentile The percentile value used to determine salient
-	 *                               nodes within the subgraph.
-	 */
-	public void setSubGraphSalientNodes(double salientNodesPercentile) {
-		salientNodes = subGraphSalientNodes(salientNodesPercentile);
 	}
 
 	/**
@@ -378,7 +429,7 @@ public class SubGraph extends Graph {
 	 * @return A mapping of salient nodes within the subgraph to their centrality
 	 *         values, or null if no salient nodes are found in the subgraph.
 	 */
-	public Map<NodeGraph, Double> subGraphSalientNodes(double percentile) {
+	public Map<NodeGraph, Double> getSubGraphSalientNodes(double percentile) {
 
 		int position;
 		position = (int) (centralityMap.size() * percentile);
@@ -388,7 +439,7 @@ public class SubGraph extends Graph {
 				.filter(entry -> entry.getValue() >= boundary)
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
 
-		if (filteredMap.size() == 0 || filteredMap == null)
+		if (filteredMap.isEmpty() || filteredMap == null)
 			return null;
 		final Map<NodeGraph, Double> parentMap = new HashMap<>();
 
@@ -398,4 +449,23 @@ public class SubGraph extends Graph {
 		}
 		return parentMap;
 	}
+
+//	/**
+//	 * Identifies and returns the salient nodes within the current subgraph based on
+//	 * a specified percentile of centrality values in the parent graph. This method
+//	 * calculates salient nodes within the parent graph, filters them to retain only
+//	 * those that are parent nodes of the current subgraph, and returns the
+//	 * resulting List of global salient nodes in the subgraph.
+//	 *
+//	 * @param percentile The percentile value used to determine salient nodes in the
+//	 *                   parent graph.
+//	 * @return A List of global salient nodes within the current subgraph based on
+//	 *         the specified percentile in the parent graph.
+//	 */
+//	public List<NodeGraph> getParentSalientNodesInSubGraph(double percentile) {
+//		final Map<NodeGraph, Double> parentGraphSalientNodesMap = parentGraph.getSalientNodes(percentile);
+//		final List<NodeGraph> parentGraphSalientNodes = new ArrayList<>(parentGraphSalientNodesMap.keySet());
+//		parentGraphSalientNodes.retainAll(this.getParentNodes());
+//		return parentGraphSalientNodes;
+//	}
 }
