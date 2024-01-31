@@ -96,19 +96,9 @@ public class SubGraph extends Graph {
 		final Coordinate[] coords = CoordinateArrays.removeRepeatedPoints(line.getCoordinates());
 		final EdgeGraph childEdge = new EdgeGraph(line);
 
-		try {
-			final DirectedEdge de0 = new DirectedEdge(childFromNode, childToNode, coords[1], true);
-			final DirectedEdge de1 = new DirectedEdge(childToNode, childFromNode, coords[coords.length - 2], false);
-			childEdge.setDirectedEdges(de0, de1);
-			// Rest of your code if no exception is thrown
-		} catch (IllegalArgumentException e) {
-			// Handle the exception (e.g., log the coordinates)
-			System.err.println("IllegalArgumentException caught while creating DirectedEdge:");
-			System.err.println("Coordinates causing the issue:");
-			for (Coordinate coord : coords) {
-				System.err.println(coord);
-			}
-		}
+		final DirectedEdge de0 = new DirectedEdge(childFromNode, childToNode, coords[1], true);
+		final DirectedEdge de1 = new DirectedEdge(childToNode, childFromNode, coords[coords.length - 2], false);
+		childEdge.setDirectedEdges(de0, de1);
 
 		childEdge.setNodes(childFromNode, childToNode);
 		setAttributesChildEdge(childEdge, parentEdge);
