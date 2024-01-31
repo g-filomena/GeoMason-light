@@ -18,36 +18,38 @@ import sim.field.geo.VectorLayer;
 import sim.util.geo.MasonGeometry;
 
 /**
- * A class containing functions to identify random nodes, given certain
- * conditions. These are used to identify origin and destination nodes for
- * possible trips.
- *
+ * A class containing functions to identify random nodes within a graph, based
+ * on specific criteria such as location, region, and distance. These methods
+ * are useful for generating origin and destination nodes for agent-based
+ * simulations in spatial models.
  */
 public class NodesLookup {
 
 	/**
-	 * Returns a randomly selected node from the given graph.
+	 * Returns a randomly selected node from a graph. This method is useful for
+	 * generating random starting or ending points in simulations.
 	 *
-	 * @param graph The input graph.
-	 * @return A randomly selected node from the graph.
+	 * @param graph The graph from which a random node is to be selected.
+	 * @return A randomly chosen NodeGraph object from the graph.
 	 */
 	public static NodeGraph randomNode(Graph graph) {
 		final Random random = new Random();
-		final Integer randomInt = random.nextInt(graph.nodesMap.values().size());
-		final ArrayList<NodeGraph> nodes = new ArrayList<>(graph.nodesMap.values());
+		final Integer randomInt = random.nextInt(graph.nodesGraph.size());
+		final List<NodeGraph> nodes = new ArrayList<>(graph.nodesGraph);
 		return nodes.get(randomInt);
 	}
 
 	/**
-	 * Returns a randomly selected node from the graph that is also contained in a
-	 * list of node geometries.
+	 * Returns a randomly selected node from a specified list of node geometries
+	 * within a graph. This method allows for the random selection of nodes that
+	 * meet certain spatial criteria represented by the node geometries.
 	 *
-	 * @param graph           The input graph.
-	 * @param nodesGeometries The list of node geometries.
-	 * @return A randomly selected node from the graph that meets the specified
-	 *         criteria.
+	 * @param graph           The graph containing the nodes.
+	 * @param nodesGeometries A List of MasonGeometry objects representing specific
+	 *                        node locations.
+	 * @return A NodeGraph object randomly selected from the specified geometries.
 	 */
-	public static NodeGraph randomNodeFromList(Graph graph, ArrayList<MasonGeometry> nodesGeometries) {
+	public static NodeGraph randomNodeFromList(Graph graph, List<MasonGeometry> nodesGeometries) {
 		final Random random = new Random();
 		final Integer randomInt = random.nextInt(nodesGeometries.size());
 		final MasonGeometry geoNode = nodesGeometries.get(randomInt);
@@ -55,14 +57,16 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node within a specified radius from the given
-	 * origin node and outside its region.
+	 * Returns a randomly selected node from a graph within a specified radius from
+	 * an origin node and outside the origin node's region. This method is used to
+	 * generate nodes that are geographically spread yet regionally distinct from
+	 * the origin.
 	 *
-	 * @param graph      The input graph.
-	 * @param originNode The origin node.
-	 * @param radius     The maximum distance from the origin node within which the
-	 *                   random node should be found.
-	 * @return A randomly selected node that satisfies the specified conditions.
+	 * @param graph      The graph from which to select the node.
+	 * @param originNode The origin node serving as the center of the search radius.
+	 * @param radius     The radius within which to search for a suitable node.
+	 * @return A randomly selected NodeGraph object that meets the specified
+	 *         criteria.
 	 */
 	public static NodeGraph randomNodeRegion(Graph graph, NodeGraph originNode, double radius) {
 
@@ -77,7 +81,7 @@ public class NodesLookup {
 			if (expandingRadius >= radius * RADIUS_THRESHOLD)
 				return null;
 
-			ArrayList<MasonGeometry> spatialFilter = graph.junctions.featuresWithinDistance(originNodeGeometry.geometry,
+			List<MasonGeometry> spatialFilter = graph.junctions.featuresWithinDistance(originNodeGeometry.geometry,
 					expandingRadius);
 			if (spatialFilter.size() < 1) {
 				expandingRadius *= EXPANSION_FACTOR;
@@ -90,8 +94,7 @@ public class NodesLookup {
 				continue;
 			}
 
-			ArrayList<MasonGeometry> regionFilter = junctionsWithin.filterFeatures("district", originNode.regionID,
-					false);
+			List<MasonGeometry> regionFilter = junctionsWithin.filterFeatures("district", originNode.regionID, false);
 			if (regionFilter.isEmpty()) {
 				expandingRadius *= EXPANSION_FACTOR;
 				continue;
@@ -109,8 +112,8 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from the graph whose distance from the
-	 * origin node matches one of the provided distances.
+	 * Returns a randomly selected node from a graph whose distance from the origin
+	 * node matches one of the provided distances.
 	 *
 	 * @param graph      The input graph.
 	 * @param junctions  The vector layer representing junctions.
@@ -130,12 +133,12 @@ public class NodesLookup {
 		if (distance < MIN_DISTANCE)
 			distance = MIN_DISTANCE;
 		NodeGraph node = null;
-		ArrayList<NodeGraph> candidates = new ArrayList<>();
+		List<NodeGraph> candidates = new ArrayList<>();
 
 		while (true) {
 			final double lowerLimit = distance - TOLERANCE;
 			final double upperLimit = distance + TOLERANCE;
-			candidates = getNodesBetweenDistanceInterval(graph, junctions, originNode, lowerLimit, upperLimit);
+			candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
 			if (!candidates.isEmpty())
 				break;
 			else
@@ -152,22 +155,21 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a list of nodes in the graph whose distance from the given node falls
+	 * Returns a List of nodes in the graph whose distance from the given node falls
 	 * within the specified range.
 	 *
 	 * @param graph      The input graph.
-	 * @param junctions  The vector layer representing junctions.
 	 * @param node       The reference node.
 	 * @param lowerLimit The minimum distance from the reference node.
 	 * @param upperLimit The maximum distance from the reference node.
-	 * @return A list of nodes that meet the distance criteria.
+	 * @return A List of nodes that meet the distance criteria.
 	 */
-	public static ArrayList<NodeGraph> getNodesBetweenDistanceInterval(Graph graph, VectorLayer junctions,
-			NodeGraph node, double lowerLimit, double upperLimit) {
+	public static List<NodeGraph> getNodesBetweenDistanceInterval(Graph graph, NodeGraph node, double lowerLimit,
+			double upperLimit) {
 
-		ArrayList<NodeGraph> containedNodes = new ArrayList<>();
+		List<NodeGraph> containedNodes = new ArrayList<>();
 		MasonGeometry originGeometry = node.masonGeometry;
-		ArrayList<MasonGeometry> containedGeometries = junctions.featuresBetweenLimits(originGeometry.geometry,
+		List<MasonGeometry> containedGeometries = graph.junctions.featuresBetweenLimits(originGeometry.geometry,
 				lowerLimit, upperLimit);
 		for (final MasonGeometry masonGeometry : containedGeometries)
 			containedNodes.add(graph.findNode(masonGeometry.geometry.getCoordinate()));
@@ -175,99 +177,66 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node whose distance from the origin node falls
-	 * within the specified range.
+	 * Returns a randomly selected node from a graph whose distance from an origin
+	 * node falls within a specified range. This method allows for the selection of
+	 * nodes based on proximity constraints.
 	 *
-	 * @param graph      The input graph.
-	 * @param junctions  The vector layer representing junctions.
-	 * @param originNode The origin node.
+	 * @param graph      The graph to search within.
+	 * @param originNode The origin node to measure distances from.
 	 * @param lowerLimit The minimum distance from the origin node.
 	 * @param upperLimit The maximum distance from the origin node.
-	 * @return A randomly selected node that satisfies the specified distance and
-	 *         centrality criteria.
+	 * @return A NodeGraph object randomly selected within the specified distance
+	 *         range.
 	 */
-	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, VectorLayer junctions, NodeGraph originNode,
-			double lowerLimit, double upperLimit) {
+	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode, double lowerLimit,
+			double upperLimit) {
 
 		final Random random = new Random();
-		final ArrayList<NodeGraph> candidates = getNodesBetweenDistanceInterval(graph, junctions, originNode,
-				lowerLimit, upperLimit);
+		final List<NodeGraph> candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
 		final int randomInt = random.nextInt(candidates.size());
 		final NodeGraph node = candidates.get(randomInt);
 		return node;
 	}
 
 	/**
-	 * Returns a list of nodes whose distance from the given node falls within the
+	 * Returns a List of nodes whose distance from the given node falls within the
 	 * specified range and belong to a different region.
 	 *
 	 * @param graph      The input graph.
-	 * @param junctions  The vector layer representing junctions.
 	 * @param node       The reference node.
 	 * @param lowerLimit The minimum distance from the reference node.
 	 * @param upperLimit The maximum distance from the reference node.
-	 * @return A list of nodes that meet the distance and region criteria.
+	 * @return A List of nodes that meet the distance and region criteria.
 	 */
-	public static ArrayList<NodeGraph> getNodesBetweenDistanceIntervalRegion(Graph graph, VectorLayer junctions,
-			NodeGraph node, double lowerLimit, double upperLimit) {
-		ArrayList<NodeGraph> containedNodes = new ArrayList<>();
-		containedNodes = getNodesBetweenDistanceInterval(graph, junctions, node, lowerLimit, upperLimit);
+	public static List<NodeGraph> getNodesBetweenDistanceIntervalRegion(Graph graph, NodeGraph node, double lowerLimit,
+			double upperLimit) {
+		List<NodeGraph> containedNodes = new ArrayList<>();
+		containedNodes = getNodesBetweenDistanceInterval(graph, node, lowerLimit, upperLimit);
 		return graph.nodesInRegion(containedNodes, node.regionID);
 	}
 
 	/**
-	 * Returns a randomly selected node from the graph whose distance from the
-	 * origin node falls within the specified range and belongs to a different
-	 * region from the origin node's region.
+	 * Returns a randomly selected node from a graph whose distance from an origin
+	 * node falls within a specified range and belongs to a different region than
+	 * the origin. This method is useful for simulating regional travel or migration
+	 * patterns.
 	 *
-	 * @param graph      The input graph.
-	 * @param junctions  The vector layer representing junctions.
-	 * @param originNode The origin node.
+	 * @param graph      The graph to search within.
+	 * @param originNode The origin node to measure distances from.
 	 * @param lowerLimit The minimum distance from the origin node.
 	 * @param upperLimit The maximum distance from the origin node.
-	 * @return A randomly selected node that satisfies the specified distance and
-	 *         region criteria.
+	 * @return A NodeGraph object randomly selected within the specified distance
+	 *         range and different region.
 	 */
-	public static NodeGraph randomNodeBetweenDistanceIntervalRegion(Graph graph, VectorLayer junctions,
-			NodeGraph originNode, double lowerLimit, double upperLimit) {
+	public static NodeGraph randomNodeBetweenDistanceIntervalRegion(Graph graph, NodeGraph originNode,
+			double lowerLimit, double upperLimit) {
 
 		final Random random = new Random();
-		final ArrayList<NodeGraph> candidates = getNodesBetweenDistanceIntervalRegion(graph, junctions, originNode,
-				lowerLimit, upperLimit);
+		final List<NodeGraph> candidates = getNodesBetweenDistanceIntervalRegion(graph, originNode, lowerLimit,
+				upperLimit);
 		final int randomInt = random.nextInt(candidates.size());
 		final NodeGraph node = candidates.get(randomInt);
 		return node;
-	}
-
-	/**
-	 * Returns a list of nodes in the graph whose distance from the given node falls
-	 * within the specified range and have centrality values above the specified
-	 * percentile.
-	 *
-	 * @param graph      The input graph.
-	 * @param junctions  The vector layer representing junctions.
-	 * @param node       The reference node.
-	 * @param lowerLimit The minimum distance from the reference node.
-	 * @param upperLimit The maximum distance from the reference node.
-	 * @param percentile The percentile used as a threshold for centrality values.
-	 * @return A list of nodes that meet the distance and centrality criteria.
-	 */
-	public static ArrayList<NodeGraph> getSalientNodesBetweenDistanceInterval(Graph graph, VectorLayer junctions,
-			NodeGraph node, double lowerLimit, double upperLimit, double percentile) {
-
-		final ArrayList<NodeGraph> containedNodes = new ArrayList<>();
-		final ArrayList<NodeGraph> containedSalientNodes = new ArrayList<>();
-		final MasonGeometry originGeometry = node.masonGeometry;
-		final ArrayList<MasonGeometry> containedGeometries = junctions.featuresBetweenLimits(originGeometry.geometry,
-				lowerLimit, upperLimit);
-		for (final MasonGeometry masonGeometry : containedGeometries)
-			containedNodes.add(graph.findNode(masonGeometry.geometry.getCoordinate()));
-		final ArrayList<NodeGraph> salientNodes = new ArrayList<>(graph.graphSalientNodes(percentile).keySet());
-
-		for (final NodeGraph otherNode : containedNodes)
-			if (salientNodes.contains(otherNode))
-				containedSalientNodes.add(otherNode);
-		return containedSalientNodes;
 	}
 
 	/**
@@ -276,7 +245,6 @@ public class NodesLookup {
 	 * specified percentile.
 	 *
 	 * @param graph      The input graph.
-	 * @param junctions  The vector layer representing junctions.
 	 * @param originNode The origin node.
 	 * @param lowerLimit The minimum distance from the origin node.
 	 * @param upperLimit The maximum distance from the origin node.
@@ -284,15 +252,15 @@ public class NodesLookup {
 	 * @return A randomly selected node that satisfies the specified distance and
 	 *         centrality criteria.
 	 */
-	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph graph, VectorLayer junctions,
-			NodeGraph originNode, double lowerLimit, double upperLimit, double percentile) {
+	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode,
+			double lowerLimit, double upperLimit, double percentile) {
 
 		double PERCENTILE_DECREASE = 0.05;
 		final Random random = new Random();
 		NodeGraph node = null;
 		while (node == null) {
-			final ArrayList<NodeGraph> candidates = getSalientNodesBetweenDistanceInterval(graph, junctions, originNode,
-					lowerLimit, upperLimit, percentile);
+			final List<NodeGraph> candidates = graph.getSalientNodesBetweenDistanceInterval(originNode, lowerLimit,
+					upperLimit, percentile);
 			final int randomInt = random.nextInt(candidates.size());
 			node = candidates.get(randomInt);
 			percentile -= PERCENTILE_DECREASE;
@@ -303,40 +271,41 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from the graph whose distance from the
-	 * origin node falls within the specified range and belongs to a certain
-	 * category ("live," "work," "visit") based on the provided DMA label.
-	 * 
-	 * @param graph      The input graph.
-	 * @param junctions  The vector layer representing junctions.
-	 * @param originNode The origin node.
+	 * Returns a random node from the graph whose distance from the origin node
+	 * falls within a specified range and belongs to a specific category based on
+	 * the DMA label. This method is useful for selecting nodes that are relevant to
+	 * specific activities or functions like living, working, or visiting.
+	 *
+	 * @param graph      The graph to search within.
+	 * @param originNode The origin node to measure distances from.
 	 * @param lowerLimit The minimum distance from the origin node.
 	 * @param upperLimit The maximum distance from the origin node.
-	 * @param DMA        The desired node category ("live," "work," "visit") or
-	 *                   "random".
-	 * @return A randomly selected node that satisfies the specified distance and
-	 *         category criteria.
+	 * @param DMA        The category label (e.g., "live," "work," "visit") or
+	 *                   "random" for any category.
+	 * @return A NodeGraph object randomly selected based on the specified distance
+	 *         and category criteria.
 	 */
-	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph graph, VectorLayer junctions,
-			NodeGraph originNode, double lowerLimit, double upperLimit, String DMA) {
+
+	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph graph, NodeGraph originNode, double lowerLimit,
+			double upperLimit, String DMA) {
 
 		final Random random = new Random();
 		int randomInt;
 		NodeGraph node = null;
 		double TOLERANCE = 50.0;
 		double DISTANCE_MULTIPLIER = 1.50;
-		ArrayList<NodeGraph> candidates = new ArrayList<>();
+		List<NodeGraph> candidates = new ArrayList<>();
 
 		while (node == null) {
-			candidates = getNodesBetweenDistanceInterval(graph, junctions, originNode, lowerLimit, upperLimit);
-			ArrayList<NodeGraph> candidatesDMA = new ArrayList<>();
+			candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
+			List<NodeGraph> candidatesDMA = new ArrayList<>();
 			if (DMA.equals("random"))
 				candidatesDMA = new ArrayList<>(candidates);
-			else
+			else {
 				for (final NodeGraph otherNode : candidates)
 					if (otherNode.DMA.equals(DMA))
 						candidatesDMA.add(otherNode);
-
+			}
 			if (candidatesDMA.isEmpty()) {
 				if (upperLimit > upperLimit * DISTANCE_MULTIPLIER) {
 					randomInt = random.nextInt(candidates.size());
@@ -365,15 +334,15 @@ public class NodesLookup {
 	public static NodeGraph randomNodeDMA(Graph graph, String DMA) {
 
 		final Random random = new Random();
-		ArrayList<NodeGraph> candidates = graph.getNodes();
+		List<NodeGraph> candidates = graph.getNodes();
 
-		ArrayList<NodeGraph> candidatesDMA = new ArrayList<>();
+		List<NodeGraph> candidatesDMA = new ArrayList<>();
 		if (DMA.equals("random"))
 			candidatesDMA = new ArrayList<>(candidates);
 		else
-			for (final NodeGraph n : candidates)
-				if (n.DMA.equals(DMA))
-					candidatesDMA.add(n);
+			for (final NodeGraph node : candidates)
+				if (node.DMA.equals(DMA))
+					candidatesDMA.add(node);
 
 		final int randomInt = random.nextInt(candidatesDMA.size());
 		return candidatesDMA.get(randomInt);
