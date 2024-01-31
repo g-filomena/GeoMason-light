@@ -14,52 +14,77 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.planargraph.DirectedEdge;
 import org.locationtech.jts.planargraph.Edge;
 
 import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
 /**
- * An edge that extends the and `Edge` (Jts) class. This is one of the two
- * components, along with {@link NodeGraph}, of graphs belonging to the class
- * {@link Graph}.
+ * Represents an edge in a graph, extending the JTS (Java Topology Suite) Edge
+ * class. This class is a component of graphs that are part of the {@link Graph}
+ * class, along with {@link NodeGraph}. It encapsulates additional attributes
+ * and functionalities specific to the graph's edges.
  */
 public class EdgeGraph extends Edge {
 
-	public int edgeID;
-	public int regionID;
-	public double deflectionDegrees;
-	public MasonGeometry masonGeometry;
-	private LineString line; // line that corresponds to this edge
+	protected int edgeID;
+	public int regionID = -1;
+	protected MasonGeometry masonGeometry;
+	final private LineString line; // line that corresponds to this edge
 
-	public NodeGraph fromNode, toNode;
-	public NodeGraph dualNode;
-
-	public HashMap<String, Integer> volumes = new HashMap<>();
+	private NodeGraph fromNode;
+	private NodeGraph toNode;
+	protected NodeGraph dualNode;
+	final private Coordinate centroidCoords;
+	final private Double length;
 	public Map<String, AttributeValue> attributes = new HashMap<>();
-	private Coordinate centroidCoords;
-	private Double length;
 	public boolean isKnown = false;
+
+	// Attributes specific to dual edges
+	protected double deflectionAngle;
+	final private LineString initialLine;
+	final private CoordinateSequence initialCoords;
 
 	/**
 	 * Sets the attributes for this EdgeGraph.
 	 *
-	 * @param attributes A map of attribute names and values.
+	 * @param attributes A map of attribute names and their corresponding values.
 	 */
 	public void setAttributes(final Map<String, AttributeValue> attributes) {
 		this.attributes = attributes;
 	}
 
 	/**
-	 * Constructs an EdgeGraph with the provided LineString.
+	 * Constructs an EdgeGraph with the specified LineString.
 	 *
-	 * @param line The LineString representing the edge.
+	 * @param line The LineString representing the physical geometry of the edge.
 	 */
 	public EdgeGraph(LineString line) {
 		this.line = line;
+
 		length = line.getLength();
 		centroidCoords = line.getCentroid().getCoordinate();
+		initialLine = line;
+		initialCoords = line.getCoordinateSequence();
+	}
+
+	/**
+	 * Initializes this Edge's two DirectedEdges, and for each DirectedEdge: sets
+	 * the Edge, sets the symmetric DirectedEdge, and adds this Edge to its
+	 * from-Node.
+	 */
+	@Override
+	public void setDirectedEdges(DirectedEdge de0, DirectedEdge de1) {
+		dirEdge = new DirectedEdge[] { de0, de1 };
+		de0.setEdge(this);
+		de1.setEdge(this);
+		de0.setSym(de1);
+		de1.setSym(de0);
+		de0.getFromNode().addOutEdge(de0);
+		de1.getFromNode().addOutEdge(de1);
 	}
 
 	/**
@@ -72,6 +97,23 @@ public class EdgeGraph extends Edge {
 	}
 
 	/**
+	 * Sets the MasonGeometry of the edge.
+	 *
+	 */
+	public void setMasonGeometry(MasonGeometry masonGeometry) {
+		this.masonGeometry = masonGeometry;
+	}
+
+	/**
+	 * Returns the MasonGeometry of the edge.
+	 *
+	 * @return The MasonGeometry of the edge.
+	 */
+	public MasonGeometry getMasonGeometry() {
+		return masonGeometry;
+	}
+
+	/**
 	 * Sets the nodes connected by this edge.
 	 *
 	 * @param fromNode The starting node of the edge.
@@ -80,6 +122,14 @@ public class EdgeGraph extends Edge {
 	public void setNodes(final NodeGraph fromNode, final NodeGraph toNode) {
 		this.fromNode = fromNode;
 		this.toNode = toNode;
+	}
+
+	public NodeGraph getFromNode() {
+		return fromNode;
+	}
+
+	public NodeGraph getToNode() {
+		return toNode;
 	}
 
 	/**
@@ -100,12 +150,16 @@ public class EdgeGraph extends Edge {
 		return this.edgeID;
 	}
 
+	public void setDualNode(NodeGraph centroid) {
+		dualNode = centroid;
+	}
+
 	/**
 	 * Returns the edge's corresponding dual node.
 	 *
 	 * @return The dual node associated with this edge.
 	 */
-	public NodeGraph getDual() {
+	public NodeGraph getDualNode() {
 		return this.dualNode;
 	}
 
@@ -125,8 +179,19 @@ public class EdgeGraph extends Edge {
 	 * @return The deflection angle of the dual edge, if applicable; otherwise, it
 	 *         returns 0.0.
 	 */
+	public void setDeflectionAngle(Double angle) {
+		deflectionAngle = angle;
+	}
+
+	/**
+	 * Returns the deflection angle if this edge is a dual edge and represents a
+	 * link between two dual nodes (street segment).
+	 *
+	 * @return The deflection angle of the dual edge, if applicable; otherwise, it
+	 *         returns 0.0.
+	 */
 	public double getDeflectionAngle() {
-		return deflectionDegrees;
+		return deflectionAngle;
 	}
 
 	/**
