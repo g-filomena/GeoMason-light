@@ -440,22 +440,22 @@ public class SubGraph extends Graph {
 		return parentMap;
 	}
 
-//	/**
-//	 * Identifies and returns the salient nodes within the current subgraph based on
-//	 * a specified percentile of centrality values in the parent graph. This method
-//	 * calculates salient nodes within the parent graph, filters them to retain only
-//	 * those that are parent nodes of the current subgraph, and returns the
-//	 * resulting List of global salient nodes in the subgraph.
-//	 *
-//	 * @param percentile The percentile value used to determine salient nodes in the
-//	 *                   parent graph.
-//	 * @return A List of global salient nodes within the current subgraph based on
-//	 *         the specified percentile in the parent graph.
-//	 */
-//	public List<NodeGraph> getParentSalientNodesInSubGraph(double percentile) {
-//		final Map<NodeGraph, Double> parentGraphSalientNodesMap = parentGraph.getSalientNodes(percentile);
-//		final List<NodeGraph> parentGraphSalientNodes = new ArrayList<>(parentGraphSalientNodesMap.keySet());
-//		parentGraphSalientNodes.retainAll(this.getParentNodes());
-//		return parentGraphSalientNodes;
-//	}
+	/**
+	 * Identifies and returns the salient nodes within the current subgraph based on
+	 * a specified percentile of centrality values in the parent graph. This method
+	 * calculates salient nodes within the parent graph, filters them to retain only
+	 * those that are parent nodes of the current subgraph, and returns the
+	 * resulting List of global salient nodes in the subgraph.
+	 *
+	 * @param percentile The percentile value used to determine salient nodes in the
+	 *                   parent graph.
+	 * @return A List of global salient nodes within the current subgraph based on
+	 *         the specified percentile in the parent graph.
+	 */
+	public List<NodeGraph> getParentSalientNodesInSubGraph(double percentile) {
+		final Map<NodeGraph, Double> parentGraphSalientNodesMap = parentGraph.getSalientNodes(percentile);
+		final List<NodeGraph> parentGraphSalientNodes = new ArrayList<>(parentGraphSalientNodesMap.keySet());
+		parentGraphSalientNodes.retainAll(this.getParentNodes());
+		return parentGraphSalientNodes;
+	}
 }
