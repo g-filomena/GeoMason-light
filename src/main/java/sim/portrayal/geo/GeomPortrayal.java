@@ -210,7 +210,6 @@ public class GeomPortrayal extends SimplePortrayal2D {
 	/**
 	 * Helper function for drawing a JTS polygon.
 	 * 
-	 * <p>
 	 * Polygons have two sets of coordinates; one for the outer ring, and optionally
 	 * another for internal ring coordinates. Draw the outer ring first, and then
 	 * draw each internal ring, if they exist.
