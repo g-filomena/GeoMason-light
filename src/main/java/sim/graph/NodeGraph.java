@@ -31,7 +31,8 @@ import sim.util.geo.Utilities;
 public class NodeGraph extends Node {
 
 	/**
-	 * Constructs a new NodeGraph instance with the specified coordinate.
+	 * Constructs a new NodeGraph instance with the specified coordinate. This node
+	 * represents a point in the planar graph.
 	 *
 	 * @param pt The coordinate associated with this node.
 	 */
@@ -41,23 +42,25 @@ public class NodeGraph extends Node {
 
 	public int nodeID;
 	public int regionID = -1;
-	public boolean gateway;
-
-	public MasonGeometry masonGeometry;
-	public EdgeGraph primalEdge;
-	public double centrality;
-
-	public ArrayList<Building> visibleBuildings2d = new ArrayList<>();
-	public ArrayList<Building> adjacentBuildings = new ArrayList<>();
-	public ArrayList<Building> visibleBuildings3d = new ArrayList<>();
+	protected MasonGeometry masonGeometry;
+	public Map<String, AttributeValue> attributes = new HashMap<>();
+	private List<EdgeGraph> edges = new ArrayList<>();
+	private List<DirectedEdge> outEdges = new ArrayList<>();
 
 	public List<Integer> adjacentRegions = new ArrayList<>();
-	public ArrayList<NodeGraph> adjacentEntries = new ArrayList<>();
-	private ArrayList<NodeGraph> adjacentNodes = new ArrayList<>();
-	private ArrayList<EdgeGraph> edges = new ArrayList<>();
-	private ArrayList<DirectedEdge> outEdges = new ArrayList<>();
+	public List<NodeGraph> adjacentRegionEntries = new ArrayList<>();
+	public List<NodeGraph> adjacentNodes = new ArrayList<>();
+
+	// when dualGraph
+	protected EdgeGraph primalEdge;
+
+	// only primalGraph
+	protected double centrality = Double.MAX_VALUE;
+	public List<Building> visibleBuildings2d = new ArrayList<>();
+	public List<Building> adjacentBuildings = new ArrayList<>();
+	public List<Building> visibleBuildings3d = new ArrayList<>();
 	public String DMA = ""; // land use categorisation
-	public Map<String, AttributeValue> attributes = new HashMap<>();
+	public boolean gateway = false;
 
 	/**
 	 * Sets the ID of the node.
@@ -78,49 +81,66 @@ public class NodeGraph extends Node {
 	}
 
 	/**
-	 * Returns the list of edges that depart from this node.
+	 * Sets the centrality score for this node. The centrality score reflects the
+	 * node's importance within the graph based on its connections.
 	 *
-	 * @return The list of edges departing from the node.
+	 * @param centrality The centrality score to set for the node.
 	 */
-	public ArrayList<EdgeGraph> getEdges() {
-		return edges;
+	public void setCentrality(double centrality) {
+		this.centrality = centrality;
 	}
 
 	/**
-	 * Returns the list of nodes that are reachable from this node.
+	 * Retrieves the centrality score of this node. The centrality score indicates
+	 * how important or central a node is within the graph.
 	 *
-	 * @return The list of nodes that can be reached from this node.
+	 * @return The centrality score of the node.
 	 */
-	public ArrayList<NodeGraph> getAdjacentNodes() {
-		return adjacentNodes;
+	public double getCentrality() {
+		return centrality;
+	}
+
+	/**
+	 * Sets the MasonGeometry of the node.
+	 *
+	 */
+	public void setMasonGeometry(MasonGeometry masonGeometry) {
+		this.masonGeometry = masonGeometry;
+	}
+
+	/**
+	 * Returns the MasonGeometry of the node.
+	 *
+	 * @return The MasonGeometry of the node.
+	 */
+	public MasonGeometry getMasonGeometry() {
+		return masonGeometry;
 	}
 
 	/**
 	 * Sets lists useful for identifying the neighboring components of this node.
 	 * This method initializes the edge and adjacent node lists.
 	 */
-	public void setNeighbouringComponents() {
+	protected void setNeighbouringComponents() {
 		setEdgesNode();
 		setAdjacentNodes();
 	}
 
-	/**
-	 * Returns the list of directed edges that depart from the node (out-going
-	 * edges).
-	 *
-	 * @return The list of out-going directed edges from the node.
-	 */
-	public ArrayList<DirectedEdge> getOutDirectedEdges() {
-		return outEdges;
+	public void setPrimalEdge(EdgeGraph edge) {
+		primalEdge = edge;
+	}
+
+	public EdgeGraph getPrimalEdge() {
+		return primalEdge;
 	}
 
 	/**
 	 * Identifies and sets the list of all the edges (non-directed) that depart from
 	 * this node. This method initializes the 'edges' list with non-duplicated
-	 * edges.
+	 * edges, representing the connections from this node to its adjacent nodes.
 	 */
 	private void setEdgesNode() {
-		final ArrayList<EdgeGraph> edges = new ArrayList<>();
+		final List<EdgeGraph> edges = new ArrayList<>();
 		this.outEdges = new ArrayList<DirectedEdge>(this.getOutEdges().getEdges());
 		for (final DirectedEdge outEdge : outEdges) {
 			final EdgeGraph edge = (EdgeGraph) outEdge.getEdge();
@@ -131,11 +151,20 @@ public class NodeGraph extends Node {
 	}
 
 	/**
-	 * Identifies a list of all the nodes adjacent to this node (i.e., sharing an
+	 * Returns the list of edges that depart from this node.
+	 *
+	 * @return The list of edges departing from the node.
+	 */
+	public List<EdgeGraph> getEdges() {
+		return edges;
+	}
+
+	/**
+	 * Identifies a List of all the nodes adjacent to this node (i.e., sharing an
 	 * edge with this node). This method initializes the 'adjacentNodes' list.
 	 */
 	private void setAdjacentNodes() {
-		final ArrayList<NodeGraph> adjacentNodes = new ArrayList<>();
+		final List<NodeGraph> adjacentNodes = new ArrayList<>();
 
 		for (final EdgeGraph edge : edges) {
 			final NodeGraph opposite = (NodeGraph) edge.getOppositeNode(this);
@@ -145,27 +174,48 @@ public class NodeGraph extends Node {
 	}
 
 	/**
-	 * Returns a list of integers representing all the adjacent regions to this
-	 * node, if any. If this node is not a gateway, it returns null.
+	 * Returns the list of nodes that are reachable from this node.
 	 *
-	 * @return A list of integers representing adjacent regions, or null if this
+	 * @return The list of nodes that can be reached from this node.
+	 */
+	public List<NodeGraph> getAdjacentNodes() {
+		return adjacentNodes;
+	}
+
+	/**
+	 * Returns a List of integers representing all the adjacent regions to this
+	 * node, if any. This method is relevant for nodes that act as gateways between
+	 * different regions. It returns null for non-gateway nodes.
+	 *
+	 * @return a List of integers representing adjacent regions, or null if this
 	 *         node is not a gateway.
 	 */
-	public ArrayList<Integer> getAdjacentRegion() {
+	public List<Integer> getAdjacentRegion() {
 		if (!gateway)
 			return null;
 
-		final ArrayList<NodeGraph> oppositeNodes = new ArrayList<>(adjacentNodes);
-		final ArrayList<Integer> adjacentRegions = new ArrayList<>();
+		final List<NodeGraph> oppositeNodes = new ArrayList<>(adjacentNodes);
+		final List<Integer> adjacentRegions = new ArrayList<>();
 
 		for (final NodeGraph opposite : oppositeNodes) {
 			final int regionID = opposite.regionID;
 			if (regionID != this.regionID) {
 				adjacentRegions.add(regionID);
-				adjacentEntries.add(opposite);
+				adjacentRegionEntries.add(opposite);
 			}
 		}
 		return adjacentRegions;
+	}
+
+	/**
+	 * Returns a List of directed edges that depart from this node (out-going
+	 * edges). These edges represent the connections from this node to other nodes
+	 * in the graph.
+	 *
+	 * @return The list of out-going directed edges from the node.
+	 */
+	public List<DirectedEdge> getOutDirectedEdges() {
+		return outEdges;
 	}
 
 	/**
@@ -189,13 +239,13 @@ public class NodeGraph extends Node {
 		double distance = Double.MAX_VALUE;
 		NodeGraph best = null;
 		NodeGraph dualNode = null;
-		final ArrayList<EdgeGraph> edges = new ArrayList<>(this.edges);
+		final List<EdgeGraph> edges = new ArrayList<>(this.edges);
 		double cost;
 
 		for (final EdgeGraph edge : edges) {
 			if (edge.regionID == -1 && regionBasedNavigation)
 				continue;
-			dualNode = edge.getDual();
+			dualNode = edge.getDualNode();
 			if (dualNode == null)
 				continue;
 
@@ -208,11 +258,11 @@ public class NodeGraph extends Node {
 			} else {
 				cost = GraphUtils.nodesDistance(edge.getOtherNode(this), destinationNode);
 
-				if (previousJunction != null && (previousJunction == dualNode.primalEdge.fromNode
-						|| previousJunction == dualNode.primalEdge.toNode))
+				if (previousJunction != null && (previousJunction == dualNode.primalEdge.getFromNode()
+						|| previousJunction.equals(dualNode.primalEdge.getToNode())))
 					continue;
 				if (regionBasedNavigation) {
-					final ArrayList<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(originNode).getEdges());
+					final List<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(originNode).getEdges());
 					nextEdges.remove(edge);
 					boolean bridges = true;
 					for (final EdgeGraph next : nextEdges)
@@ -257,14 +307,14 @@ public class NodeGraph extends Node {
 	public Map<NodeGraph, Double> getDualNodes(NodeGraph originNode, NodeGraph destinationNode,
 			boolean regionBasedNavigation, NodeGraph previousJunction) {
 
-		final HashMap<NodeGraph, Double> dualNodes = new HashMap<>();
+		final Map<NodeGraph, Double> dualNodes = new HashMap<>();
 		NodeGraph dualNode = null;
 
 		for (final EdgeGraph edge : edges) {
 			// gateway
 			if (edge.regionID == -1 && regionBasedNavigation)
 				continue;
-			dualNode = edge.getDual();
+			dualNode = edge.getDualNode();
 
 			if (this.equals(destinationNode)) {
 				double cost = GraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
@@ -275,7 +325,7 @@ public class NodeGraph extends Node {
 					continue;
 				if (regionBasedNavigation) {
 					// avoid edges that lead to gateways
-					ArrayList<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(originNode).getEdges());
+					List<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(originNode).getEdges());
 					nextEdges.remove(edge);
 					boolean bridge = true;
 					for (EdgeGraph next : nextEdges)
@@ -303,7 +353,7 @@ public class NodeGraph extends Node {
 	private boolean checkPreviousJunction(NodeGraph previousJunction, NodeGraph dualNode) {
 
 		EdgeGraph primalEdge = dualNode.primalEdge;
-		return (previousJunction != null)
-				&& (previousJunction.equals(primalEdge.fromNode) || previousJunction.equals(primalEdge.toNode));
+		return (previousJunction != null) && (previousJunction.equals(primalEdge.getFromNode())
+				|| previousJunction.equals(primalEdge.getToNode()));
 	}
 }
