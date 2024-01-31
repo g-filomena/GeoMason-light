@@ -13,8 +13,8 @@ import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
@@ -222,7 +222,6 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 	 * Helper function which performs the actual hit-testing and drawing for both
 	 * immutable fields and non-immutable fields.
 	 * 
-	 * <p>
 	 * The objects in the field can either use GeomPortrayal or any
 	 * SimplePortrayal2D for drawing.
 	 * 
@@ -237,7 +236,7 @@ public class GeomVectorFieldPortrayal extends FieldPortrayal2D {
 
 		geomField.updateTransform(info);
 
-		ArrayList<MasonGeometry> geometries;
+		List<MasonGeometry> geometries;
 		geometries = geomField.queryField(geomField.clipEnvelope);
 
 		if (geometries == null || geometries.isEmpty()) {
