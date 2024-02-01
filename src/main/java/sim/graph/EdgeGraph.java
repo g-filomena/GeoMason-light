@@ -173,11 +173,10 @@ public class EdgeGraph extends Edge {
 	}
 
 	/**
-	 * Returns the deflection angle if this edge is a dual edge and represents a
-	 * link between two dual nodes (street segment).
+	 * Set the deflection angle; this would make sense if this edge is a dual edge and represents a
+	 * link between two dual nodes (street segments).
 	 *
-	 * @return The deflection angle of the dual edge, if applicable; otherwise, it
-	 *         returns 0.0.
+	 * @param angle the value to be used to set the angle.
 	 */
 	public void setDeflectionAngle(Double angle) {
 		deflectionAngle = angle;
