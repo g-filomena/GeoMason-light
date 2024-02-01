@@ -14,5 +14,5 @@ Version 1.12
 
 Version 1.14
 ------------
-- [Enhancement] Cleaned code; removed/simplified redundant functions.
+- [Enhancement] Cleaned code; removed/simplified redundant functions. Simplified class SubGraph and added some utilities.
 - [Enhancement] Replaced ArrayList/HashMap with generic types List/Map
