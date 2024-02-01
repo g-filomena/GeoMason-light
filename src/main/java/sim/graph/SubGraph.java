@@ -43,8 +43,7 @@ public class SubGraph extends Graph {
 	 * Constructs a subgraph from a parent graph by copying a specified list of
 	 * edges.
 	 *
-	 * @param parentGraph The parent graph from which the edges are copied.
-	 * @param edges       The list of edges to be included in the subgraph.
+	 * @param graph       The graph from which to copy edges and nodes;
 	 */
 	public SubGraph(Graph graph) {
 		this.edgesGraph = graph.getEdges();
@@ -58,7 +57,6 @@ public class SubGraph extends Graph {
 	 * Constructs a subgraph from a parent graph by copying a specified list of
 	 * edges.
 	 *
-	 * @param parentGraph The parent graph from which the edges are copied.
 	 * @param edges       The list of edges to be included in the subgraph.
 	 */
 	public SubGraph(List<EdgeGraph> edges) {
@@ -79,7 +77,7 @@ public class SubGraph extends Graph {
 	 * Adds an edge and its corresponding nodes to the subgraph from the parent
 	 * graph.
 	 * 
-	 * @param ParentEdge The edge to be added to the subgraph, which is originally
+	 * @param parentEdge The edge to be added to the subgraph, which is originally
 	 *                   from the parent graph.
 	 */
 	public void addFromParentGraph(EdgeGraph parentEdge) {
@@ -438,24 +436,5 @@ public class SubGraph extends Graph {
 			parentMap.put(parentNode, entry.getValue());
 		}
 		return parentMap;
-	}
-
-	/**
-	 * Identifies and returns the salient nodes within the current subgraph based on
-	 * a specified percentile of centrality values in the parent graph. This method
-	 * calculates salient nodes within the parent graph, filters them to retain only
-	 * those that are parent nodes of the current subgraph, and returns the
-	 * resulting List of global salient nodes in the subgraph.
-	 *
-	 * @param percentile The percentile value used to determine salient nodes in the
-	 *                   parent graph.
-	 * @return A List of global salient nodes within the current subgraph based on
-	 *         the specified percentile in the parent graph.
-	 */
-	public List<NodeGraph> getParentSalientNodesInSubGraph(double percentile) {
-		final Map<NodeGraph, Double> parentGraphSalientNodesMap = parentGraph.getSalientNodes(percentile);
-		final List<NodeGraph> parentGraphSalientNodes = new ArrayList<>(parentGraphSalientNodesMap.keySet());
-		parentGraphSalientNodes.retainAll(this.getParentNodes());
-		return parentGraphSalientNodes;
 	}
 }
