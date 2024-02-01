@@ -123,8 +123,8 @@ public class VectorLayer extends Layer {
 	 * Searches the VectorLayer for the first geometry with attribute equals to name
 	 * that has the given value.
 	 * 
-	 * @param Name  of attribute.
-	 * @param Value of attribute.
+	 * @param name  of attribute.
+	 * @param value of attribute.
 	 * @return MasonGeometry with specified attribute otherwise null.
 	 */
 	public MasonGeometry getGeometry(String name, Object value) {
