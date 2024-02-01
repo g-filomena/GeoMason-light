@@ -386,8 +386,6 @@ public class Graph extends PlanarGraph {
 	 * within the specified range and have centrality values above the specified
 	 * percentile.
 	 *
-	 * @param graph      The input graph.
-	 * @param junctions  The vector layer representing junctions.
 	 * @param node       The reference node.
 	 * @param lowerLimit The minimum distance from the reference node.
 	 * @param upperLimit The maximum distance from the reference node.
