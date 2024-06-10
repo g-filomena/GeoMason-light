@@ -171,8 +171,11 @@ public class NodesLookup {
 		MasonGeometry originGeometry = node.masonGeometry;
 		List<MasonGeometry> containedGeometries = graph.junctions.featuresBetweenLimits(originGeometry.geometry,
 				lowerLimit, upperLimit);
-		for (final MasonGeometry masonGeometry : containedGeometries)
-			containedNodes.add(graph.findNode(masonGeometry.geometry.getCoordinate()));
+		for (final MasonGeometry masonGeometry : containedGeometries) {
+			NodeGraph potentialNode = graph.findNode(masonGeometry.geometry.getCoordinate());
+			if (!node.equals(potentialNode))
+				containedNodes.add(potentialNode);
+		}
 		return containedNodes;
 	}
 
