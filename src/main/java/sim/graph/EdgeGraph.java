@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.planargraph.DirectedEdge;
 import org.locationtech.jts.planargraph.Edge;
@@ -33,20 +32,18 @@ public class EdgeGraph extends Edge {
 	protected int edgeID;
 	public int regionID = -1;
 	protected MasonGeometry masonGeometry;
-	final private LineString line; // line that corresponds to this edge
+	private final LineString line; // line that corresponds to this edge
 
 	private NodeGraph fromNode;
 	private NodeGraph toNode;
 	protected NodeGraph dualNode;
-	final private Coordinate centroidCoords;
-	final private Double length;
+	private final Coordinate centroidCoords;
+	private final Double length;
 	public Map<String, AttributeValue> attributes = new HashMap<>();
 	public boolean isKnown = false;
 
 	// Attributes specific to dual edges
 	protected double deflectionAngle;
-	final private LineString initialLine;
-	final private CoordinateSequence initialCoords;
 
 	/**
 	 * Sets the attributes for this EdgeGraph.
@@ -64,11 +61,8 @@ public class EdgeGraph extends Edge {
 	 */
 	public EdgeGraph(LineString line) {
 		this.line = line;
-
 		length = line.getLength();
 		centroidCoords = line.getCentroid().getCoordinate();
-		initialLine = line;
-		initialCoords = line.getCoordinateSequence();
 	}
 
 	/**
@@ -93,7 +87,11 @@ public class EdgeGraph extends Edge {
 	 * @return The LineString for this edge.
 	 */
 	public LineString getLine() {
-		return line;
+		return (LineString) this.line.copy();
+	}
+
+	public Coordinate[] getCoordinates() {
+		return this.line.getCoordinates();
 	}
 
 	/**
@@ -173,8 +171,8 @@ public class EdgeGraph extends Edge {
 	}
 
 	/**
-	 * Set the deflection angle; this would make sense if this edge is a dual edge and represents a
-	 * link between two dual nodes (street segments).
+	 * Set the deflection angle; this would make sense if this edge is a dual edge
+	 * and represents a link between two dual nodes (street segments).
 	 *
 	 * @param angle the value to be used to set the angle.
 	 */
