@@ -43,7 +43,7 @@ public class SubGraph extends Graph {
 	 * Constructs a subgraph from a parent graph by copying a specified list of
 	 * edges.
 	 *
-	 * @param graph       The graph from which to copy edges and nodes;
+	 * @param graph The graph from which to copy edges and nodes;
 	 */
 	public SubGraph(Graph graph) {
 		this.edgesGraph = graph.getEdges();
@@ -57,7 +57,7 @@ public class SubGraph extends Graph {
 	 * Constructs a subgraph from a parent graph by copying a specified list of
 	 * edges.
 	 *
-	 * @param edges       The list of edges to be included in the subgraph.
+	 * @param edges The list of edges to be included in the subgraph.
 	 */
 	public SubGraph(List<EdgeGraph> edges) {
 		for (final EdgeGraph edge : edges)
@@ -91,8 +91,8 @@ public class SubGraph extends Graph {
 		final NodeGraph childToNode = getNode(toNodeCoord);
 
 		final LineString line = (LineString) parentEdge.getMasonGeometry().geometry;
-		final Coordinate[] coords = CoordinateArrays.removeRepeatedPoints(line.getCoordinates());
 		final EdgeGraph childEdge = new EdgeGraph(line);
+		final Coordinate[] coords = CoordinateArrays.removeRepeatedPoints(parentEdge.getCoordinates());
 
 		final DirectedEdge de0 = new DirectedEdge(childFromNode, childToNode, coords[1], true);
 		final DirectedEdge de1 = new DirectedEdge(childToNode, childFromNode, coords[coords.length - 2], false);
