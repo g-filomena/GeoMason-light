@@ -223,6 +223,21 @@ public class VectorLayer extends Layer {
 			otherMasonGeometry.geometry.apply(coordsFilter);
 			otherMasonGeometry.geometry.geometryChanged();
 		}
+		updateSpatialIndex();
+	}
+
+	/**
+	 * Moves the centroid of the given geometry to the provided point. The spatial
+	 * index is not notified of the geometry changes. It is strongly recommended
+	 * that updateSpatialIndex() be invoked after all geometry position changes.
+	 *
+	 * @param masonGeometry The geometry to move.
+	 * @param coordsFilter  The coordinate sequence filter.
+	 */
+	public void setGeometryLocation(MasonGeometry masonGeometry, Point newLocation) {
+		MasonGeometry otherMasonGeometry = findGeometry(masonGeometry);
+		otherMasonGeometry.geometry = newLocation;
+		updateSpatialIndex();
 	}
 
 	/**
