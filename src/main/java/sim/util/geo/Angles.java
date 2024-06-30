@@ -51,10 +51,10 @@ public class Angles {
 	 *         to the y-axis.
 	 */
 	public static double angle(NodeGraph originNode, NodeGraph destinationNode) {
-		
+
 		final Coordinate origin = originNode.getCoordinate();
 		final Coordinate destination = destinationNode.getCoordinate();
-		double distance = GraphUtils.euclideanDistance(origin, destination);
+		double distance = GeometryUtilities.euclideanDistance(origin, destination);
 		final double[] vectorA = { origin.x - origin.x, origin.y - (origin.y + distance) };
 		final double[] vectorB = { origin.x - destination.x, origin.y - destination.y };
 		final double dot_prod = dot(vectorA, vectorB);
@@ -83,8 +83,8 @@ public class Angles {
 	 *         to the y-axis.
 	 */
 	public static double angle(Coordinate origin, Coordinate destination) {
-		
-		double distance = GraphUtils.euclideanDistance(origin, destination);
+
+		double distance = GeometryUtilities.euclideanDistance(origin, destination);
 		final double[] vectorA = { origin.x - origin.x, origin.y - (origin.y + distance) };
 		final double[] vectorB = { origin.x - destination.x, origin.y - destination.y };
 		final double dot_prod = dot(vectorA, vectorB);
