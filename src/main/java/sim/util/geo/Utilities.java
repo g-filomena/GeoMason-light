@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
  */
 public class Utilities {
 
+	static Random random = new Random();
+
 	/**
 	 * Sorts a Map based on its values.
 	 *
@@ -64,7 +66,7 @@ public class Utilities {
 	 * @return A random value from the distribution.
 	 */
 	public static double fromDistribution(double mean, double sd, String direction) {
-		Random random = new Random();
+
 		double result = random.nextGaussian() * sd + mean;
 		if (direction != null) {
 			if ((direction.equals("left")) && (result > mean))
