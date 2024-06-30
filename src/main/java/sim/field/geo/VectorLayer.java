@@ -96,7 +96,7 @@ public class VectorLayer extends Layer {
 	 */
 	public VectorLayer(List<MasonGeometry> masonGeometries) {
 		super();
-
+		MBR = new Envelope();
 		for (final MasonGeometry masonGeometry : masonGeometries)
 			addGeometry(masonGeometry);
 	}
@@ -152,7 +152,7 @@ public class VectorLayer extends Layer {
 	 * @return The List of MasonGeometry features.
 	 */
 	public List<MasonGeometry> getGeometries() {
-		return geometriesList;
+		return new ArrayList<>(geometriesList);
 	}
 
 	/**
