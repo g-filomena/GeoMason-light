@@ -104,7 +104,7 @@ public class Islands {
 			else {
 				Map.Entry<Pair<NodeGraph, NodeGraph>, Set<NodeGraph>> closestPairWithIsland = findClosestPairAcrossAllIslands();
 				Pair<NodeGraph, NodeGraph> closestNodes = closestPairWithIsland.getKey();
-				Route route = Astar.astarRoute(closestNodes.getValue0(), closestNodes.getValue1(), null);
+				Route route = Astar.astarRoute(closestNodes.getValue0(), closestNodes.getValue1(), graph, null);
 				bridges.addAll(route.edgesSequence);
 			}
 			edges.addAll(bridges);
