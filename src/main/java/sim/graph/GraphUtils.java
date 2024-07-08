@@ -10,24 +10,43 @@
  */
 package sim.graph;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.javatuples.Pair;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.operation.union.UnaryUnionOp;
 import org.locationtech.jts.planargraph.DirectedEdge;
+
+import sim.field.geo.VectorLayer;
+import sim.util.geo.GeometryUtilities;
+import sim.util.geo.MasonGeometry;
 
 /**
  * The `GraphUtils` class provides utility methods for working {@link NodeGraph}
  * objects.
  */
 public class GraphUtils {
+
+	// Introduce a HashMap to cache previously computed distances
+	private static Map<Pair<Coordinate, Coordinate>, Double> distanceCache = new ConcurrentHashMap<>();
+	private static Map<Pair<Coordinate, Coordinate>, Polygon> visibilityPolygonsCache = new ConcurrentHashMap<>();
+	private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
+	static int DISTANCE_ALONG_VISIBILITY = 10;
 
 	/**
 	 * Calculates the Euclidean distance between two nodes in a graph.
@@ -37,9 +56,20 @@ public class GraphUtils {
 	 * @return The Euclidean distance between the two nodes' coordinates.
 	 */
 	public static double nodesDistance(NodeGraph node, NodeGraph otherNode) {
-		final Coordinate originCoord = node.getCoordinate();
-		final Coordinate destinationCoord = otherNode.getCoordinate();
-		return euclideanDistance(originCoord, destinationCoord);
+
+		final Coordinate coords = node.getCoordinate();
+		final Coordinate otherCoords = otherNode.getCoordinate();
+		Pair<Coordinate, Coordinate> pair = new Pair<>(coords, otherCoords);
+		Pair<Coordinate, Coordinate> otherPair = new Pair<>(otherCoords, coords);
+
+		if (distanceCache.containsKey(pair))
+			return distanceCache.get(pair);
+		else if (distanceCache.containsKey(otherPair))
+			return distanceCache.get(otherPair);
+
+		double distance = GeometryUtilities.euclideanDistance(coords, otherCoords);
+		distanceCache.put(pair, distance);
+		return distance;
 	}
 
 	/**
@@ -50,17 +80,86 @@ public class GraphUtils {
 	 *              circle.
 	 * @return A geometry representing the minimum enclosing circle.
 	 */
-	public static Geometry enclosingCircleFromNodes(Iterable<NodeGraph> nodes) {
-		// Calculate the center of the enclosing circle
-		Coordinate center = calculateCenterPointNodes(nodes);
-		// Calculate the radius of the enclosing circle
-		double radius = calculateRadius(center, nodes);
+	public static Geometry smallestEnclosingGeometryBetweenNodes(List<NodeGraph> nodes) {
 
-		// Create a circle geometry representing the enclosing circle
-		GeometryFactory geometryFactory = new GeometryFactory();
-		Point circleCenter = geometryFactory.createPoint(center);
-		Geometry enclosingCircle = circleCenter.buffer(radius);
-		return enclosingCircle;
+		if (nodes.size() == 1)
+			return nodes.get(0).masonGeometry.getGeometry().buffer(50);
+		if (nodes.size() == 2)
+			return enclosingCircleBetweenTwoNodes(nodes.get(0), nodes.get(1));
+		else
+			return convexHullFromNodes(nodes);
+	}
+
+	/**
+	 * Calculates the convex hull from a list of nodes using Andrew's monotone chain
+	 * algorithm.
+	 *
+	 * @param nodes The list of nodes to compute the convex hull from.
+	 * @return The convex hull polygon as a Geometry object, or null if there are
+	 *         fewer than 3 nodes.
+	 */
+	private static Geometry convexHullFromNodes(List<NodeGraph> nodes) {
+
+		// Sort nodes by x-coordinate (break ties by y-coordinate)
+		nodes.sort(Comparator.comparingDouble((NodeGraph node) -> node.getCoordinate().x)
+				.thenComparingDouble(node -> node.getCoordinate().y));
+
+		List<NodeGraph> hull = new ArrayList<>();
+
+		// Build lower hull
+		for (NodeGraph node : nodes) {
+			while (hull.size() >= 2 && !isCounterClockwise(hull.get(hull.size() - 2), hull.get(hull.size() - 1), node))
+				hull.remove(hull.size() - 1);
+			hull.add(node);
+		}
+
+		// Build upper hull
+		int lowerHullSize = hull.size();
+		for (int i = nodes.size() - 1; i >= 0; i--) {
+			NodeGraph node = nodes.get(i);
+			while (hull.size() > lowerHullSize
+					&& !isCounterClockwise(hull.get(hull.size() - 2), hull.get(hull.size() - 1), node))
+				hull.remove(hull.size() - 1);
+
+			hull.add(node);
+		}
+
+		// Remove the last point because it is repeated at the beginning of the list
+		if (hull.size() > 1 && hull.get(hull.size() - 1).equals(hull.get(0)))
+			hull.remove(hull.size() - 1);
+
+		// Create an array of coordinates for the convex hull
+		Coordinate[] coordinates = hull.stream().map(NodeGraph::getCoordinate).toArray(Coordinate[]::new);
+
+		// Ensure the polygon is closed
+		if (!coordinates[0].equals(coordinates[coordinates.length - 1])) {
+			coordinates = Arrays.copyOf(coordinates, coordinates.length + 1);
+			coordinates[coordinates.length - 1] = coordinates[0];
+		}
+
+		// Create and return the polygon using JTS
+		LinearRing linearRing = GEOMETRY_FACTORY.createLinearRing(coordinates);
+		return GEOMETRY_FACTORY.createPolygon(linearRing);
+	}
+
+	/**
+	 * Determines if three nodes form a counter-clockwise turn.
+	 *
+	 * This method uses the cross product of vectors to determine the relative
+	 * orientation of three points (nodes). It returns true if the points form a
+	 * counter-clockwise turn, and false otherwise.
+	 *
+	 * @param a The first node.
+	 * @param b The second node.
+	 * @param c The third node.
+	 * @return true if the nodes a, b, and c form a counter-clockwise turn, false
+	 *         otherwise.
+	 */
+	private static boolean isCounterClockwise(NodeGraph a, NodeGraph b, NodeGraph c) {
+		Coordinate p1 = a.getCoordinate();
+		Coordinate p2 = b.getCoordinate();
+		Coordinate p3 = c.getCoordinate();
+		return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x) > 0;
 	}
 
 	/**
@@ -70,50 +169,11 @@ public class GraphUtils {
 	 * @param otherNode The second node.
 	 * @return The smallest enclosing circle as a geometry.
 	 */
-	public static Geometry enclosingCircleBetweenNodes(NodeGraph node, NodeGraph otherNode) {
+	protected static Geometry enclosingCircleBetweenTwoNodes(NodeGraph node, NodeGraph otherNode) {
 		final LineString line = LineStringBetweenNodes(node, otherNode);
 		final Point centroid = line.getCentroid();
 		final Geometry smallestEnclosingCircle = centroid.buffer(line.getLength() / 2);
 		return smallestEnclosingCircle;
-	}
-
-	/**
-	 * Calculates the center point (centroid) of a collection of nodes.
-	 *
-	 * @param nodes The collection of nodes for which to calculate the center point.
-	 * @return The center point coordinate.
-	 */
-	private static Coordinate calculateCenterPointNodes(Iterable<NodeGraph> nodes) {
-		double totalX = 0.0;
-		double totalY = 0.0;
-		int count = 0;
-
-		for (NodeGraph node : nodes) {
-			totalX += node.getCoordinate().getX();
-			totalY += node.getCoordinate().getY();
-			count++;
-		}
-
-		return new Coordinate(totalX / count, totalY / count);
-	}
-
-	/**
-	 * Calculates the radius of a collection of nodes relative to a center point.
-	 *
-	 * @param center The center point coordinate.
-	 * @param nodes  The collection of nodes for which to calculate the radius.
-	 * @return The maximum distance from the center point to any node.
-	 */
-	private static double calculateRadius(Coordinate center, Iterable<NodeGraph> nodes) {
-		double maxDistance = 0.0;
-
-		for (NodeGraph node : nodes) {
-			double distance = center.distance(node.getCoordinate());
-			if (distance > maxDistance) {
-				maxDistance = distance;
-			}
-		}
-		return maxDistance;
 	}
 
 	/**
@@ -126,17 +186,8 @@ public class GraphUtils {
 	 * @return The closest node to the target coordinate.
 	 */
 	public static NodeGraph findClosestNode(Coordinate targetCoordinates, Iterable<NodeGraph> nodes) {
-		NodeGraph closestNode = null;
-		double minDistance = Double.MAX_VALUE;
-
-		for (NodeGraph node : nodes) {
-			double distance = targetCoordinates.distance(node.getCoordinate());
-			if (distance < minDistance) {
-				minDistance = distance;
-				closestNode = node;
-			}
-		}
-		return closestNode;
+		return StreamSupport.stream(nodes.spliterator(), true) // Convert Iterable to parallel stream
+				.min(Comparator.comparingDouble(node -> targetCoordinates.distance(node.getCoordinate()))).orElse(null); // found
 	}
 
 	/**
@@ -192,38 +243,86 @@ public class GraphUtils {
 		return GraphUtils.getPrimalJunction(lastCentroid, otherCentroid);
 	}
 
-	/**
-	 * Computes the Euclidean distance between two locations
-	 *
-	 * @param originCoord      the origin location;
-	 * @param destinationCoord the destination;
-	 */
-	public static double euclideanDistance(Coordinate originCoord, Coordinate destinationCoord) {
-		return Math.sqrt(
-				Math.pow(originCoord.x - destinationCoord.x, 2) + Math.pow(originCoord.y - destinationCoord.y, 2));
+	public static Set<NodeGraph> nodesFromEdges(Set<EdgeGraph> edges) {
+		return edges.stream().flatMap(edge -> edge.getNodes().stream()).collect(Collectors.toSet());
 	}
 
-	// Introduce a HashMap to cache previously computed distances
-	public static Map<Pair<NodeGraph, NodeGraph>, Double> distanceCache = new HashMap<>();
+	public static Set<EdgeGraph> edgesFromNodes(Set<NodeGraph> nodes) {
+		return nodes.stream().flatMap(node -> node.getEdges().stream()).collect(Collectors.toSet());
+	}
 
-	// Method to compute the distance between two nodes, with caching
-	synchronized public static double getCachedNodesDistance(NodeGraph node, NodeGraph otherNode) {
-		Pair<NodeGraph, NodeGraph> pair = new Pair<>(node, otherNode);
-		Pair<NodeGraph, NodeGraph> otherPair = new Pair<>(otherNode, node);
+	public static List<Integer> getNodeIDs(List<NodeGraph> nodes) {
+		return nodes.stream().map(NodeGraph::getID).collect(Collectors.toList());
+	}
 
-		if (distanceCache.containsKey(pair))
-			return distanceCache.get(pair);
-		else if (distanceCache.containsKey(otherPair))
-			return distanceCache.get(otherPair);
-		else {
-			double distance = GraphUtils.nodesDistance(node, otherNode);
-			distanceCache.put(pair, distance);
-			return distance;
+	public static List<Integer> getEdgeIDs(List<EdgeGraph> edges) {
+		return edges.stream().map(EdgeGraph::getID).collect(Collectors.toList());
+	}
+
+	public static Polygon createVisibilityPolygon(NodeGraph fromNode, NodeGraph toNode, Double visibilityAngle,
+			VectorLayer obstructions, double maxExpansionDistance) {
+
+		Coordinate fromCoordinates = fromNode.getCoordinate();
+		Coordinate toCoordinates = toNode.getCoordinate();
+
+		Pair<Coordinate, Coordinate> pair = new Pair<>(fromCoordinates, toCoordinates);
+
+		if (visibilityPolygonsCache.containsKey(pair))
+			return visibilityPolygonsCache.get(pair);
+
+		double edgeAngle = Math.toDegrees(Math.atan2(toCoordinates.getY() - fromCoordinates.getY(),
+				toCoordinates.getX() - fromCoordinates.getX()));
+		List<Coordinate> coords = new ArrayList<>();
+
+		int visibilityLimit = (int) (visibilityAngle / 2.0);
+		for (int i = -visibilityLimit; i <= visibilityLimit; i += DISTANCE_ALONG_VISIBILITY) {
+			double angle = Math.toRadians(edgeAngle + i);
+			double x = toCoordinates.getX() + maxExpansionDistance * Math.cos(angle);
+			double y = toCoordinates.getY() + maxExpansionDistance * Math.sin(angle);
+			coords.add(new Coordinate(x, y));
 		}
-	}
 
-	public List<Integer> getNodeIds(List<NodeGraph> nodes) {
-		return nodes.stream().map(NodeGraph::getID) // Assumendo che getID() sia il metodo per ottenere l'ID del nodo
-				.collect(Collectors.toList());
+		List<LineString> lines = new ArrayList<>();
+		for (Coordinate coord : coords)
+			lines.add(GEOMETRY_FACTORY.createLineString(new Coordinate[] { toNode.getCoordinate(), coord }));
+
+		Geometry toNodeGeometry = toNode.getMasonGeometry().geometry;
+		Geometry buffer = toNodeGeometry.buffer(maxExpansionDistance);
+		List<MasonGeometry> possibleMatches = obstructions.containedFeatures(buffer);
+		List<Geometry> obstacles = new ArrayList<>();
+
+		possibleMatches.stream().map(masonGeometry -> masonGeometry.geometry)
+				.filter(geometry -> lines.stream()
+						.anyMatch(line -> geometry.crosses(line) && !geometry.touches(toNodeGeometry)))
+				.forEach(obstacles::add);
+
+		List<LineString> clippedLines = new ArrayList<>();
+		if (!obstacles.isEmpty()) {
+			Geometry unionObstacles = UnaryUnionOp.union(obstacles);
+
+			for (LineString line : lines) {
+				Geometry intersection = line.intersection(unionObstacles);
+				if (!intersection.isEmpty()) {
+
+					Coordinate[] intersectionCoords = intersection instanceof MultiLineString
+							? intersection.getCoordinates()
+							: new Coordinate[] { intersection.getCoordinate() };
+					clippedLines.add(GEOMETRY_FACTORY
+							.createLineString(new Coordinate[] { toNode.getCoordinate(), intersectionCoords[0] }));
+				} else
+					clippedLines.add(line);
+			}
+		} else
+			clippedLines = lines;
+
+		List<Coordinate> polyCoords = new ArrayList<>();
+		polyCoords.add(toNode.getCoordinate());
+		clippedLines.forEach(line -> polyCoords.add(line.getCoordinateN(1)));
+		polyCoords.add(toNode.getCoordinate());
+
+		Polygon visibilityCone = GEOMETRY_FACTORY.createPolygon(polyCoords.toArray(new Coordinate[0]));
+//		Polygon visibilityCone = (Polygon) poly.difference(UnaryUnionOp.union(obstacles));
+		visibilityPolygonsCache.put(pair, visibilityCone);
+		return visibilityCone;
 	}
 }
