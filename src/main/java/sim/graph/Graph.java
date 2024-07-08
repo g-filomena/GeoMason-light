@@ -41,7 +41,7 @@ import sim.util.geo.Utilities;
  */
 public class Graph extends PlanarGraph {
 
-	public List<NodeGraph> nodesGraph = new ArrayList<>();
+	protected List<NodeGraph> nodesGraph = new ArrayList<>();
 	protected List<EdgeGraph> edgesGraph = new ArrayList<>();
 	protected Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
 	protected VectorLayer junctions = new VectorLayer();
@@ -51,6 +51,8 @@ public class Graph extends PlanarGraph {
 	protected Map<NodeGraph, Double> salientNodes = new HashMap<>();
 	protected Set<DirectedEdge> directedEdges = new HashSet<>();
 	public Map<String, AttributeValue> attributes = new HashMap<>();
+
+	private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
 
 	/**
 	 * Constructs a new empty Graph.
@@ -69,12 +71,12 @@ public class Graph extends PlanarGraph {
 	 * @param streetSegments  The VectorLayer containing street segment geometries.
 	 */
 	public void fromStreetJunctionsSegments(VectorLayer streetJunctions, VectorLayer streetSegments) {
+
 		List<MasonGeometry> geometries = streetSegments.getGeometries();
-		for (final MasonGeometry masonGeometry : geometries)
-			if (masonGeometry.geometry instanceof LineString)
-				addLineString(masonGeometry);
-		for (final NodeGraph node : nodesGraph)
-			node.setNeighbouringComponents();
+		geometries.stream().filter(masonGeometry -> masonGeometry.geometry instanceof LineString)
+				.forEach(this::addLineString);
+
+		nodesGraph.forEach(NodeGraph::setNeighbouringComponents);
 		generateAdjacencyMatrix();
 	}
 
@@ -92,18 +94,18 @@ public class Graph extends PlanarGraph {
 		if (line.isEmpty())
 			return;
 
-		final Coordinate[] coords = CoordinateArrays.removeRepeatedPoints(line.getCoordinates());
+		Coordinate[] coords = CoordinateArrays.removeRepeatedPoints(line.getCoordinates());
 		if (coords.length < 2)
 			return;
 
-		final Coordinate fromCoord = coords[0];
-		final Coordinate toCoord = coords[coords.length - 1];
-		final NodeGraph fromNode = getNode(fromCoord);
-		final NodeGraph toNode = getNode(toCoord);
+		Coordinate fromCoord = coords[0];
+		Coordinate toCoord = coords[coords.length - 1];
+		NodeGraph fromNode = getNode(fromCoord);
+		NodeGraph toNode = getNode(toCoord);
 
-		final EdgeGraph edge = new EdgeGraph(line);
-		final DirectedEdge directedEdge0 = new DirectedEdge(fromNode, toNode, coords[1], true);
-		final DirectedEdge directedEdge1 = new DirectedEdge(toNode, fromNode, coords[coords.length - 2], false);
+		EdgeGraph edge = new EdgeGraph(line);
+		DirectedEdge directedEdge0 = new DirectedEdge(fromNode, toNode, coords[1], true);
+		DirectedEdge directedEdge1 = new DirectedEdge(toNode, fromNode, coords[coords.length - 2], false);
 
 		edge.setDirectedEdges(directedEdge0, directedEdge1);
 		edge.setAttributes(wrappedLine.getAttributes());
@@ -156,9 +158,7 @@ public class Graph extends PlanarGraph {
 			node = new NodeGraph(coordinate);
 
 			// ensure node is only added once to graph
-			final GeometryFactory fact = new GeometryFactory();
-			// in case
-			node.masonGeometry = new MasonGeometry(fact.createPoint(coordinate));
+			node.masonGeometry = new MasonGeometry(GEOMETRY_FACTORY.createPoint(coordinate));
 			nodesGraph.add(node);
 			add(node);
 			junctions.addGeometry(node.masonGeometry);
@@ -174,7 +174,7 @@ public class Graph extends PlanarGraph {
 	public void generateCentralityMap() {
 
 		Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
-		for (final NodeGraph node : nodesGraph)
+		for (NodeGraph node : nodesGraph)
 			centralityMap.put(node, node.centrality);
 		this.centralityMap = (LinkedHashMap<NodeGraph, Double>) Utilities.sortByValue(centralityMap, false);
 	}
@@ -186,26 +186,20 @@ public class Graph extends PlanarGraph {
 	 * The adjacency matrix stores relationships between nodes and edges.
 	 */
 	protected void generateAdjacencyMatrix() {
-
-		// Populate the adjacency list with edges from your graph
 		for (EdgeGraph edgeGraph : edgesGraph) {
-			DirectedEdge directedEdge = edgeGraph.getDirEdge(0);
-			DirectedEdge oppositeDirectedEdge = edgeGraph.getDirEdge(1);
-
-			// Add the original directed edge and its nodes to the adjacency matrix
-			NodeGraph fromNode = (NodeGraph) directedEdge.getFromNode();
-			NodeGraph toNode = (NodeGraph) directedEdge.getToNode();
-			Pair<NodeGraph, NodeGraph> nodes = new Pair<>(fromNode, toNode);
-			adjacencyMatrixDirected.put(nodes, directedEdge);
-			adjacencyMatrix.put(nodes, edgeGraph);
-
-			// Add the opposite directed edge and its nodes to the adjacency matrix
-			fromNode = (NodeGraph) oppositeDirectedEdge.getFromNode();
-			toNode = (NodeGraph) oppositeDirectedEdge.getToNode();
-			nodes = new Pair<>(fromNode, toNode);
-			adjacencyMatrixDirected.put(nodes, oppositeDirectedEdge);
-			adjacencyMatrix.put(nodes, edgeGraph);
+			addEdgesToAdjacencyMatrix(edgeGraph, 0);
+			addEdgesToAdjacencyMatrix(edgeGraph, 1);
 		}
+	}
+
+	private void addEdgesToAdjacencyMatrix(EdgeGraph edgeGraph, int index) {
+		DirectedEdge directedEdge = edgeGraph.getDirEdge(index);
+		NodeGraph fromNode = (NodeGraph) directedEdge.getFromNode();
+		NodeGraph toNode = (NodeGraph) directedEdge.getToNode();
+		Pair<NodeGraph, NodeGraph> nodes = new Pair<>(fromNode, toNode);
+
+		adjacencyMatrixDirected.put(nodes, directedEdge);
+		adjacencyMatrix.put(nodes, edgeGraph);
 	}
 
 	/**
@@ -216,6 +210,32 @@ public class Graph extends PlanarGraph {
 	@Override
 	public List<NodeGraph> getNodes() {
 		return nodesGraph;
+	}
+
+	/**
+	 * Retrieves the IDs of all nodes in the graph.
+	 *
+	 * @return a list of IDs corresponding to the nodes in the graph
+	 */
+	public List<Integer> getNodeIDs() {
+
+		List<Integer> nodeIDs = new ArrayList<>();
+		for (NodeGraph node : nodesGraph)
+			nodeIDs.add(node.getID());
+		return nodeIDs;
+	}
+
+	/**
+	 * Retrieves the IDs of all edges in the graph.
+	 *
+	 * @return a list of IDs corresponding to the edges in the graph
+	 */
+	public List<Integer> getEdgeIDs() {
+
+		List<Integer> edgeIDs = new ArrayList<>();
+		for (EdgeGraph edge : edgesGraph)
+			edgeIDs.add(edge.getID());
+		return edgeIDs;
 	}
 
 	/**
@@ -236,14 +256,9 @@ public class Graph extends PlanarGraph {
 	 *         within the specified Geometry.
 	 */
 	public List<NodeGraph> getContainedNodes(Geometry geometry) {
-		final ArrayList<NodeGraph> containedNodes = new ArrayList<>();
 
-		for (final NodeGraph node : nodesGraph) {
-			final Geometry geoNode = node.masonGeometry.geometry;
-			if (geometry.contains(geoNode))
-				containedNodes.add(node);
-		}
-		return containedNodes;
+		return nodesGraph.parallelStream().filter(node -> geometry.contains(node.masonGeometry.geometry))
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -254,15 +269,8 @@ public class Graph extends PlanarGraph {
 	 *         within the specified Geometry.
 	 */
 	public List<EdgeGraph> getContainedEdges(Geometry geometry) {
-		final List<EdgeGraph> containedEdges = new ArrayList<>();
-		final List<EdgeGraph> edges = edgesGraph;
-
-		for (EdgeGraph edge : edges) {
-			Geometry edgeGeometry = edge.masonGeometry.geometry;
-			if (geometry.contains(edgeGeometry))
-				containedEdges.add(edge);
-		}
-		return containedEdges;
+		return edgesGraph.parallelStream().filter(edge -> geometry.contains(edge.masonGeometry.geometry))
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -275,10 +283,7 @@ public class Graph extends PlanarGraph {
 	 *         source and target nodes, or null if no such edge exists.
 	 */
 	public EdgeGraph getEdgeBetween(NodeGraph fromNode, NodeGraph toNode) {
-		EdgeGraph edge = null;
-		Pair<NodeGraph, NodeGraph> pair = new Pair<>(fromNode, toNode);
-		edge = adjacencyMatrix.get(pair);
-		return edge;
+		return adjacencyMatrix.get(new Pair<>(fromNode, toNode));
 	}
 
 	/**
@@ -291,10 +296,7 @@ public class Graph extends PlanarGraph {
 	 *         specified source and target nodes, or null if no such edge exists.
 	 */
 	public DirectedEdge getDirectedEdgeBetween(NodeGraph fromNode, NodeGraph toNode) {
-		DirectedEdge edge = null;
-		Pair<NodeGraph, NodeGraph> pair = new Pair<>(fromNode, toNode);
-		edge = adjacencyMatrixDirected.get(pair);
-		return edge;
+		return adjacencyMatrixDirected.get(new Pair<>(fromNode, toNode));
 	}
 
 	/**
@@ -311,13 +313,8 @@ public class Graph extends PlanarGraph {
 	 */
 	public static Map<NodeGraph, Double> filterCentralityMap(Map<NodeGraph, Double> map, List<NodeGraph> filter) {
 
-		final Map<NodeGraph, Double> mapFiltered = new LinkedHashMap<>(map);
-		final ArrayList<NodeGraph> result = new ArrayList<>();
-		for (final NodeGraph key : mapFiltered.keySet())
-			if (filter.contains(key))
-				result.add(key);
-		mapFiltered.keySet().retainAll(result);
-		return mapFiltered;
+		return map.entrySet().stream().filter(entry -> filter.contains(entry.getKey()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
 	}
 
 	/**
@@ -332,16 +329,15 @@ public class Graph extends PlanarGraph {
 	 *         specified percentile threshold.
 	 */
 	public Map<NodeGraph, Double> getSalientNodes(double percentile) {
-		int position;
-		position = (int) (centralityMap.size() * percentile);
 
-		final double boundary = new ArrayList<>(centralityMap.values()).get(position);
+		int position = (int) (centralityMap.size() * percentile);
+		ArrayList<Double> values = new ArrayList<>(centralityMap.values());
+		values.sort(Double::compareTo); // Sort values to determine the boundary
+		double boundary = values.get(position);
 
-		Map<NodeGraph, Double> filteredMap = new HashMap<NodeGraph, Double>();
-		filteredMap = centralityMap.entrySet().stream().filter(entry -> entry.getValue() >= boundary)
-				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+		return centralityMap.entrySet().stream().filter(entry -> entry.getValue() >= boundary)
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-		return filteredMap;
 	}
 
 	/**
@@ -362,13 +358,14 @@ public class Graph extends PlanarGraph {
 	public Map<NodeGraph, Double> getSalientNodesWithinSpace(NodeGraph node, NodeGraph otherNode, double percentile) {
 
 		List<NodeGraph> containedNodes = new ArrayList<>();
-		Geometry smallestEnclosingCircle = GraphUtils.enclosingCircleBetweenNodes(node, otherNode);
+		Geometry smallestEnclosingCircle = GraphUtils.enclosingCircleBetweenTwoNodes(node, otherNode);
 		containedNodes = this.getContainedNodes(smallestEnclosingCircle);
 
 		Map<NodeGraph, Double> spatialfilteredMap = new LinkedHashMap<>();
 		if (containedNodes.isEmpty())
 			return spatialfilteredMap;
-		spatialfilteredMap = filterCentralityMap(centralityMap, containedNodes);
+		spatialfilteredMap = filterCentralityMap(new LinkedHashMap<>(centralityMap), containedNodes);
+
 		if (spatialfilteredMap.isEmpty())
 			return spatialfilteredMap;
 
@@ -395,16 +392,17 @@ public class Graph extends PlanarGraph {
 	public List<NodeGraph> getSalientNodesBetweenDistanceInterval(NodeGraph node, double lowerLimit, double upperLimit,
 			double percentile) {
 
-		final List<NodeGraph> containedNodes = new ArrayList<>();
-		final List<NodeGraph> containedSalientNodes = new ArrayList<>();
-		final MasonGeometry originGeometry = node.masonGeometry;
-		final List<MasonGeometry> containedGeometries = junctions.featuresBetweenLimits(originGeometry.geometry,
-				lowerLimit, upperLimit);
-		for (final MasonGeometry masonGeometry : containedGeometries)
+		List<NodeGraph> containedNodes = new ArrayList<>();
+		List<NodeGraph> containedSalientNodes = new ArrayList<>();
+		MasonGeometry originGeometry = node.masonGeometry;
+		List<MasonGeometry> containedGeometries = junctions.featuresBetweenLimits(originGeometry.geometry, lowerLimit,
+				upperLimit);
+		for (MasonGeometry masonGeometry : containedGeometries)
 			containedNodes.add(findNode(masonGeometry.geometry.getCoordinate()));
-		final List<NodeGraph> salientNodes = new ArrayList<>(getSalientNodes(percentile).keySet());
 
-		for (final NodeGraph otherNode : containedNodes)
+		List<NodeGraph> salientNodes = new ArrayList<>(getSalientNodes(percentile).keySet());
+
+		for (NodeGraph otherNode : containedNodes)
 			if (salientNodes.contains(otherNode))
 				containedSalientNodes.add(otherNode);
 		return containedSalientNodes;
@@ -423,15 +421,11 @@ public class Graph extends PlanarGraph {
 	 */
 	public List<EdgeGraph> edgesInNodesSpace(NodeGraph node, NodeGraph otherNode) {
 
-		Double radius = GraphUtils.nodesDistance(node, otherNode) * 1.50;
-		if (radius < 500)
-			radius = 500.0;
-		final Geometry bufferOrigin = node.masonGeometry.geometry.buffer(radius);
-		final Geometry bufferDestination = otherNode.masonGeometry.geometry.buffer(radius);
-		final Geometry convexHull = bufferOrigin.union(bufferDestination).convexHull();
-
-		final List<EdgeGraph> containedEdges = this.getContainedEdges(convexHull);
-		return containedEdges;
+		double radius = Math.max(GraphUtils.nodesDistance(node, otherNode) * 1.5, 500.0);
+		Geometry bufferOrigin = node.masonGeometry.geometry.buffer(radius);
+		Geometry bufferDestination = otherNode.masonGeometry.geometry.buffer(radius);
+		Geometry convexHull = bufferOrigin.union(bufferDestination).convexHull();
+		return getContainedEdges(convexHull);
 	}
 
 	/**
@@ -444,10 +438,18 @@ public class Graph extends PlanarGraph {
 	 * @return A List of nodes not belonging to the specified region.
 	 */
 	public List<NodeGraph> nodesInRegion(List<NodeGraph> nodes, int regionID) {
-		final List<NodeGraph> newNodes = new ArrayList<>(nodes);
-		for (final NodeGraph node : nodes)
-			if (node.regionID == regionID)
-				newNodes.remove(node);
-		return newNodes;
+		return nodes.stream().filter(node -> node.regionID != regionID).collect(Collectors.toList());
+	}
+
+	/**
+	 * Finds a node in the graph that matches the given node's geometry coordinates.
+	 *
+	 * @param nodeGraph the node whose geometry coordinates will be used for the
+	 *                  search
+	 * @return the node in the graph that matches the given node's geometry
+	 *         coordinates
+	 */
+	public NodeGraph findNode(NodeGraph nodeGraph) {
+		return findNode(nodeGraph.getMasonGeometry().geometry.getCoordinate());
 	}
 }
