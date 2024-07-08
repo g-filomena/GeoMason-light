@@ -243,22 +243,60 @@ public class GraphUtils {
 		return GraphUtils.getPrimalJunction(lastCentroid, otherCentroid);
 	}
 
+	/**
+	 * Extracts all nodes from a given set of edges.
+	 *
+	 * @param edges the set of edges from which to extract nodes
+	 * @return a set containing all unique nodes from the given edges
+	 */
 	public static Set<NodeGraph> nodesFromEdges(Set<EdgeGraph> edges) {
 		return edges.stream().flatMap(edge -> edge.getNodes().stream()).collect(Collectors.toSet());
 	}
 
+	/**
+	 * Extracts all edges from a given set of nodes.
+	 *
+	 * @param nodes the set of nodes from which to extract edges
+	 * @return a set containing all unique edges from the given nodes
+	 */
 	public static Set<EdgeGraph> edgesFromNodes(Set<NodeGraph> nodes) {
 		return nodes.stream().flatMap(node -> node.getEdges().stream()).collect(Collectors.toSet());
 	}
 
+	/**
+	 * Retrieves the IDs of a given list of nodes.
+	 *
+	 * @param nodes the list of nodes from which to extract IDs
+	 * @return a list of IDs corresponding to the given nodes
+	 */
 	public static List<Integer> getNodeIDs(List<NodeGraph> nodes) {
 		return nodes.stream().map(NodeGraph::getID).collect(Collectors.toList());
 	}
 
+	/**
+	 * Retrieves the IDs of a given list of edges.
+	 *
+	 * @param edges the list of edges from which to extract IDs
+	 * @return a list of IDs corresponding to the given edges
+	 */
 	public static List<Integer> getEdgeIDs(List<EdgeGraph> edges) {
 		return edges.stream().map(EdgeGraph::getID).collect(Collectors.toList());
 	}
 
+	/**
+	 * Creates a visibility polygon from one node to another considering
+	 * obstructions and a maximum expansion distance.
+	 *
+	 * @param fromNode             the starting node of the visibility polygon
+	 * @param toNode               the destination node of the visibility polygon
+	 * @param visibilityAngle      the angle of visibility in degrees
+	 * @param obstructions         a layer containing potential obstructions to
+	 *                             visibility
+	 * @param maxExpansionDistance the maximum distance the visibility polygon can
+	 *                             expand
+	 * @return a Polygon representing the visibility area from the starting node to
+	 *         the destination node
+	 */
 	public static Polygon createVisibilityPolygon(NodeGraph fromNode, NodeGraph toNode, Double visibilityAngle,
 			VectorLayer obstructions, double maxExpansionDistance) {
 
