@@ -13,6 +13,7 @@ package sim.graph;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import sim.field.geo.VectorLayer;
 import sim.util.geo.MasonGeometry;
@@ -25,6 +26,17 @@ import sim.util.geo.MasonGeometry;
  */
 public class NodesLookup {
 
+	private static final Random random = new Random();
+	final static double PERCENTILE_DECREASE = 0.05;
+	final static double EXPANSION_FACTOR = 1.10;
+	final static double RADIUS_THRESHOLD = 2.00;
+
+	final static double MIN_DISTANCE = 100;
+	final static double INITIAL_TOLERANCE = 50;
+	final static double TOLERANCE_INCREMENT = 50;
+
+	final static double DISTANCE_MULTIPLIER = 1.50;
+
 	/**
 	 * Returns a randomly selected node from a graph. This method is useful for
 	 * generating random starting or ending points in simulations.
@@ -33,10 +45,8 @@ public class NodesLookup {
 	 * @return A randomly chosen NodeGraph object from the graph.
 	 */
 	public static NodeGraph randomNode(Graph graph) {
-		final Random random = new Random();
-		final Integer randomInt = random.nextInt(graph.nodesGraph.size());
-		final List<NodeGraph> nodes = new ArrayList<>(graph.nodesGraph);
-		return nodes.get(randomInt);
+		final List<NodeGraph> candidates = new ArrayList<>(graph.nodesGraph);
+		return selectRandomNode(candidates);
 	}
 
 	/**
@@ -49,11 +59,10 @@ public class NodesLookup {
 	 *                        node locations.
 	 * @return A NodeGraph object randomly selected from the specified geometries.
 	 */
-	public static NodeGraph randomNodeFromList(Graph graph, List<MasonGeometry> nodesGeometries) {
-		final Random random = new Random();
-		final Integer randomInt = random.nextInt(nodesGeometries.size());
-		final MasonGeometry geoNode = nodesGeometries.get(randomInt);
-		return graph.findNode(geoNode.geometry.getCoordinate());
+	public static NodeGraph randomNodeFromList(List<NodeGraph> nodes) {
+
+		int randomInt = random.nextInt(nodes.size());
+		return nodes.get(randomInt);
 	}
 
 	/**
@@ -71,10 +80,6 @@ public class NodesLookup {
 	public static NodeGraph randomNodeRegion(Graph graph, NodeGraph originNode, double radius) {
 
 		final MasonGeometry originNodeGeometry = originNode.masonGeometry;
-		Random random = new Random();
-		double EXPANSION_FACTOR = 1.10;
-		double RADIUS_THRESHOLD = 2.00;
-		NodeGraph node = null;
 		double expandingRadius = radius;
 
 		while (true) {
@@ -83,26 +88,22 @@ public class NodesLookup {
 
 			List<MasonGeometry> spatialFilter = graph.junctions.featuresWithinDistance(originNodeGeometry.geometry,
 					expandingRadius);
-			if (spatialFilter.size() < 1) {
-				expandingRadius *= EXPANSION_FACTOR;
-				continue;
-			}
-			VectorLayer junctionsWithin = new VectorLayer(spatialFilter);
-
-			if (junctionsWithin.getGeometries().isEmpty()) {
+			if (spatialFilter.isEmpty()) {
 				expandingRadius *= EXPANSION_FACTOR;
 				continue;
 			}
 
-			List<MasonGeometry> regionFilter = junctionsWithin.filterFeatures("district", originNode.regionID, false);
+			List<MasonGeometry> regionFilter = spatialFilter.stream()
+					.filter(geo -> Integer.parseInt(geo.getStringAttribute("district")) == originNode.regionID)
+					.collect(Collectors.toList());
+
 			if (regionFilter.isEmpty()) {
 				expandingRadius *= EXPANSION_FACTOR;
 				continue;
 			}
 
-			int randomInt = random.nextInt(regionFilter.size());
-			MasonGeometry nodeGeometry = regionFilter.get(randomInt);
-			node = graph.findNode(nodeGeometry.geometry.getCoordinate());
+			MasonGeometry nodeGeometry = regionFilter.get(random.nextInt(regionFilter.size()));
+			NodeGraph node = graph.findNode(nodeGeometry.geometry.getCoordinate());
 
 			if (node != null)
 				return node;
@@ -125,32 +126,28 @@ public class NodesLookup {
 	public static NodeGraph randomNodeFromDistancesSet(Graph graph, VectorLayer junctions, NodeGraph originNode,
 			List<Float> distances) {
 
-		double MIN_DISTANCE = 100;
-		double TOLERANCE = 50;
-		Random random = new Random();
-		int randomInt = random.nextInt(distances.size());
-		double distance = distances.get(randomInt);
+		// Select a random distance from the list
+		double distance = distances.get(random.nextInt(distances.size()));
 		if (distance < MIN_DISTANCE)
 			distance = MIN_DISTANCE;
+
 		NodeGraph node = null;
 		List<NodeGraph> candidates = new ArrayList<>();
+		double tolerance = INITIAL_TOLERANCE;
 
-		while (true) {
-			final double lowerLimit = distance - TOLERANCE;
-			final double upperLimit = distance + TOLERANCE;
+		while (candidates.isEmpty()) {
+			double lowerLimit = distance - tolerance;
+			double upperLimit = distance + tolerance;
 			candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
-			if (!candidates.isEmpty())
-				break;
-			else
-				TOLERANCE += TOLERANCE;
+			tolerance += TOLERANCE_INCREMENT;
 		}
 
 		while (node == null || node.getID() == originNode.getID()) {
-			randomInt = random.nextInt(candidates.size());
-			node = candidates.get(randomInt);
+			node = candidates.get(random.nextInt(candidates.size()));
 			if (graph.getEdgeBetween(originNode, node) != null)
 				node = null;
 		}
+
 		return node;
 	}
 
@@ -166,17 +163,11 @@ public class NodesLookup {
 	 */
 	public static List<NodeGraph> getNodesBetweenDistanceInterval(Graph graph, NodeGraph node, double lowerLimit,
 			double upperLimit) {
-
-		List<NodeGraph> containedNodes = new ArrayList<>();
 		MasonGeometry originGeometry = node.masonGeometry;
 		List<MasonGeometry> containedGeometries = graph.junctions.featuresBetweenLimits(originGeometry.geometry,
 				lowerLimit, upperLimit);
-		for (final MasonGeometry masonGeometry : containedGeometries) {
-			NodeGraph potentialNode = graph.findNode(masonGeometry.geometry.getCoordinate());
-			if (!node.equals(potentialNode))
-				containedNodes.add(potentialNode);
-		}
-		return containedNodes;
+		return containedGeometries.stream().map(masonGeometry -> graph.findNode(masonGeometry.geometry.getCoordinate()))
+				.filter(potentialNode -> !node.equals(potentialNode)).collect(Collectors.toList());
 	}
 
 	/**
@@ -194,11 +185,8 @@ public class NodesLookup {
 	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode, double lowerLimit,
 			double upperLimit) {
 
-		final Random random = new Random();
 		final List<NodeGraph> candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
-		final int randomInt = random.nextInt(candidates.size());
-		final NodeGraph node = candidates.get(randomInt);
-		return node;
+		return selectRandomNode(candidates);
 	}
 
 	/**
@@ -234,12 +222,8 @@ public class NodesLookup {
 	public static NodeGraph randomNodeBetweenDistanceIntervalRegion(Graph graph, NodeGraph originNode,
 			double lowerLimit, double upperLimit) {
 
-		final Random random = new Random();
-		final List<NodeGraph> candidates = getNodesBetweenDistanceIntervalRegion(graph, originNode, lowerLimit,
-				upperLimit);
-		final int randomInt = random.nextInt(candidates.size());
-		final NodeGraph node = candidates.get(randomInt);
-		return node;
+		List<NodeGraph> candidates = getNodesBetweenDistanceIntervalRegion(graph, originNode, lowerLimit, upperLimit);
+		return selectRandomNode(candidates);
 	}
 
 	/**
@@ -258,17 +242,21 @@ public class NodesLookup {
 	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode,
 			double lowerLimit, double upperLimit, double percentile) {
 
-		double PERCENTILE_DECREASE = 0.05;
-		final Random random = new Random();
 		NodeGraph node = null;
+
 		while (node == null) {
-			final List<NodeGraph> candidates = graph.getSalientNodesBetweenDistanceInterval(originNode, lowerLimit,
+			List<NodeGraph> candidates = graph.getSalientNodesBetweenDistanceInterval(originNode, lowerLimit,
 					upperLimit, percentile);
-			final int randomInt = random.nextInt(candidates.size());
-			node = candidates.get(randomInt);
+
+			if (candidates.isEmpty())
+				return null; // Return null if no candidates are found
+
+			node = candidates.get(random.nextInt(candidates.size()));
+
+			// Reduce percentile for the next iteration if node is not found
 			percentile -= PERCENTILE_DECREASE;
-			if (percentile == 0.0)
-				return null;
+			if (percentile <= 0.0)
+				return null; // Return null if percentile reaches 0 or below
 		}
 		return node;
 	}
@@ -288,39 +276,23 @@ public class NodesLookup {
 	 * @return A NodeGraph object randomly selected based on the specified distance
 	 *         and category criteria.
 	 */
-
 	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph graph, NodeGraph originNode, double lowerLimit,
 			double upperLimit, String DMA) {
 
-		final Random random = new Random();
-		int randomInt;
 		NodeGraph node = null;
-		double TOLERANCE = 50.0;
-		double DISTANCE_MULTIPLIER = 1.50;
-		List<NodeGraph> candidates = new ArrayList<>();
 
 		while (node == null) {
-			candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
-			List<NodeGraph> candidatesDMA = new ArrayList<>();
-			if (DMA.equals("random"))
-				candidatesDMA = new ArrayList<>(candidates);
-			else {
-				for (final NodeGraph otherNode : candidates)
-					if (otherNode.DMA.equals(DMA))
-						candidatesDMA.add(otherNode);
-			}
+			List<NodeGraph> candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
+			List<NodeGraph> candidatesDMA = getCandidatesByDMA(candidates, DMA);
+
 			if (candidatesDMA.isEmpty()) {
 				if (upperLimit > upperLimit * DISTANCE_MULTIPLIER) {
-					randomInt = random.nextInt(candidates.size());
-					node = candidates.get(randomInt);
+					node = candidates.get(random.nextInt(candidates.size()));
 					break;
 				}
-				upperLimit += TOLERANCE;
-				continue;
-			}
-
-			randomInt = random.nextInt(candidatesDMA.size());
-			node = candidatesDMA.get(randomInt);
+				upperLimit += INITIAL_TOLERANCE;
+			} else
+				node = candidatesDMA.get(random.nextInt(candidatesDMA.size()));
 		}
 		return node;
 	}
@@ -335,19 +307,28 @@ public class NodesLookup {
 	 *         DMA.
 	 */
 	public static NodeGraph randomNodeDMA(Graph graph, String DMA) {
-
-		final Random random = new Random();
 		List<NodeGraph> candidates = graph.getNodes();
+		List<NodeGraph> candidatesDMA = getCandidatesByDMA(candidates, DMA);
+		return selectRandomNode(candidatesDMA);
+	}
 
-		List<NodeGraph> candidatesDMA = new ArrayList<>();
-		if (DMA.equals("random"))
-			candidatesDMA = new ArrayList<>(candidates);
-		else
-			for (final NodeGraph node : candidates)
-				if (node.DMA.equals(DMA))
-					candidatesDMA.add(node);
+	// Function to get candidates based on DMA
+	public static List<NodeGraph> getCandidatesByDMA(List<NodeGraph> nodes, String DMA) {
+		if (DMA.equals("random")) {
+			List<NodeGraph> filteredNodes = nodes.stream()
+					.filter(node -> node.DMA.equals("work") || node.DMA.equals("visit") || node.DMA.equals("live"))
+					.collect(Collectors.toList());
+			return List.of(filteredNodes.get(random.nextInt(filteredNodes.size())));
+		} else
+			return nodes.stream().filter(node -> node.DMA.equals(DMA)).collect(Collectors.toList());
+	}
 
-		final int randomInt = random.nextInt(candidatesDMA.size());
-		return candidatesDMA.get(randomInt);
+	// Function to get candidates based on DMA
+	public static List<NodeGraph> getNodesByDMA(Graph graph, String DMA) {
+		return getCandidatesByDMA(graph.getNodes(), DMA);
+	}
+
+	public static NodeGraph selectRandomNode(List<NodeGraph> nodes) {
+		return nodes.get(random.nextInt(nodes.size()));
 	}
 }
