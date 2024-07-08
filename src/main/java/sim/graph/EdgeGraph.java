@@ -10,7 +10,9 @@
  */
 package sim.graph;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -30,12 +32,13 @@ import sim.util.geo.MasonGeometry;
 public class EdgeGraph extends Edge {
 
 	protected int edgeID;
-	public int regionID = -1;
+	protected int regionID = -1;
 	protected MasonGeometry masonGeometry;
 	private final LineString line; // line that corresponds to this edge
 
 	private NodeGraph fromNode;
 	private NodeGraph toNode;
+	private List<NodeGraph> nodes = new ArrayList<NodeGraph>();
 	protected NodeGraph dualNode;
 	private final Coordinate centroidCoords;
 	private final Double length;
@@ -120,12 +123,33 @@ public class EdgeGraph extends Edge {
 	public void setNodes(final NodeGraph fromNode, final NodeGraph toNode) {
 		this.fromNode = fromNode;
 		this.toNode = toNode;
+		nodes.add(fromNode);
+		nodes.add(toNode);
 	}
 
+	/**
+	 * Retrieves the list of nodes in the graph.
+	 *
+	 * @return a list of nodes in the graph
+	 */
+	public List<NodeGraph> getNodes() {
+		return nodes;
+	}
+
+	/**
+	 * Retrieves the starting node of the edge.
+	 *
+	 * @return the starting node of the edge
+	 */
 	public NodeGraph getFromNode() {
 		return fromNode;
 	}
 
+	/**
+	 * Retrieves the ending node of the edge.
+	 *
+	 * @return the ending node of the edge
+	 */
 	public NodeGraph getToNode() {
 		return toNode;
 	}
@@ -144,10 +168,34 @@ public class EdgeGraph extends Edge {
 	 *
 	 * @return The ID of this edge.
 	 */
-	public Integer getID() {
+	public int getID() {
 		return this.edgeID;
 	}
 
+	/**
+	 * Sets the ID of the edge's region.
+	 *
+	 * @param The ID to set for the edge's region.
+	 * @return
+	 */
+	public void setRegionID(int regionID) {
+		this.regionID = regionID;
+	}
+
+	/**
+	 * Gets the ID of the region of this edge.
+	 *
+	 * @return The ID of the region of this edge.
+	 */
+	public int getRegionID() {
+		return this.regionID;
+	}
+
+	/**
+	 * Sets the dual node to the specified centroid.
+	 *
+	 * @param centroid the node to be set as the dual node
+	 */
 	public void setDualNode(NodeGraph centroid) {
 		dualNode = centroid;
 	}
