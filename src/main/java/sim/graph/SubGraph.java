@@ -37,7 +37,6 @@ public class SubGraph extends Graph {
 
 	private final SubGraphNodesMap subGraphNodesMap = new SubGraphNodesMap();
 	private final SubGraphEdgesMap subGraphEdgesMap = new SubGraphEdgesMap();
-	Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
 
 	/**
 	 * Constructs a subgraph from a parent graph by copying a specified list of
@@ -45,10 +44,10 @@ public class SubGraph extends Graph {
 	 *
 	 * @param graph The graph from which to copy edges and nodes;
 	 */
-	public SubGraph(Graph graph) {
-		this.edgesGraph = graph.getEdges();
-		this.nodesGraph = graph.getNodes();
-		for (NodeGraph node : this.nodesGraph)
+	public SubGraph(Graph parentGraph) {
+		edgesGraph = parentGraph.getEdges();
+		nodesGraph = parentGraph.getNodes();
+		for (NodeGraph node : nodesGraph)
 			node.setNeighbouringComponents();
 		generateAdjacencyMatrix();
 	}
@@ -60,9 +59,9 @@ public class SubGraph extends Graph {
 	 * @param edges The list of edges to be included in the subgraph.
 	 */
 	public SubGraph(List<EdgeGraph> edges) {
-		for (final EdgeGraph edge : edges)
+		for (EdgeGraph edge : edges)
 			addFromParentGraph(edge);
-		for (final NodeGraph node : nodesGraph)
+		for (NodeGraph node : nodesGraph)
 			node.setNeighbouringComponents();
 		generateAdjacencyMatrix();
 	}
@@ -197,6 +196,12 @@ public class SubGraph extends Graph {
 		}
 	}
 
+	public void updateSubGraph() {
+		for (NodeGraph node : nodesGraph)
+			node.setNeighbouringComponents();
+		generateAdjacencyMatrix();
+	}
+
 	/**
 	 * Retrieves the parent node corresponding to the provided child node.
 	 *
@@ -328,9 +333,9 @@ public class SubGraph extends Graph {
 	 * @return A List of child edges corresponding to the provided parent edges.
 	 */
 	public List<EdgeGraph> getChildEdges(List<EdgeGraph> parentEdges) {
-		final List<EdgeGraph> childEdges = new ArrayList<>();
-		for (final EdgeGraph parent : parentEdges) {
-			final EdgeGraph child = subGraphEdgesMap.findChild(parent);
+		List<EdgeGraph> childEdges = new ArrayList<>();
+		for (EdgeGraph parent : parentEdges) {
+			EdgeGraph child = subGraphEdgesMap.findChild(parent);
 			if (child != null)
 				childEdges.add(child);
 		}
@@ -355,9 +360,10 @@ public class SubGraph extends Graph {
 		childNode.regionID = parentNode.regionID;
 
 		// for primalGraph only
-		childNode.visibleBuildings2d = parentNode.visibleBuildings2d;
+//		childNode.visibleBuildings2d = parentNode.visibleBuildings2d;
 		childNode.adjacentBuildings = parentNode.adjacentBuildings;
 		childNode.visibleBuildings3d = parentNode.visibleBuildings3d;
+		// TODO
 		childNode.adjacentRegions = parentNode.adjacentRegions;
 		childNode.DMA = parentNode.DMA;
 
@@ -395,10 +401,11 @@ public class SubGraph extends Graph {
 	 * in descending order and stored as the subgraph's centrality map.
 	 */
 	public void generateSubGraphCentralityMap() {
-		final Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
-		final List<NodeGraph> nodes = nodesGraph;
-		for (final NodeGraph node : nodes) {
-			final NodeGraph parentNode = getParentNode(node);
+
+		Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
+		List<NodeGraph> nodes = nodesGraph;
+		for (NodeGraph node : nodes) {
+			NodeGraph parentNode = getParentNode(node);
 			if (parentNode.centrality == Double.MAX_VALUE)
 				return;
 			centralityMap.put(node, parentNode.centrality);
@@ -429,12 +436,13 @@ public class SubGraph extends Graph {
 
 		if (filteredMap.isEmpty() || filteredMap == null)
 			return null;
-		final Map<NodeGraph, Double> parentMap = new HashMap<>();
+		Map<NodeGraph, Double> parentMap = new HashMap<>();
 
-		for (final Map.Entry<NodeGraph, Double> entry : filteredMap.entrySet()) {
-			final NodeGraph parentNode = this.getParentNode(entry.getKey());
+		for (Map.Entry<NodeGraph, Double> entry : filteredMap.entrySet()) {
+			NodeGraph parentNode = this.getParentNode(entry.getKey());
 			parentMap.put(parentNode, entry.getValue());
 		}
 		return parentMap;
 	}
+
 }
