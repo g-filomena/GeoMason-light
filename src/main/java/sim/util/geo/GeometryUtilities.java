@@ -12,7 +12,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import sim.display.Display2D;
 import sim.field.geo.GridLayer;
@@ -20,6 +22,8 @@ import sim.field.geo.Layer;
 import sim.portrayal.DrawInfo2D;
 
 public class GeometryUtilities {
+
+	GeometryFactory geomFactory = new GeometryFactory();
 
 	/**
 	 * Determines the affine transform which converts world coordinates into screen
@@ -152,4 +156,16 @@ public class GeometryUtilities {
 		}
 		return false;
 	}
+
+	/**
+	 * Computes the Euclidean distance between two locations
+	 *
+	 * @param originCoord      the origin location;
+	 * @param destinationCoord the destination;
+	 */
+	public static double euclideanDistance(Coordinate originCoord, Coordinate destinationCoord) {
+		return Math.sqrt(
+				Math.pow(originCoord.x - destinationCoord.x, 2) + Math.pow(originCoord.y - destinationCoord.y, 2));
+	}
+
 }
