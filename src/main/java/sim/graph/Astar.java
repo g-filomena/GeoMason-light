@@ -12,7 +12,6 @@ import java.util.Set;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.planargraph.DirectedEdge;
 
-import pedSim.cognitiveMap.CommunityCognitiveMap;
 import pedSim.dijkstra.NodeWrapper;
 import pedSim.routeChoice.Route;
 import sim.util.geo.GeometryUtilities;
@@ -25,11 +24,13 @@ public class Astar {
 	 *
 	 * @param originNode      the starting node for the route
 	 * @param destinationNode the destination node for the route
+	 * @param graph           the graph on which to calculate the route
 	 * @param edgesToAvoid    a set of edges to avoid during route calculation
 	 * @return a Route object representing the shortest path from originNode to
 	 *         destinationNode, or null if no path is found
 	 */
-	public static Route astarRoute(NodeGraph originNode, NodeGraph destinationNode, Set<EdgeGraph> edgesToAvoid) {
+	public static Route astarRoute(NodeGraph originNode, NodeGraph destinationNode, Graph graph,
+			Set<EdgeGraph> edgesToAvoid) {
 
 		if (edgesToAvoid == null)
 			edgesToAvoid = new HashSet<>();
@@ -68,8 +69,7 @@ public class Astar {
 
 				if (tentativeGx < nextNodeWrapper.gx) {
 					nextNodeWrapper.previousWrapper = currentNodeWrapper;
-					nextNodeWrapper.directedEdgeFrom = CommunityCognitiveMap.getNetwork()
-							.getDirectedEdgeBetween(currentNode, otherNode);
+					nextNodeWrapper.directedEdgeFrom = graph.getDirectedEdgeBetween(currentNode, otherNode);
 					nextNodeWrapper.gx = tentativeGx;
 					nextNodeWrapper.hx = heuristic(otherNode, destinationNode); // Update hx value
 					nextNodeWrapper.fx = tentativeGx + nextNodeWrapper.hx;
