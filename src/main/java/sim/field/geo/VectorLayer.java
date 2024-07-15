@@ -227,12 +227,11 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Moves the centroid of the given geometry to the provided point. The spatial
-	 * index is not notified of the geometry changes. It is strongly recommended
-	 * that updateSpatialIndex() be invoked after all geometry position changes.
+	 * Sets the geometry location of the given MasonGeometry to a new location and
+	 * updates the spatial index.
 	 *
-	 * @param masonGeometry The geometry to move.
-	 * @param coordsFilter  The coordinate sequence filter.
+	 * @param masonGeometry the MasonGeometry object to update
+	 * @param newLocation   the new location to set for the MasonGeometry
 	 */
 	public void setGeometryLocation(MasonGeometry masonGeometry, Point newLocation) {
 		MasonGeometry otherMasonGeometry = findGeometry(masonGeometry);
@@ -878,4 +877,5 @@ public class VectorLayer extends Layer {
 			clipEnvelope = new Envelope(p1.getX(), p2.getX(), p1.getY(), p2.getY());
 		}
 	}
+
 }
