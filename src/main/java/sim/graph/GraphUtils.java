@@ -30,7 +30,6 @@ import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.operation.union.UnaryUnionOp;
-import org.locationtech.jts.planargraph.DirectedEdge;
 
 import sim.field.geo.VectorLayer;
 import sim.util.geo.GeometryUtilities;
@@ -200,47 +199,6 @@ public class GraphUtils {
 		final Coordinate[] coords = { node.getCoordinate(), otherNode.getCoordinate() };
 		final LineString line = new GeometryFactory().createLineString(coords);
 		return line;
-	}
-
-	/**
-	 * Given two centroids (nodes in the dual graph), identifies their shared
-	 * junction (i.e., the junction shared by the corresponding primal segments).
-	 *
-	 * @param centroid      A dual node.
-	 * @param otherCentroid Another dual node.
-	 * @return The common primal junction node.
-	 */
-	public static NodeGraph getPrimalJunction(NodeGraph centroid, NodeGraph otherCentroid) {
-
-		EdgeGraph edge = centroid.getPrimalEdge();
-		EdgeGraph otherEdge = otherCentroid.getPrimalEdge();
-
-		if (edge.getFromNode().equals(otherEdge.getFromNode()) || edge.getFromNode().equals(otherEdge.getToNode()))
-			return edge.getFromNode();
-		else if (edge.getToNode().equals(otherEdge.getFromNode()) || edge.getToNode().equals(otherEdge.getToNode()))
-			return edge.getToNode();
-		else
-			return null;
-	}
-
-	/**
-	 * Identifies the previous junction traversed in a dual graph path to avoid
-	 * traversing an unnecessary segment in the primal graph.
-	 *
-	 * @param sequenceDirectedEdges A sequence of GeomPlanarGraphDirectedEdge
-	 *                              representing the path.
-	 * @return The previous junction node.
-	 */
-	public static NodeGraph previousJunction(List<DirectedEdge> sequenceDirectedEdges) {
-
-		if (sequenceDirectedEdges.size() == 1)
-			return (NodeGraph) sequenceDirectedEdges.get(0).getFromNode();
-
-		int ixLast = sequenceDirectedEdges.size() - 1;
-		int ixBeforeLast = sequenceDirectedEdges.size() - 2;
-		NodeGraph lastCentroid = ((EdgeGraph) sequenceDirectedEdges.get(ixLast).getEdge()).getDualNode();
-		NodeGraph otherCentroid = ((EdgeGraph) sequenceDirectedEdges.get(ixBeforeLast).getEdge()).getDualNode();
-		return GraphUtils.getPrimalJunction(lastCentroid, otherCentroid);
 	}
 
 	/**
