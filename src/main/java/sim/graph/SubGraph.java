@@ -42,7 +42,7 @@ public class SubGraph extends Graph {
 	 * Constructs a subgraph from a parent graph by copying a specified list of
 	 * edges.
 	 *
-	 * @param graph The graph from which to copy edges and nodes;
+	 * @param parentGraph The graph from which to copy edges and nodes;
 	 */
 	public SubGraph(Graph parentGraph) {
 		edgesGraph = parentGraph.getEdges();
