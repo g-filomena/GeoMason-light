@@ -50,6 +50,19 @@ public class NodesLookup {
 	}
 
 	/**
+	 * Returns a randomly selected node from a specified list of NodedGraph
+	 * elements.
+	 *
+	 * @param nodes The list of nodes.
+	 * @return A NodeGraph object randomly selected from the given list.
+	 */
+	public static NodeGraph randomNodeFromList(List<NodeGraph> nodes) {
+
+		int randomInt = random.nextInt(nodes.size());
+		return nodes.get(randomInt);
+	}
+
+	/**
 	 * Returns a randomly selected node from a specified list of node geometries
 	 * within a graph. This method allows for the random selection of nodes that
 	 * meet certain spatial criteria represented by the node geometries.
@@ -59,10 +72,10 @@ public class NodesLookup {
 	 *                        node locations.
 	 * @return A NodeGraph object randomly selected from the specified geometries.
 	 */
-	public static NodeGraph randomNodeFromList(List<NodeGraph> nodes) {
-
-		int randomInt = random.nextInt(nodes.size());
-		return nodes.get(randomInt);
+	public static NodeGraph randomNodeFromGeometriest(Graph graph, List<MasonGeometry> nodesGeometries) {
+		Integer randomInt = random.nextInt(nodesGeometries.size());
+		MasonGeometry geoNode = nodesGeometries.get(randomInt);
+		return graph.findNode(geoNode.geometry.getCoordinate());
 	}
 
 	/**
