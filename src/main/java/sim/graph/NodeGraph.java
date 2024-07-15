@@ -86,7 +86,7 @@ public class NodeGraph extends Node {
 	/**
 	 * Sets the ID of the node's region.
 	 *
-	 * @param The ID to set for the node's region.
+	 * @param regionID The ID to set for the node's region.
 	 */
 	public void setRegionID(int regionID) {
 		this.regionID = regionID;
