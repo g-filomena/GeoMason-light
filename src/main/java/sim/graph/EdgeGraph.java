@@ -175,8 +175,7 @@ public class EdgeGraph extends Edge {
 	/**
 	 * Sets the ID of the edge's region.
 	 *
-	 * @param The ID to set for the edge's region.
-	 * @return
+	 * @param regionID The ID to set for the edge's region.
 	 */
 	public void setRegionID(int regionID) {
 		this.regionID = regionID;
