@@ -12,7 +12,8 @@ import java.util.Stack;
 
 import org.javatuples.Pair;
 
-import pedSim.routeChoice.Route;
+import sim.routing.Astar;
+import sim.routing.Route;
 
 public class Islands {
 
@@ -147,25 +148,4 @@ public class Islands {
 								node -> otherIsland.stream().map(otherNode -> graph.getEdgeBetween(node, otherNode)))))
 				.filter(Objects::nonNull).findAny().orElse(null);
 	}
-
-//	public static Set<EdgeGraph> findNecessaryEdges(Set<EdgeGraph> edges, Set<NodeGraph> nodesToPreserve) {
-//
-//		Set<NodeGraph> allNodes = new HashSet<>(
-//				edges.stream().flatMap(edge -> edge.getNodes().stream()).collect(Collectors.toSet()));
-//		Set<EdgeGraph> newEdges = new HashSet<>(
-//				allNodes.stream().flatMap(node -> node.getEdges().stream()).collect(Collectors.toSet()));
-//
-//		Map<NodeGraph, Integer> nodeDegrees = new HashMap<>();
-//		newEdges.stream().flatMap(edge -> edge.getNodes().stream())
-//				.forEach(node -> nodeDegrees.put(node, nodeDegrees.getOrDefault(node, 0) + 1));
-//
-//		newEdges.stream().filter(edge -> {
-//			Set<NodeGraph> nodes = new HashSet<>(edge.getNodes());
-//			return nodes.stream()
-//					.noneMatch(node -> nodeDegrees.getOrDefault(node, 0) == 1 && !nodesToPreserve.contains(node));
-//		}).collect(Collectors.toList());
-//
-//		return newEdges;
-//	}
-
 }
