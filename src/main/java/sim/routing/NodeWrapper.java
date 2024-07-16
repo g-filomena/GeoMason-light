@@ -36,12 +36,4 @@ public class NodeWrapper {
 		nodeLandmarkness = 0.0;
 		pathLandmarkness = 0.0;
 	}
-
-	public void reset() {
-		gx = Double.MAX_VALUE;
-		fx = Double.MAX_VALUE;
-		hx = 0.0;
-		previousWrapper = null;
-		directedEdgeFrom = null;
-	}
 }
