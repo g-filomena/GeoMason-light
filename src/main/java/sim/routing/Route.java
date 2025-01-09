@@ -3,11 +3,14 @@ package sim.routing;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.planargraph.DirectedEdge;
@@ -30,11 +33,14 @@ public class Route {
 	public List<NodeGraph> nodesSequence = new ArrayList<>();
 	public List<EdgeGraph> edgesSequence = new ArrayList<>();
 	public List<NodeGraph> dualNodesSequence = new ArrayList<>();
-	public List<Geometry> visibleSpaces = new ArrayList<>();
-
 	public LineString lineString;
 
+	public Map<String, Object> attributes = new HashMap<>();
+
 	private final static GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
+
+	public Set<NodeGraph> visitedLocations = new HashSet<>();
+	public boolean social = false;
 
 	public Route() {
 
