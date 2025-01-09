@@ -39,17 +39,24 @@ public class Islands {
 	 * @return a list of sets, each representing a disconnected island of nodes
 	 */
 	public List<Set<NodeGraph>> findDisconnectedIslands(Set<EdgeGraph> edges) {
-
 		Set<NodeGraph> nodes = new HashSet<>(GraphUtils.nodesFromEdges(edges));
 		this.visitedNodes = new HashSet<>();
 		islands.clear();
-		for (NodeGraph currentNode : nodes) {
+
+		nodes.parallelStream().forEach(currentNode -> {
 			if (!visitedNodes.contains(currentNode)) {
-				Set<NodeGraph> currentIsland = new HashSet<>();
-				dfs(currentNode, currentIsland, nodes, edges);
-				islands.add(currentIsland);
+				synchronized (visitedNodes) { // Ensure thread-safe updates
+					if (!visitedNodes.contains(currentNode)) {
+						Set<NodeGraph> currentIsland = new HashSet<>();
+						dfs(currentNode, currentIsland, nodes, edges);
+						synchronized (islands) {
+							islands.add(currentIsland);
+						}
+					}
+				}
 			}
-		}
+		});
+
 		return islands;
 	}
 
@@ -122,9 +129,8 @@ public class Islands {
 	 *         the second node
 	 */
 	private Map.Entry<Pair<NodeGraph, NodeGraph>, Set<NodeGraph>> findClosestPairAcrossAllIslands() {
-
-		return islands.stream()
-				.flatMap(island -> islands.stream().filter(otherIsland -> island != otherIsland)
+		return islands.parallelStream()
+				.flatMap(island -> islands.parallelStream().filter(otherIsland -> island != otherIsland)
 						.flatMap(otherIsland -> island.stream().flatMap(node -> otherIsland.stream().map(
 								otherNode -> new AbstractMap.SimpleEntry<>(new Pair<>(node, otherNode), otherIsland)))))
 				.min(Comparator.comparingDouble(
