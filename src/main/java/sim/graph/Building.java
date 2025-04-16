@@ -33,7 +33,7 @@ public class Building {
 	public String landUse; // Classification of land use for the building
 	public MasonGeometry geometry; // Geographic geometry representing the building
 	public NodeGraph node; // Associated node in a graph (if applicable)
-	public String DMA; // Urban DMA categorisation
 
 	public Map<String, AttributeValue> attributes = new HashMap<>();
+	public String DMA;
 }
