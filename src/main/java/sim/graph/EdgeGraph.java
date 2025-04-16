@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
@@ -279,4 +280,23 @@ public class EdgeGraph extends Edge {
 		else
 			return null;
 	}
+
+	private final AtomicInteger agentCount = new AtomicInteger(0);
+
+	public void incrementAgentCount() {
+		agentCount.incrementAndGet();
+	}
+
+	public void decrementAgentCount() {
+		agentCount.decrementAndGet();
+	}
+
+	public int getAgentCount() {
+		return agentCount.get();
+	}
+
+	public void resetAgentCount() {
+		agentCount.set(0);
+	}
+
 }
