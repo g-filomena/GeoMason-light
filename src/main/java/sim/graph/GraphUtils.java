@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -26,18 +27,13 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.operation.union.UnaryUnionOp;
 
-import sim.field.geo.VectorLayer;
 import sim.util.geo.GeometryUtilities;
-import sim.util.geo.MasonGeometry;
 
 /**
- * The `GraphUtils` class provides utility methods for working {@link NodeGraph}
- * objects.
+ * The `GraphUtils` class provides utility methods for working {@link NodeGraph} objects.
  */
 public class GraphUtils {
 
@@ -72,11 +68,9 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Calculates the minimum enclosing circle (smallest circle that completely
-	 * encloses a collection of nodes).
+	 * Calculates the minimum enclosing circle (smallest circle that completely encloses a collection of nodes).
 	 *
-	 * @param nodes The collection of nodes for which to calculate the enclosing
-	 *              circle.
+	 * @param nodes The collection of nodes for which to calculate the enclosing circle.
 	 * @return A geometry representing the minimum enclosing circle.
 	 */
 	public static Geometry smallestEnclosingGeometryBetweenNodes(List<NodeGraph> nodes) {
@@ -90,12 +84,10 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Calculates the convex hull from a list of nodes using Andrew's monotone chain
-	 * algorithm.
+	 * Calculates the convex hull from a list of nodes using Andrew's monotone chain algorithm.
 	 *
 	 * @param nodes The list of nodes to compute the convex hull from.
-	 * @return The convex hull polygon as a Geometry object, or null if there are
-	 *         fewer than 3 nodes.
+	 * @return The convex hull polygon as a Geometry object, or null if there are fewer than 3 nodes.
 	 */
 	private static Geometry convexHullFromNodes(List<NodeGraph> nodes) {
 
@@ -144,15 +136,13 @@ public class GraphUtils {
 	/**
 	 * Determines if three nodes form a counter-clockwise turn.
 	 *
-	 * This method uses the cross product of vectors to determine the relative
-	 * orientation of three points (nodes). It returns true if the points form a
-	 * counter-clockwise turn, and false otherwise.
+	 * This method uses the cross product of vectors to determine the relative orientation of three points (nodes). It
+	 * returns true if the points form a counter-clockwise turn, and false otherwise.
 	 *
 	 * @param a The first node.
 	 * @param b The second node.
 	 * @param c The third node.
-	 * @return true if the nodes a, b, and c form a counter-clockwise turn, false
-	 *         otherwise.
+	 * @return true if the nodes a, b, and c form a counter-clockwise turn, false otherwise.
 	 */
 	private static boolean isCounterClockwise(NodeGraph a, NodeGraph b, NodeGraph c) {
 		Coordinate p1 = a.getCoordinate();
@@ -178,10 +168,8 @@ public class GraphUtils {
 	/**
 	 * Finds the closest node to a target coordinate from a collection of nodes.
 	 *
-	 * @param targetCoordinates The target coordinate to which to find the closest
-	 *                          node.
-	 * @param nodes             The collection of nodes to search for the closest
-	 *                          node.
+	 * @param targetCoordinates The target coordinate to which to find the closest node.
+	 * @param nodes             The collection of nodes to search for the closest node.
 	 * @return The closest node to the target coordinate.
 	 */
 	public static NodeGraph findClosestNode(Coordinate targetCoordinates, Iterable<NodeGraph> nodes) {
@@ -232,6 +220,16 @@ public class GraphUtils {
 	}
 
 	/**
+	 * Retrieves the IDs of a given list of nodes.
+	 *
+	 * @param nodes the list of nodes from which to extract IDs
+	 * @return a list of IDs corresponding to the given nodes
+	 */
+	public static List<Integer> getNodeIDs(Set<NodeGraph> nodes) {
+		return nodes.stream().map(NodeGraph::getID).collect(Collectors.toList());
+	}
+
+	/**
 	 * Retrieves the IDs of a given list of edges.
 	 *
 	 * @param edges the list of edges from which to extract IDs
@@ -242,83 +240,64 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Creates a visibility polygon from one node to another considering
-	 * obstructions and a maximum expansion distance.
+	 * Retrieves the IDs of a given list of edges.
 	 *
-	 * @param fromNode             the starting node of the visibility polygon
-	 * @param toNode               the destination node of the visibility polygon
-	 * @param visibilityAngle      the angle of visibility in degrees
-	 * @param obstructions         a layer containing potential obstructions to
-	 *                             visibility
-	 * @param maxExpansionDistance the maximum distance the visibility polygon can
-	 *                             expand
-	 * @return a Polygon representing the visibility area from the starting node to
-	 *         the destination node
+	 * @param edges the list of edges from which to extract IDs
+	 * @return a list of IDs corresponding to the given edges
 	 */
-	public static Polygon createVisibilityPolygon(NodeGraph fromNode, NodeGraph toNode, Double visibilityAngle,
-			VectorLayer obstructions, double maxExpansionDistance) {
+	public static List<Integer> getEdgeIDs(Set<EdgeGraph> edges) {
+		return edges.stream().map(EdgeGraph::getID).collect(Collectors.toList());
+	}
 
-		Coordinate fromCoordinates = fromNode.getCoordinate();
-		Coordinate toCoordinates = toNode.getCoordinate();
+	/**
+	 * Retrieves nodes from a list of node IDs using a provided map.
+	 *
+	 * @param nodeIDs A list of node IDs.
+	 * @param map     The map to retrieve nodes from.
+	 * @return A list of nodes corresponding to the given node IDs.
+	 */
+	public static List<NodeGraph> getNodesFromNodeIDs(List<Integer> nodeIDs, Map<Integer, NodeGraph> map) {
+		return nodeIDs.stream().map(map::get) // Retrieve NodeGraph from the map
+				.filter(Objects::nonNull) // Ignore null values
+				.collect(Collectors.toList());
+	}
 
-		Pair<Coordinate, Coordinate> pair = new Pair<>(fromCoordinates, toCoordinates);
+	/**
+	 * Retrieves edges from a list of edge IDs using a provided map.
+	 *
+	 * @param edgeIDs A list of edge IDs.
+	 * @param map     The map to retrieve edges from.
+	 * @return A list of edges corresponding to the given edge IDs.
+	 */
+	public static List<EdgeGraph> getEdgesFromEdgeIDs(List<Integer> edgeIDs, Map<Integer, EdgeGraph> map) {
+		return edgeIDs.stream().map(map::get) // Retrieve EdgeGraph from the map
+				.filter(Objects::nonNull) // Ignore null values
+				.collect(Collectors.toList());
+	}
 
-		if (visibilityPolygonsCache.containsKey(pair))
-			return visibilityPolygonsCache.get(pair);
+	/**
+	 * Retrieves nodes from a set of node IDs using a provided map.
+	 *
+	 * @param nodeIDs A set of node IDs.
+	 * @param map     The map to retrieve nodes from.
+	 * @return A list of nodes corresponding to the given node IDs.
+	 */
+	public static List<NodeGraph> getNodesFromNodeIDs(Set<Integer> nodeIDs, Map<Integer, NodeGraph> map) {
+		return nodeIDs.stream().map(map::get) // Retrieve NodeGraph from the map
+				.filter(Objects::nonNull) // Ignore null values
+				.collect(Collectors.toList());
+	}
 
-		double edgeAngle = Math.toDegrees(Math.atan2(toCoordinates.getY() - fromCoordinates.getY(),
-				toCoordinates.getX() - fromCoordinates.getX()));
-		List<Coordinate> coords = new ArrayList<>();
-
-		int visibilityLimit = (int) (visibilityAngle / 2.0);
-		for (int i = -visibilityLimit; i <= visibilityLimit; i += DISTANCE_ALONG_VISIBILITY) {
-			double angle = Math.toRadians(edgeAngle + i);
-			double x = toCoordinates.getX() + maxExpansionDistance * Math.cos(angle);
-			double y = toCoordinates.getY() + maxExpansionDistance * Math.sin(angle);
-			coords.add(new Coordinate(x, y));
-		}
-
-		List<LineString> lines = new ArrayList<>();
-		for (Coordinate coord : coords)
-			lines.add(GEOMETRY_FACTORY.createLineString(new Coordinate[] { toNode.getCoordinate(), coord }));
-
-		Geometry toNodeGeometry = toNode.getMasonGeometry().geometry;
-		Geometry buffer = toNodeGeometry.buffer(maxExpansionDistance);
-		List<MasonGeometry> possibleMatches = obstructions.containedFeatures(buffer);
-		List<Geometry> obstacles = new ArrayList<>();
-
-		possibleMatches.stream().map(masonGeometry -> masonGeometry.geometry)
-				.filter(geometry -> lines.stream()
-						.anyMatch(line -> geometry.crosses(line) && !geometry.touches(toNodeGeometry)))
-				.forEach(obstacles::add);
-
-		List<LineString> clippedLines = new ArrayList<>();
-		if (!obstacles.isEmpty()) {
-			Geometry unionObstacles = UnaryUnionOp.union(obstacles);
-
-			for (LineString line : lines) {
-				Geometry intersection = line.intersection(unionObstacles);
-				if (!intersection.isEmpty()) {
-
-					Coordinate[] intersectionCoords = intersection instanceof MultiLineString
-							? intersection.getCoordinates()
-							: new Coordinate[] { intersection.getCoordinate() };
-					clippedLines.add(GEOMETRY_FACTORY
-							.createLineString(new Coordinate[] { toNode.getCoordinate(), intersectionCoords[0] }));
-				} else
-					clippedLines.add(line);
-			}
-		} else
-			clippedLines = lines;
-
-		List<Coordinate> polyCoords = new ArrayList<>();
-		polyCoords.add(toNode.getCoordinate());
-		clippedLines.forEach(line -> polyCoords.add(line.getCoordinateN(1)));
-		polyCoords.add(toNode.getCoordinate());
-
-		Polygon visibilityCone = GEOMETRY_FACTORY.createPolygon(polyCoords.toArray(new Coordinate[0]));
-//		Polygon visibilityCone = (Polygon) poly.difference(UnaryUnionOp.union(obstacles));
-		visibilityPolygonsCache.put(pair, visibilityCone);
-		return visibilityCone;
+	/**
+	 * Retrieves edges from a set of edge IDs using a provided map.
+	 *
+	 * @param edgeIDs A set of edge IDs.
+	 * @param map     The map to retrieve edges from.
+	 * @return A list of edges corresponding to the given edge IDs.
+	 */
+	public static List<EdgeGraph> getEdgesFromEdgeIDs(Set<Integer> edgeIDs, Map<Integer, EdgeGraph> map) {
+		return edgeIDs.stream().map(map::get) // Retrieve EdgeGraph from the map
+				.filter(Objects::nonNull) // Ignore null values
+				.collect(Collectors.toList());
 	}
 }
