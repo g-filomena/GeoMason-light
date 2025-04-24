@@ -22,8 +22,7 @@ public class Islands {
 	List<Set<NodeGraph>> islands = new ArrayList<>();
 
 	/**
-	 * Constructs an Islands object for finding and merging disconnected islands in
-	 * the given graph.
+	 * Constructs an Islands object for finding and merging disconnected islands in the given graph.
 	 *
 	 * @param graph the graph to analyze for islands
 	 */
@@ -32,8 +31,7 @@ public class Islands {
 	}
 
 	/**
-	 * Finds and returns a list of sets, where each set contains nodes that form a
-	 * disconnected island in the graph.
+	 * Finds and returns a list of sets, where each set contains nodes that form a disconnected island in the graph.
 	 *
 	 * @param edges the set of edges to consider when finding disconnected islands
 	 * @return a list of sets, each representing a disconnected island of nodes
@@ -61,12 +59,10 @@ public class Islands {
 	}
 
 	/**
-	 * Performs a depth-first search (DFS) to explore and mark all nodes connected
-	 * to the given node.
+	 * Performs a depth-first search (DFS) to explore and mark all nodes connected to the given node.
 	 *
 	 * @param node          the starting node for the DFS
-	 * @param currentIsland the set to store nodes that are part of the current
-	 *                      island
+	 * @param currentIsland the set to store nodes that are part of the current island
 	 * @param nodes         the set of all nodes to consider in the DFS
 	 * @param edges         the set of edges to consider in the DFS
 	 */
@@ -91,8 +87,7 @@ public class Islands {
 	}
 
 	/**
-	 * Merges disconnected islands in the graph by adding edges to connect them,
-	 * ensuring all nodes are connected.
+	 * Merges disconnected islands in the graph by adding edges to connect them, ensuring all nodes are connected.
 	 *
 	 * @param edges the set of edges to consider when merging islands
 	 * @return the updated set of edges with added bridges to connect islands
@@ -103,7 +98,7 @@ public class Islands {
 		islands = findDisconnectedIslands(edges);
 		if (islands.size() == 1)
 			return edges;
-
+		Astar aStar = new Astar();
 		// Connect the remaining islands purely based on distance
 		while (islands.size() > 1) {
 			EdgeGraph connectingEdge = findConnectingBridge(islands, graph);
@@ -112,7 +107,8 @@ public class Islands {
 			else {
 				Map.Entry<Pair<NodeGraph, NodeGraph>, Set<NodeGraph>> closestPairWithIsland = findClosestPairAcrossAllIslands();
 				Pair<NodeGraph, NodeGraph> closestNodes = closestPairWithIsland.getKey();
-				Route route = Astar.astarRoute(closestNodes.getValue0(), closestNodes.getValue1(), graph, null);
+
+				Route route = aStar.astarRoute(closestNodes.getValue0(), closestNodes.getValue1(), graph, null);
 				bridges.addAll(route.edgesSequence);
 			}
 			edges.addAll(bridges);
@@ -122,11 +118,9 @@ public class Islands {
 	}
 
 	/**
-	 * Finds the closest pair of nodes across all islands and returns the pair along
-	 * with the island of the second node.
+	 * Finds the closest pair of nodes across all islands and returns the pair along with the island of the second node.
 	 *
-	 * @return a map entry containing the closest pair of nodes and the island of
-	 *         the second node
+	 * @return a map entry containing the closest pair of nodes and the island of the second node
 	 */
 	private Map.Entry<Pair<NodeGraph, NodeGraph>, Set<NodeGraph>> findClosestPairAcrossAllIslands() {
 		return islands.parallelStream()
@@ -139,11 +133,9 @@ public class Islands {
 	}
 
 	/**
-	 * Finds an edge that can act as a bridge to connect two disconnected islands in
-	 * the graph.
+	 * Finds an edge that can act as a bridge to connect two disconnected islands in the graph.
 	 *
-	 * @param islands the list of sets of nodes representing the disconnected
-	 *                islands
+	 * @param islands the list of sets of nodes representing the disconnected islands
 	 * @param graph   the graph to analyze for potential connecting bridges
 	 * @return an edge that connects two islands, or null if no such edge exists
 	 */
