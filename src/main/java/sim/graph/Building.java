@@ -17,15 +17,12 @@ import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
 /**
- * A class representing building metadata within a geographic information
- * system. Each instance of this class stores information about a building,
- * including its unique identifier, land use classification, geographic
- * geometry, associated node in a graph, local and global landmarkness scores,
- * and a label based on the Urban DMA categorisation.
+ * A class representing building metadata within a geographic information system. Each instance of this class stores
+ * information about a building, including its unique identifier, land use classification, geographic geometry,
+ * associated node in a graph, local and global landmarkness scores, and a label based on the Urban DMA categorisation.
  *
- * This class is used to organize and manage data related to buildings in a
- * geographical context, facilitating various spatial analysis and modeling
- * tasks.
+ * This class is used to organize and manage data related to buildings in a geographical context, facilitating various
+ * spatial analysis and modeling tasks.
  */
 public class Building {
 
@@ -35,5 +32,5 @@ public class Building {
 	public NodeGraph node; // Associated node in a graph (if applicable)
 
 	public Map<String, AttributeValue> attributes = new HashMap<>();
-	public String DMA;
+	public String DMA; // DMA classification: "live", "work", "visit" - or "other"
 }
