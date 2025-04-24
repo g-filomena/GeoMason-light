@@ -16,3 +16,9 @@ Version 1.14
 ------------
 - [Enhancement] Cleaned code; removed/simplified redundant functions. Simplified class SubGraph and added some utilities.
 - [Enhancement] Replaced ArrayList/HashMap with generic types List/Map
+
+Version 1.15
+------------
+- [Enhancement] Allows loading layers from Geopackage files.
+- [Enhancement] Added A* Class.
+- [Enhancement] Added further utilities in GraphUtils.java
