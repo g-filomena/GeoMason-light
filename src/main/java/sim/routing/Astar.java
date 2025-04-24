@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.planargraph.DirectedEdge;
@@ -19,29 +20,31 @@ import sim.util.geo.GeometryUtilities;
 
 public class Astar {
 
+	NodeGraph destinationNode;
+	Set<EdgeGraph> finalEdgesToAvoid;
+
 	/**
-	 * Finds the shortest route between two nodes using the A* algorithm, avoiding
-	 * specified edges.
+	 * Finds the shortest route between two nodes using the A* algorithm, avoiding specified edges.
 	 *
 	 * @param originNode      the starting node for the route
 	 * @param destinationNode the destination node for the route
 	 * @param graph           the graph on which to calculate the route
 	 * @param edgesToAvoid    a set of edges to avoid during route calculation
-	 * @return a Route object representing the shortest path from originNode to
-	 *         destinationNode, or null if no path is found
+	 * @return a Route object representing the shortest path from originNode to destinationNode, or null if no path is
+	 *         found
 	 */
-	public static Route astarRoute(NodeGraph originNode, NodeGraph destinationNode, Graph graph,
-			Set<EdgeGraph> edgesToAvoid) {
+	public Route astarRoute(NodeGraph originNode, NodeGraph destinationNode, Graph graph, Set<EdgeGraph> edgesToAvoid) {
 
 		if (edgesToAvoid == null)
 			edgesToAvoid = new HashSet<>();
+		this.finalEdgesToAvoid = new HashSet<>(edgesToAvoid);
 
 		// Data structures for A* algorithm
 		Map<NodeGraph, NodeWrapper> nodeWrappersMap = new HashMap<>();
 		PriorityQueue<NodeWrapper> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fx));
 		Set<NodeGraph> closedSet = new HashSet<>();
 
-		// Initialize the origin node wrapper
+		// Initialise the origin node wrapper
 		NodeWrapper originNodeWrapper = getNodeWrapper(originNode, nodeWrappersMap);
 		originNodeWrapper.gx = 0.0;
 		originNodeWrapper.hx = heuristic(originNode, destinationNode);
@@ -57,22 +60,32 @@ public class Astar {
 				return reconstructPath(currentNodeWrapper, originNode, destinationNode);
 			closedSet.add(currentNode);
 
-			for (EdgeGraph edge : currentNode.getEdges()) {
+			List<NodeGraph> adjacentNodes = currentNode.getAdjacentNodes();
+			List<NodeGraph> validNeighbors;
 
-				if (edgesToAvoid.contains(edge))
-					continue;
-				NodeGraph otherNode = edge.getOtherNode(currentNode);
-				if (closedSet.contains(otherNode))
-					continue;
+			validNeighbors = adjacentNodes.stream().filter(targetNode -> {
+				EdgeGraph edge = graph.getEdgeBetween(currentNode, targetNode);
+				return (!finalEdgesToAvoid.contains(edge) && !closedSet.contains(targetNode)); // Exclude disregarded
+																								// nodes
 
-				NodeWrapper nextNodeWrapper = getNodeWrapper(otherNode, nodeWrappersMap);
+			}).collect(Collectors.toList());
+
+			if (validNeighbors.isEmpty())
+				continue;
+
+			if (validNeighbors.isEmpty())
+				continue;
+
+			for (NodeGraph targetNode : validNeighbors) {
+				EdgeGraph edge = graph.getEdgeBetween(currentNode, targetNode);
+				NodeWrapper nextNodeWrapper = getNodeWrapper(targetNode, nodeWrappersMap);
 				double tentativeGx = currentNodeWrapper.gx + edge.getLength();
 
 				if (tentativeGx < nextNodeWrapper.gx) {
 					nextNodeWrapper.previousWrapper = currentNodeWrapper;
-					nextNodeWrapper.directedEdgeFrom = graph.getDirectedEdgeBetween(currentNode, otherNode);
+					nextNodeWrapper.directedEdgeFrom = graph.getDirectedEdgeBetween(currentNode, targetNode);
 					nextNodeWrapper.gx = tentativeGx;
-					nextNodeWrapper.hx = heuristic(otherNode, destinationNode); // Update hx value
+					nextNodeWrapper.hx = heuristic(targetNode, destinationNode); // Update hx value
 					nextNodeWrapper.fx = tentativeGx + nextNodeWrapper.hx;
 
 					// Only add to open set if it's not already there
@@ -90,8 +103,7 @@ public class Astar {
 	}
 
 	/**
-	 * Retrieves the NodeWrapper associated with the given node, creating it if it
-	 * doesn't exist.
+	 * Retrieves the NodeWrapper associated with the given node, creating it if it doesn't exist.
 	 *
 	 * @param node            the node to get the wrapper for
 	 * @param nodeWrappersMap a map storing NodeWrappers for each node
@@ -102,14 +114,12 @@ public class Astar {
 	}
 
 	/**
-	 * Reconstructs the path from the origin node to the destination node based on
-	 * the node wrappers.
+	 * Reconstructs the path from the origin node to the destination node based on the node wrappers.
 	 *
 	 * @param nodeWrapper     the NodeWrapper at the destination node
 	 * @param originNode      the starting node for the route
 	 * @param destinationNode the destination node for the route
-	 * @return a Route object representing the path from originNode to
-	 *         destinationNode
+	 * @return a Route object representing the path from originNode to destinationNode
 	 */
 	private static Route reconstructPath(NodeWrapper nodeWrapper, NodeGraph originNode, NodeGraph destinationNode) {
 
