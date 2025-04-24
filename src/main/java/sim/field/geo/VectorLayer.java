@@ -32,6 +32,7 @@ import org.locationtech.jts.index.quadtree.Quadtree;
 
 import sim.engine.SimState;
 import sim.engine.Steppable;
+import sim.io.geo.GeoPackageImporter;
 import sim.io.geo.ShapeFileImporter;
 import sim.portrayal.DrawInfo2D;
 import sim.util.geo.GeometryUtilities;
@@ -845,6 +846,10 @@ public class VectorLayer extends Layer {
 	 */
 	public static void readShapefile(URL urlShp, URL urlDbf, VectorLayer vectorLayer) throws Exception {
 		ShapeFileImporter.read(urlShp, urlDbf, vectorLayer, MasonGeometry.class);
+	}
+
+	public static void readGPKG(URL urlPkg, VectorLayer vectorLayer) throws Exception {
+		GeoPackageImporter.read(urlPkg, vectorLayer);
 	}
 
 	public Envelope clipEnvelope;
