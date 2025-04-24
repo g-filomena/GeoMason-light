@@ -10,11 +10,12 @@ You can find the original manual of `Geomason` on the [Geomason Site](https://cs
 
 ### Why GeoMason-light?
 #### Content:
-* It includes a `graph` package that supports a way more advanced manipulation of graph components. This allows the users to develop more complex street network-based urban mobility/traffic agent-based models.
+* It includes a `graph` package that supports a way more advanced manipulation of graph components. This allows the users to develop flexible street network-based urban mobility/traffic agent-based models.
 * It explicitly allows the creation of `SubGraphs`.
 * It includes a `VectorLayer` class that allows for more geometric and spatial operations, usually common for GIS VectorLayers.
+* It supports loading GeoPackages through the library [Geopackage](https://github.com/ngageoint/geopackage-java).
 
-#### Support and open software:
+#### Open software:
 * The structure of the repository allows for smoother devleopments and contributions from users, compared both to the MASON and GeoMason source repositories.
 * It is fully mavenised and available on the [Maven Repository](https://mvnrepository.com).
 * It comes with javadoc and sources.
@@ -23,7 +24,7 @@ You can find the original manual of `Geomason` on the [Geomason Site](https://cs
 * It comes without all the heavy examples included in the original geomason.
 * All the code now refers to the last version of Java Topology Suite (JTS).
 
-### Dependencies:
+### Main Dependencies:
 * `mason`
 * `javatuples`
 * `jts`
