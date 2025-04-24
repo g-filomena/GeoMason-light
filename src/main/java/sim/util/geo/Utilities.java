@@ -68,12 +68,9 @@ public class Utilities {
 	public static double fromDistribution(double mean, double sd, String direction) {
 
 		double result = random.nextGaussian() * sd + mean;
-		if (direction != null) {
-			if ((direction.equals("left")) && (result > mean))
+		if (direction != null)
+			if ((direction.equals("left")) && (result > mean) || (direction.equals("right")) && (result < mean))
 				result = mean;
-			if ((direction.equals("right")) && (result < mean))
-				result = mean;
-		}
 		if (result <= 0.00)
 			result = mean;
 		return result;
