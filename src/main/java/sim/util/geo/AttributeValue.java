@@ -119,6 +119,14 @@ public class AttributeValue implements java.io.Serializable {
 		return (Double) getValue();
 	}
 
+	public void setBoolean(boolean value) {
+		setValue(Boolean.valueOf(value));
+	}
+
+	public boolean getBoolean() {
+		return (Boolean) getValue();
+	}
+
 	public void setString(String value) {
 		setValue(value);
 	}
@@ -130,7 +138,7 @@ public class AttributeValue implements java.io.Serializable {
 	public <T> void setArray(ArrayList<T> array) {
 		setValue(array);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> ArrayList<T> getArray() {
 		return (ArrayList<T>) getValue();
