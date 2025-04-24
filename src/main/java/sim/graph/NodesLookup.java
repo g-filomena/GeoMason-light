@@ -19,9 +19,8 @@ import sim.field.geo.VectorLayer;
 import sim.util.geo.MasonGeometry;
 
 /**
- * A class containing functions to identify random nodes within a graph, based
- * on specific criteria such as location, region, and distance. These methods
- * are useful for generating origin and destination nodes for agent-based
+ * A class containing functions to identify random nodes within a graph, based on specific criteria such as location,
+ * region, and distance. These methods are useful for generating origin and destination nodes for agent-based
  * simulations in spatial models.
  */
 public class NodesLookup {
@@ -38,8 +37,8 @@ public class NodesLookup {
 	final static double DISTANCE_MULTIPLIER = 1.50;
 
 	/**
-	 * Returns a randomly selected node from a graph. This method is useful for
-	 * generating random starting or ending points in simulations.
+	 * Returns a randomly selected node from a graph. This method is useful for generating random starting or ending
+	 * points in simulations.
 	 *
 	 * @param graph The graph from which a random node is to be selected.
 	 * @return A randomly chosen NodeGraph object from the graph.
@@ -50,8 +49,7 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from a specified list of NodedGraph
-	 * elements.
+	 * Returns a randomly selected node from a specified list of NodedGraph elements.
 	 *
 	 * @param nodes The list of nodes.
 	 * @return A NodeGraph object randomly selected from the given list.
@@ -63,13 +61,11 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from a specified list of node geometries
-	 * within a graph. This method allows for the random selection of nodes that
-	 * meet certain spatial criteria represented by the node geometries.
+	 * Returns a randomly selected node from a specified list of node geometries within a graph. This method allows for
+	 * the random selection of nodes that meet certain spatial criteria represented by the node geometries.
 	 *
 	 * @param graph           The graph containing the nodes.
-	 * @param nodesGeometries A List of MasonGeometry objects representing specific
-	 *                        node locations.
+	 * @param nodesGeometries A List of MasonGeometry objects representing specific node locations.
 	 * @return A NodeGraph object randomly selected from the specified geometries.
 	 */
 	public static NodeGraph randomNodeFromGeometriest(Graph graph, List<MasonGeometry> nodesGeometries) {
@@ -79,16 +75,14 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from a graph within a specified radius from
-	 * an origin node and outside the origin node's region. This method is used to
-	 * generate nodes that are geographically spread yet regionally distinct from
-	 * the origin.
+	 * Returns a randomly selected node from a graph within a specified radius from an origin node and outside the
+	 * origin node's region. This method is used to generate nodes that are geographically spread yet regionally
+	 * distinct from the origin.
 	 *
 	 * @param graph      The graph from which to select the node.
 	 * @param originNode The origin node serving as the center of the search radius.
 	 * @param radius     The radius within which to search for a suitable node.
-	 * @return A randomly selected NodeGraph object that meets the specified
-	 *         criteria.
+	 * @return A randomly selected NodeGraph object that meets the specified criteria.
 	 */
 	public static NodeGraph randomNodeRegion(Graph graph, NodeGraph originNode, double radius) {
 
@@ -126,15 +120,14 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from a graph whose distance from the origin
-	 * node matches one of the provided distances.
+	 * Returns a randomly selected node from a graph whose distance from the origin node matches one of the provided
+	 * distances.
 	 *
 	 * @param graph      The input graph.
 	 * @param junctions  The vector layer representing junctions.
 	 * @param originNode The origin node.
 	 * @param distances  The list of possible distances used to identify the node.
-	 * @return A randomly selected node that matches the specified distance
-	 *         criteria.
+	 * @return A randomly selected node that matches the specified distance criteria.
 	 */
 	public static NodeGraph randomNodeFromDistancesSet(Graph graph, VectorLayer junctions, NodeGraph originNode,
 			List<Float> distances) {
@@ -165,8 +158,7 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a List of nodes in the graph whose distance from the given node falls
-	 * within the specified range.
+	 * Returns a List of nodes in the graph whose distance from the given node falls within the specified range.
 	 *
 	 * @param graph      The input graph.
 	 * @param node       The reference node.
@@ -184,16 +176,14 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from a graph whose distance from an origin
-	 * node falls within a specified range. This method allows for the selection of
-	 * nodes based on proximity constraints.
+	 * Returns a randomly selected node from a graph whose distance from an origin node falls within a specified range.
+	 * This method allows for the selection of nodes based on proximity constraints.
 	 *
 	 * @param graph      The graph to search within.
 	 * @param originNode The origin node to measure distances from.
 	 * @param lowerLimit The minimum distance from the origin node.
 	 * @param upperLimit The maximum distance from the origin node.
-	 * @return A NodeGraph object randomly selected within the specified distance
-	 *         range.
+	 * @return A NodeGraph object randomly selected within the specified distance range.
 	 */
 	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode, double lowerLimit,
 			double upperLimit) {
@@ -203,8 +193,8 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a List of nodes whose distance from the given node falls within the
-	 * specified range and belong to a different region.
+	 * Returns a List of nodes whose distance from the given node falls within the specified range and belong to a
+	 * different region.
 	 *
 	 * @param graph      The input graph.
 	 * @param node       The reference node.
@@ -220,17 +210,15 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from a graph whose distance from an origin
-	 * node falls within a specified range and belongs to a different region than
-	 * the origin. This method is useful for simulating regional travel or migration
-	 * patterns.
+	 * Returns a randomly selected node from a graph whose distance from an origin node falls within a specified range
+	 * and belongs to a different region than the origin. This method is useful for simulating regional travel or
+	 * migration patterns.
 	 *
 	 * @param graph      The graph to search within.
 	 * @param originNode The origin node to measure distances from.
 	 * @param lowerLimit The minimum distance from the origin node.
 	 * @param upperLimit The maximum distance from the origin node.
-	 * @return A NodeGraph object randomly selected within the specified distance
-	 *         range and different region.
+	 * @return A NodeGraph object randomly selected within the specified distance range and different region.
 	 */
 	public static NodeGraph randomNodeBetweenDistanceIntervalRegion(Graph graph, NodeGraph originNode,
 			double lowerLimit, double upperLimit) {
@@ -240,17 +228,15 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node whose distance from the origin node falls
-	 * within the specified range and has centrality values above or equal to a
-	 * specified percentile.
+	 * Returns a randomly selected node whose distance from the origin node falls within the specified range and has
+	 * centrality values above or equal to a specified percentile.
 	 *
 	 * @param graph      The input graph.
 	 * @param originNode The origin node.
 	 * @param lowerLimit The minimum distance from the origin node.
 	 * @param upperLimit The maximum distance from the origin node.
 	 * @param percentile The percentile used as a threshold for centrality values.
-	 * @return A randomly selected node that satisfies the specified distance and
-	 *         centrality criteria.
+	 * @return A randomly selected node that satisfies the specified distance and centrality criteria.
 	 */
 	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode,
 			double lowerLimit, double upperLimit, double percentile) {
@@ -275,19 +261,18 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a random node from the graph whose distance from the origin node
-	 * falls within a specified range and belongs to a specific category based on
-	 * the DMA label. This method is useful for selecting nodes that are relevant to
-	 * specific activities or functions like living, working, or visiting.
+	 * Returns a random node from the graph whose distance from the origin node falls within a specified range and
+	 * belongs to a specific category based on the DMA label. This method is useful for selecting nodes that are
+	 * relevant to specific activities or functions like living, working, or visiting.
+	 * 
+	 * DMA = Urban Density (D), Mix(M) and Access (A).
 	 *
 	 * @param graph      The graph to search within.
 	 * @param originNode The origin node to measure distances from.
 	 * @param lowerLimit The minimum distance from the origin node.
 	 * @param upperLimit The maximum distance from the origin node.
-	 * @param DMA        The category label (e.g., "live," "work," "visit") or
-	 *                   "random" for any category.
-	 * @return A NodeGraph object randomly selected based on the specified distance
-	 *         and category criteria.
+	 * @param DMA        The category label (e.g., "live," "work," "visit") or "random" for any category.
+	 * @return A NodeGraph object randomly selected based on the specified distance and category criteria.
 	 */
 	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph graph, NodeGraph originNode, double lowerLimit,
 			double upperLimit, String DMA) {
@@ -311,13 +296,14 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from the graph that belongs to a specified
-	 * category ("live," "work," "visit") based on the provided DMA label.
+	 * Returns a randomly selected node from the graph that belongs to a specified category ("live," "work," "visit")
+	 * based on the provided DMA label.
 	 *
+	 * DMA = Urban Density (D), Mix(M) and Access (A).
+	 * 
 	 * @param graph The input graph.
 	 * @param DMA   The desired node category ("live," "work," "visit") or "random".
-	 * @return A randomly selected node from the specified category based on the
-	 *         DMA.
+	 * @return A randomly selected node from the specified category based on the DMA.
 	 */
 	public static NodeGraph randomNodeDMA(Graph graph, String DMA) {
 		List<NodeGraph> candidates = graph.getNodes();
@@ -325,22 +311,49 @@ public class NodesLookup {
 		return selectRandomNode(candidatesDMA);
 	}
 
-	// Function to get candidates based on DMA
+	/**
+	 * Filters a list of nodes based on the specified DMA. - If DMA is "random", returns nodes whose DMA is either
+	 * "work", "visit", or "live". - If DMA is "workOrVisit", returns nodes whose DMA is either "work" or "visit". -
+	 * Otherwise, returns nodes whose DMA exactly matches the given DMA string.
+	 *
+	 * DMA = Urban Density (D), Mix(M) and Access (A).
+	 * 
+	 * @param nodes List of nodes to filter.
+	 * @param DMA   The DMA criterion used for filtering ("random", "workOrVisit", or specific DMA).
+	 * @return A filtered list of nodes matching the DMA criteria.
+	 */
 	public static List<NodeGraph> getCandidatesByDMA(List<NodeGraph> nodes, String DMA) {
 		if (DMA.equals("random")) {
-			List<NodeGraph> filteredNodes = nodes.stream()
+			return nodes.stream()
 					.filter(node -> node.DMA.equals("work") || node.DMA.equals("visit") || node.DMA.equals("live"))
 					.collect(Collectors.toList());
-			return List.of(filteredNodes.get(random.nextInt(filteredNodes.size())));
-		} else
+		} else if (DMA.equals("workOrVisit")) {
+			return nodes.stream().filter(node -> node.DMA.equals("work") || node.DMA.equals("visit"))
+					.collect(Collectors.toList());
+		} else {
 			return nodes.stream().filter(node -> node.DMA.equals(DMA)).collect(Collectors.toList());
+		}
 	}
 
-	// Function to get candidates based on DMA
+	/**
+	 * Retrieves nodes from a graph based on the specified DMA.
+	 *
+	 * DMA = Urban Density (D), Mix(M) and Access (A).
+	 * 
+	 * @param graph The graph containing the nodes to filter.
+	 * @param DMA   The DMA criterion used for filtering ("random", "workOrVisit", or specific DMA).
+	 * @return A filtered list of nodes matching the DMA criteria.
+	 */
 	public static List<NodeGraph> getNodesByDMA(Graph graph, String DMA) {
 		return getCandidatesByDMA(graph.getNodes(), DMA);
 	}
 
+	/**
+	 * Selects and returns a random node from a given list of nodes.
+	 *
+	 * @param nodes List of nodes from which to select randomly.
+	 * @return A randomly selected node from the list.
+	 */
 	public static NodeGraph selectRandomNode(List<NodeGraph> nodes) {
 		return nodes.get(random.nextInt(nodes.size()));
 	}
