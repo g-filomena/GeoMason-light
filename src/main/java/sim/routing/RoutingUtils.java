@@ -12,11 +12,10 @@ import sim.graph.NodeGraph;
 public class RoutingUtils {
 
 	/**
-	 * Identifies the previous junction traversed in a dual graph path to avoid
-	 * traversing an unnecessary segment in the primal graph.
+	 * Identifies the previous junction traversed in a dual graph path to avoid traversing an unnecessary segment in the
+	 * primal graph.
 	 *
-	 * @param sequenceDirectedEdges A sequence of GeomPlanarGraphDirectedEdge
-	 *                              representing the path.
+	 * @param sequenceDirectedEdges A sequence of GeomPlanarGraphDirectedEdge representing the path.
 	 * @return The previous junction node.
 	 */
 	public static NodeGraph getPreviousJunction(List<DirectedEdge> sequenceDirectedEdges) {
@@ -32,8 +31,8 @@ public class RoutingUtils {
 	}
 
 	/**
-	 * Given two centroids (nodes in the dual graph), identifies their shared
-	 * junction (i.e., the junction shared by the corresponding primal segments).
+	 * Given two centroids (nodes in the dual graph), identifies their shared junction (i.e., the junction shared by the
+	 * corresponding primal segments).
 	 *
 	 * @param centroid      A dual node.
 	 * @param otherCentroid Another dual node.
@@ -55,8 +54,7 @@ public class RoutingUtils {
 	/**
 	 * Returns all the primal nodes traversed in a path.
 	 *
-	 * @param directedEdgesSequence A sequence of GeomPlanarGraphDirectedEdge
-	 *                              representing the path.
+	 * @param directedEdgesSequence A sequence of GeomPlanarGraphDirectedEdge representing the path.
 	 * @return A list of primal nodes.
 	 */
 	public static List<NodeGraph> getNodesFromDirectedEdgesSequence(List<DirectedEdge> directedEdgesSequence) {
@@ -76,9 +74,7 @@ public class RoutingUtils {
 	/**
 	 * Returns all the centroids (nodes in the dual graph) traversed in a path.
 	 *
-	 * @param sequenceDirectedEdges A sequence of GeomPlanarGraphDirectedEdge
-	 *                              representing the path.
-	 * @return
+	 * @param sequenceDirectedEdges A sequence of GeomPlanarGraphDirectedEdge representing the path.
 	 * @return A list of centroids (dual nodes).
 	 */
 	public static List<NodeGraph> getCentroidsFromEdgesSequence(List<DirectedEdge> sequenceDirectedEdges) {
