@@ -7,7 +7,7 @@
 
     <groupId>uk.ac.liv.gdsl</groupId>
     <artifactId>GeoMason-light</artifactId>
-    <version>1.15</version>
+    <version>1.1.7</version>
 	
 	<name>${project.groupId}:${project.artifactId}</name>
     <description>
@@ -38,6 +38,14 @@
     </properties>
 
     <dependencies>
+		<!-- GeoMason-light dependency from local installation -->
+        <dependency>
+            <groupId>sim</groupId>
+            <artifactId>mason-21</artifactId>
+            <version>1.16</version>
+            <scope>compile</scope>
+        </dependency>
+	
 		<!-- Commons math3 -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -57,15 +65,6 @@
             <groupId>org.locationtech.jts</groupId>
             <artifactId>jts-core</artifactId>
             <version>1.19.0</version>
-        </dependency>
-
-        <!-- Mason -->
-        <dependency>
-            <groupId>edu.gmu.eclab</groupId>
-            <artifactId>mason</artifactId>
-            <version>21</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/mason-21.jar</systemPath>
         </dependency>
 
 		<!-- Add GeoPackage dependencies -->
@@ -141,17 +140,39 @@
         </snapshotRepository>
 		<repository>
 			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
     </distributionManagement>
 	
 	<build>
 		<plugins>
-		
+				
+			<!-- Exec Maven Plugin to run with external jar -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						<configuration>
+							<classpathScope>compile</classpathScope>
+							<mainClass>pedSim.applet.PedSimCityApplet</mainClass>
+							<classpath>
+								<!-- Add mason-21.jar from the local lib folder -->
+								<path>${project.basedir}/lib/mason-21.jar</path>
+							</classpath>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+				
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.7</version>
+				<version>1.6.13</version>
 				<extensions>true</extensions>
 				<configuration>
 					<serverId>ossrh</serverId>
