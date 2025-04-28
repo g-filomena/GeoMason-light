@@ -1,7 +1,10 @@
 package sim.io.geo;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,15 +27,28 @@ import sim.util.geo.MasonGeometry;
 public class GeoPackageImporter {
 
 	/**
-	 * Reads GeoPackage data and populates the provided VectorLayer with geometries
-	 * and attributes.
+	 * Reads GeoPackage data and populates the provided VectorLayer with geometries and attributes.
 	 *
-	 * @param gpkgUrl     The URL to the GeoPackage file.
+	 * @param gpkgURL     The URL to the GeoPackage file.
 	 * @param vectorLayer The VectorLayer to populate with data.
 	 * @throws Exception If an error occurs during GeoPackage reading or processing.
 	 */
-	public static void read(URL gpkgUrl, VectorLayer vectorLayer) throws Exception {
-		File file = new File(gpkgUrl.toURI());
+	public static void read(URL gpkgURL, VectorLayer vectorLayer) throws Exception {
+
+		File file;
+
+		if ("file".equals(gpkgURL.getProtocol())) {
+			// Normal filesystem
+			file = new File(gpkgURL.toURI());
+		} else if ("jar".equals(gpkgURL.getProtocol())) {
+			// Inside a jar: extract to temp file
+			InputStream input = gpkgURL.openStream();
+			file = File.createTempFile("temp_", ".gpkg");
+			file.deleteOnExit();
+			Files.copy(input, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		} else {
+			throw new IllegalArgumentException("Unsupported URL protocol: " + gpkgURL.getProtocol());
+		}
 
 		GeoPackage geoPackage = GeoPackageManager.open(file);
 		// Feature and tile tables
@@ -58,7 +74,6 @@ public class GeoPackageImporter {
 
 					if (!columnName.equalsIgnoreCase("geometry")) {
 						Object value = row.getValue(columnName);
-//						System.out.println("columng  " + columnName + " value: " + value);
 						attributes.put(columnName, parseAttributeValue(value));
 					}
 				}
