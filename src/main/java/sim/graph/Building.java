@@ -32,5 +32,6 @@ public class Building {
 	public NodeGraph node; // Associated node in a graph (if applicable)
 
 	public Map<String, AttributeValue> attributes = new HashMap<>();
-	public String DMA; // DMA classification: "live", "work", "visit" - or "other"
+
+	public String DMA; // Urban Density (D), Mix(M) and Access (A) classification: "live", "work", "visit" - or "other"
 }
