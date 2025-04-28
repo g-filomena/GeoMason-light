@@ -48,12 +48,12 @@ Alternatively, if you are not using Maven, add `GeoMason-light-1.1.7` to your Ja
 
 You can now start using GeoMason-light in your project.     
    
-### Option 2: Installing GeoMason-light into Maven (Central Repository)
+## Option 2: Installing GeoMason-light into Maven (Central Repository)
 GeoMason-light is available in **Maven Central**, so you can directly install it into your local Maven repository. This allows you to use it in other Maven projects, including those not in Eclipse.
 
 1. Download Maven from the [official Maven website](https://maven.apache.org/download.cgi) and extract Maven to a directory on your machine.
-3.  Set up Environment Variables: Add Maven's `bin` directory to your system's `PATH` environment variable
-4. Add GeoMason-light Dependency to Your `pom.xml`, inside the `<dependencies>` section:
+2.  Set up Environment Variables: Add Maven's `bin` directory to your system's `PATH` environment variable
+3. Add GeoMason-light Dependency to Your `pom.xml`, inside the `<dependencies>` section:
 
 ```
 <dependency> <groupId>uk.ac.liv.gdsl</groupId> 
