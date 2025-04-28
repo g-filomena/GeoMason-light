@@ -38,14 +38,6 @@
     </properties>
 
     <dependencies>
-		<!-- GeoMason-light dependency from local installation -->
-        <dependency>
-            <groupId>sim</groupId>
-            <artifactId>mason-21</artifactId>
-            <version>1.16</version>
-            <scope>compile</scope>
-        </dependency>
-	
 		<!-- Commons math3 -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
