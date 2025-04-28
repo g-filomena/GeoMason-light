@@ -39,9 +39,8 @@ import sim.util.geo.GeometryUtilities;
 import sim.util.geo.MasonGeometry;
 
 /**
- * `VectorLayer` is an extension of the `Layer` class that offers advanced
- * geometric, selection, and filtering capabilities for managing and working
- * with spatial data.
+ * `VectorLayer` is an extension of the `Layer` class that offers advanced geometric, selection, and filtering
+ * capabilities for managing and working with spatial data.
  */
 public class VectorLayer extends Layer {
 
@@ -89,11 +88,9 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Creates a VectorLayer from a List of MasonGeometry objects contained in an
-	 * List of MasonGeometries.
+	 * Creates a VectorLayer from a List of MasonGeometry objects contained in an List of MasonGeometries.
 	 *
-	 * @param masonGeometries A List containing MasonGeometry objects to populate
-	 *                        the VectorLayer with.
+	 * @param masonGeometries A List containing MasonGeometry objects to populate the VectorLayer with.
 	 */
 	public VectorLayer(List<MasonGeometry> masonGeometries) {
 		super();
@@ -105,9 +102,8 @@ public class VectorLayer extends Layer {
 	// Basic Setters/Getters
 
 	/**
-	 * Adds a MasonGeometry to the VectorLayer and updates the layer's spatial
-	 * index. This method adds the specified MasonGeometry to the VectorLayer and
-	 * inserts its envelope into the layer's spatial index for efficient spatial
+	 * Adds a MasonGeometry to the VectorLayer and updates the layer's spatial index. This method adds the specified
+	 * MasonGeometry to the VectorLayer and inserts its envelope into the layer's spatial index for efficient spatial
 	 * queries.
 	 *
 	 * @param masonGeometry The MasonGeometry to be added to the VectorLayer.
@@ -121,8 +117,7 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Searches the VectorLayer for the first geometry with attribute equals to name
-	 * that has the given value.
+	 * Searches the VectorLayer for the first geometry with attribute equals to name that has the given value.
 	 * 
 	 * @param name  of attribute.
 	 * @param value of attribute.
@@ -157,15 +152,12 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Sets a unique identifier for each MasonGeometry object in the geometries
-	 * list.
+	 * Sets a unique identifier for each MasonGeometry object in the geometries list.
 	 *
-	 * This method assigns a unique identifier to each MasonGeometry object in the
-	 * geometries list based on the specified attribute name. The attribute value
-	 * for each MasonGeometry is used as its unique identifier.
+	 * This method assigns a unique identifier to each MasonGeometry object in the geometries list based on the
+	 * specified attribute name. The attribute value for each MasonGeometry is used as its unique identifier.
 	 *
-	 * @param attributeName The name of the attribute that contains unique
-	 *                      identifiers.
+	 * @param attributeName The name of the attribute that contains unique identifiers.
 	 */
 	public void setID(String attributeName) {
 		for (final MasonGeometry masonGeometry : geometriesList)
@@ -173,14 +165,11 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Retrieves a List of IDs from the MasonGeometry objects in the geometries
-	 * list. Each ID is obtained from the user data of the MasonGeometry object,
-	 * which is assumed to be stored as an Integer. This method iterates through all
-	 * MasonGeometry objects in the geometriesList and collects their IDs into a new
-	 * list.
+	 * Retrieves a List of IDs from the MasonGeometry objects in the geometries list. Each ID is obtained from the user
+	 * data of the MasonGeometry object, which is assumed to be stored as an Integer. This method iterates through all
+	 * MasonGeometry objects in the geometriesList and collects their IDs into a new list.
 	 *
-	 * @return A List of Integer IDs, one for each MasonGeometry object in the
-	 *         geometries list.
+	 * @return A List of Integer IDs, one for each MasonGeometry object in the geometries list.
 	 */
 	public List<Integer> getIDs() {
 		List<Integer> IDs = new ArrayList<>();
@@ -190,13 +179,11 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Retrieves a List of integer values from a specified attribute column in this
-	 * VectorLayer. This function iterates through the geometries in the VectorLayer
-	 * and extracts integer values from the specified attribute column for each
-	 * geometry. It returns a List of these integer values.
+	 * Retrieves a List of integer values from a specified attribute column in this VectorLayer. This function iterates
+	 * through the geometries in the VectorLayer and extracts integer values from the specified attribute column for
+	 * each geometry. It returns a List of these integer values.
 	 *
-	 * @param attributeName The name of the attribute column to retrieve values
-	 *                      from.
+	 * @param attributeName The name of the attribute column to retrieve values from.
 	 * @return A List of integer values from the specified attribute column.
 	 */
 	public List<Integer> getIntColumn(String attributeName) {
@@ -211,9 +198,8 @@ public class VectorLayer extends Layer {
 	// Geometry Manipulation
 
 	/**
-	 * Moves the centroid of the given geometry to the provided point. The spatial
-	 * index is not notified of the geometry changes. It is strongly recommended
-	 * that updateSpatialIndex() be invoked after all geometry position changes.
+	 * Moves the centroid of the given geometry to the provided point. The spatial index is not notified of the geometry
+	 * changes. It is strongly recommended that updateSpatialIndex() be invoked after all geometry position changes.
 	 *
 	 * @param masonGeometry The geometry to move.
 	 * @param coordsFilter  The coordinate sequence filter.
@@ -228,8 +214,7 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Sets the geometry location of the given MasonGeometry to a new location and
-	 * updates the spatial index.
+	 * Sets the geometry location of the given MasonGeometry to a new location and updates the spatial index.
 	 *
 	 * @param masonGeometry the MasonGeometry object to update
 	 * @param newLocation   the new location to set for the MasonGeometry
@@ -313,9 +298,8 @@ public class VectorLayer extends Layer {
 	// Geometric Computations
 
 	/**
-	 * Computes the convex hull of the geometries within this VectorLayer. This
-	 * function calculates the convex hull, which is the smallest convex polygon
-	 * that encloses all the geometries in this VectorLayer.
+	 * Computes the convex hull of the geometries within this VectorLayer. This function calculates the convex hull,
+	 * which is the smallest convex polygon that encloses all the geometries in this VectorLayer.
 	 */
 	private void computeConvexHull() {
 		final List<Coordinate> points = new ArrayList<>();
@@ -336,9 +320,8 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Computes and retrieves the convex hull of the geometries within this
-	 * VectorLayer. The convex hull is the smallest convex polygon that encloses all
-	 * the geometries in this VectorLayer.
+	 * Computes and retrieves the convex hull of the geometries within this VectorLayer. The convex hull is the smallest
+	 * convex polygon that encloses all the geometries in this VectorLayer.
 	 *
 	 * @return The convex hull geometry of the geometries in this VectorLayer
 	 */
@@ -349,8 +332,8 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Compute the union of the VectorLayer geometries. The resulting Geometry is
-	 * the outside points of the layer geometries.
+	 * Compute the union of the VectorLayer geometries. The resulting Geometry is the outside points of the layer
+	 * geometries.
 	 */
 	private void computeUnion() {
 		Geometry polygon = new Polygon(null, null, geomFactory);
@@ -368,9 +351,8 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Computes and retrieves the union of the geometries within this VectorLayer.
-	 * The resulting Geometry represents the outside points of the field's
-	 * geometries.
+	 * Computes and retrieves the union of the geometries within this VectorLayer. The resulting Geometry represents the
+	 * outside points of the field's geometries.
 	 *
 	 * @return The union geometry of the geometries in this VectorLayer.
 	 */
@@ -384,12 +366,11 @@ public class VectorLayer extends Layer {
 	// Spatial Queries
 
 	/**
-	 * Queries the VectorLayer based on the provided Envelope and returns a List of
-	 * MasonGeometry objects that intersect with the envelope.
+	 * Queries the VectorLayer based on the provided Envelope and returns a List of MasonGeometry objects that intersect
+	 * with the envelope.
 	 *
 	 * @param envelope The envelope used for the query.
-	 * @return A List of MasonGeometry objects that intersect with the provided
-	 *         envelope.
+	 * @return A List of MasonGeometry objects that intersect with the provided envelope.
 	 */
 	public synchronized List<MasonGeometry> queryField(Envelope envelope) {
 		List<?> geometriesList = spatialIndex.query(envelope);
@@ -408,16 +389,13 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Retrieves all the geometries in the VectorLayer that are within a specified
-	 * range of distances from a given Geometry.
+	 * Retrieves all the geometries in the VectorLayer that are within a specified range of distances from a given
+	 * Geometry.
 	 *
 	 * @param inputGeometry The reference geometry for distance calculation.
-	 * @param lowerLimit    The minimum distance from the input geometry
-	 *                      (inclusive).
-	 * @param upperLimit    The maximum distance from the input geometry
-	 *                      (inclusive).
-	 * @return A List containing the geometries that fall within the specified
-	 *         distance range from the input geometry.
+	 * @param lowerLimit    The minimum distance from the input geometry (inclusive).
+	 * @param upperLimit    The maximum distance from the input geometry (inclusive).
+	 * @return A List containing the geometries that fall within the specified distance range from the input geometry.
 	 */
 	public List<MasonGeometry> featuresBetweenLimits(Geometry inputGeometry, double lowerLimit, double upperLimit) {
 		final List<MasonGeometry> featuresBetween = new ArrayList<>();
@@ -437,14 +415,11 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Returns all the geometries in the VectorLayer that are contained within a
-	 * certain radius from a given Geometry.
+	 * Returns all the geometries in the VectorLayer that are contained within a certain radius from a given Geometry.
 	 *
 	 * @param inputGeometry The reference geometry for containment evaluation.
-	 * @param radius        The maximum distance from the input geometry within
-	 *                      which other geometries are considered.
-	 * @return A List containing the geometries that are within the specified radius
-	 *         of the input geometry.
+	 * @param radius        The maximum distance from the input geometry within which other geometries are considered.
+	 * @return A List containing the geometries that are within the specified radius of the input geometry.
 	 */
 	public List<MasonGeometry> featuresWithinDistance(Geometry inputGeometry, double radius) {
 		final List<MasonGeometry> featuresWithin = new ArrayList<>();
@@ -461,13 +436,10 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Retrieves the geometries in the VectorLayer that intersect with a given
-	 * Geometry.
+	 * Retrieves the geometries in the VectorLayer that intersect with a given Geometry.
 	 *
-	 * @param inputGeometry The reference geometry defining the intersection
-	 *                      criterion.
-	 * @return A List containing the geometries that intersect with the specified
-	 *         input geometry.
+	 * @param inputGeometry The reference geometry defining the intersection criterion.
+	 * @return A List containing the geometries that intersect with the specified input geometry.
 	 */
 	public final List<MasonGeometry> intersectingFeatures(Geometry inputGeometry) {
 		ConcurrentLinkedQueue<MasonGeometry> intersectingFeatures = new ConcurrentLinkedQueue<>();
@@ -483,15 +455,13 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Computes the intersection of geometries between this VectorLayer and another
-	 * VectorLayer. This function takes another VectorLayer as input and checks for
-	 * intersections between its geometries and the geometries in this VectorLayer.
-	 * It returns a List of intersecting geometries if 'inclusive' is true, or a
-	 * list of non-intersecting geometries if 'inclusive' is false.
+	 * Computes the intersection of geometries between this VectorLayer and another VectorLayer. This function takes
+	 * another VectorLayer as input and checks for intersections between its geometries and the geometries in this
+	 * VectorLayer. It returns a List of intersecting geometries if 'inclusive' is true, or a list of non-intersecting
+	 * geometries if 'inclusive' is false.
 	 *
 	 * @param otherLayer The VectorLayer to intersect with this VectorLayer.
-	 * @param inclusive  If true, returns intersecting geometries; if false, returns
-	 *                   non-intersecting geometries.
+	 * @param inclusive  If true, returns intersecting geometries; if false, returns non-intersecting geometries.
 	 * @return A List of intersecting or non-intersecting MasonGeometry features.
 	 */
 	public List<MasonGeometry> intersection(VectorLayer otherLayer, boolean inclusive) {
@@ -510,12 +480,10 @@ public class VectorLayer extends Layer {
 	// Spatial Relations
 
 	/**
-	 * Checks whether the input MasonGeometry is covered by other geometries in the
-	 * spatial index of the VectorLayer.
+	 * Checks whether the input MasonGeometry is covered by other geometries in the spatial index of the VectorLayer.
 	 *
 	 * @param inputMasonGeometry The MasonGeometry object to check for coverage.
-	 * @return true if the inputMasonGeometry is covered by other geometries in the
-	 *         spatial index, false otherwise.
+	 * @return true if the inputMasonGeometry is covered by other geometries in the spatial index, false otherwise.
 	 */
 	public boolean isCovered(MasonGeometry inputMasonGeometry) {
 		Envelope envelope = inputMasonGeometry.getGeometry().getEnvelopeInternal();
@@ -538,8 +506,7 @@ public class VectorLayer extends Layer {
 	 * Checks if the given coordinate is inside the convex hull of the VectorLayer.
 	 *
 	 * @param coord The coordinate to check.
-	 * @return true if the coordinate is inside the convex hull of the VectorLayer,
-	 *         false otherwise.
+	 * @return true if the coordinate is inside the convex hull of the VectorLayer, false otherwise.
 	 */
 	public boolean isInsideConvexHull(final Coordinate coord) {
 		Point point = geomFactory.createPoint(coord);
@@ -556,8 +523,7 @@ public class VectorLayer extends Layer {
 	 * Checks if the given coordinate is inside the union of the VectorLayer.
 	 *
 	 * @param coordinate The coordinate to check.
-	 * @return true if the coordinate is inside the union of the VectorLayer, false
-	 *         otherwise.
+	 * @return true if the coordinate is inside the union of the VectorLayer, false otherwise.
 	 */
 	public boolean isInsideUnion(final Coordinate coordinate) {
 		Point point = geomFactory.createPoint(coordinate);
@@ -571,11 +537,9 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Verifies if any of the geometries of this VectorLayer intersect a given
-	 * geometry.
+	 * Verifies if any of the geometries of this VectorLayer intersect a given geometry.
 	 *
-	 * @param inputGeometry The input geometry on which the intersection is
-	 *                      verified.
+	 * @param inputGeometry The input geometry on which the intersection is verified.
 	 */
 	public boolean intersects(Geometry inputGeometry) {
 		final Envelope envelope = inputGeometry.getEnvelopeInternal();
@@ -594,23 +558,18 @@ public class VectorLayer extends Layer {
 	// Feature Filtering
 
 	/**
-	 * Filters a List of geometries based on a specified String attribute's value.
-	 * This method selects geometries that either match or do not match the provided
-	 * attribute value based on the 'equal' parameter. Matching geometries are
+	 * Filters a List of geometries based on a specified String attribute's value. This method selects geometries that
+	 * either match or do not match the provided attribute value based on the 'equal' parameter. Matching geometries are
 	 * included in the resulting List.
 	 *
-	 * @param attributeName  The name of the attribute to filter by. This should be
-	 *                       a valid attribute name present in the MasonGeometry
-	 *                       objects.
-	 * @param attributeValue The value to compare against for filtering. Geometries
-	 *                       with the specified attribute equal to this value will
-	 *                       be included in the result.
-	 * @param equal          If true, filter geometries where the specified
-	 *                       attribute equals the given value. If false, filter
-	 *                       geometries where the specified attribute does not equal
-	 *                       the given value.
-	 * @return A List containing the filtered MasonGeometry features. The List may
-	 *         be empty if no matching geometries are found.
+	 * @param attributeName  The name of the attribute to filter by. This should be a valid attribute name present in
+	 *                       the MasonGeometry objects.
+	 * @param attributeValue The value to compare against for filtering. Geometries with the specified attribute equal
+	 *                       to this value will be included in the result.
+	 * @param equal          If true, filter geometries where the specified attribute equals the given value. If false,
+	 *                       filter geometries where the specified attribute does not equal the given value.
+	 * @return A List containing the filtered MasonGeometry features. The List may be empty if no matching geometries
+	 *         are found.
 	 */
 	public List<MasonGeometry> filterFeatures(String attributeName, String attributeValue, boolean equal) {
 		final List<MasonGeometry> filteredFeatures = new ArrayList<>();
@@ -625,17 +584,14 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Filters a List of geometries based on a List of String values. This function
-	 * filters the geometries in this VectorLayer based on the provided string
-	 * attribute and a List of string values. If 'equal' is true, it keeps features
-	 * with attribute values that match those in the list; if 'equal' is false, it
-	 * keeps features with attribute values that do not match the list. The selected
-	 * features are added to a new list and returned.
+	 * Filters a List of geometries based on a List of String values. This function filters the geometries in this
+	 * VectorLayer based on the provided string attribute and a List of string values. If 'equal' is true, it keeps
+	 * features with attribute values that match those in the list; if 'equal' is false, it keeps features with
+	 * attribute values that do not match the list. The selected features are added to a new list and returned.
 	 *
 	 * @param attributeName The name of the string attribute to filter on.
 	 * @param listValues    A List of string values used for filtering.
-	 * @param equal         If true, keeps features with attribute values matching
-	 *                      the list; if false, keeps others.
+	 * @param equal         If true, keeps features with attribute values matching the list; if false, keeps others.
 	 * @return A List of MasonGeometry features after filtering.
 	 */
 	public List<MasonGeometry> filterFeatures(String attributeName, List<String> listValues, boolean equal) {
@@ -651,23 +607,19 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Filters a List of geometries in the VectorLayer based on a specified integer
-	 * attribute's value. This method selects geometries that either match or do not
-	 * match the provided integer attribute value based on the 'equal' parameter.
-	 * Matching geometries are included in the resulting List.
+	 * Filters a List of geometries in the VectorLayer based on a specified integer attribute's value. This method
+	 * selects geometries that either match or do not match the provided integer attribute value based on the 'equal'
+	 * parameter. Matching geometries are included in the resulting List.
 	 *
-	 * @param attributeName  The name of the integer attribute to filter by. This
-	 *                       should be a valid attribute name present in the
-	 *                       MasonGeometry features.
-	 * @param attributeValue The integer value to compare against for filtering.
-	 *                       Geometries with the specified integer attribute equal
-	 *                       to this value will be included in the result.
-	 * @param equal          If true, filter geometries where the specified integer
-	 *                       attribute equals the given value. If false, filter
-	 *                       geometries where the specified integer attribute does
-	 *                       not equal the given value.
-	 * @return A List containing the filtered MasonGeometry features. The List may
-	 *         be empty if no matching geometries are found.
+	 * @param attributeName  The name of the integer attribute to filter by. This should be a valid attribute name
+	 *                       present in the MasonGeometry features.
+	 * @param attributeValue The integer value to compare against for filtering. Geometries with the specified integer
+	 *                       attribute equal to this value will be included in the result.
+	 * @param equal          If true, filter geometries where the specified integer attribute equals the given value. If
+	 *                       false, filter geometries where the specified integer attribute does not equal the given
+	 *                       value.
+	 * @return A List containing the filtered MasonGeometry features. The List may be empty if no matching geometries
+	 *         are found.
 	 */
 	public List<MasonGeometry> filterFeatures(String attributeName, int attributeValue, boolean equal) {
 
@@ -683,18 +635,15 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Selects and creates a new VectorLayer containing features based on a
-	 * specified integer attribute and values. This function filters the features in
-	 * this VectorLayer based on the provided integer attribute and a List of
-	 * integer values. If 'equal' is true, it keeps geometries with attribute values
-	 * that match those in the list; if 'equal' is false, it keeps geometries with
-	 * attribute values that do not match the list. The selected geometries are
-	 * added to a new VectorLayer, which is returned.
+	 * Selects and creates a new VectorLayer containing features based on a specified integer attribute and values. This
+	 * function filters the features in this VectorLayer based on the provided integer attribute and a List of integer
+	 * values. If 'equal' is true, it keeps geometries with attribute values that match those in the list; if 'equal' is
+	 * false, it keeps geometries with attribute values that do not match the list. The selected geometries are added to
+	 * a new VectorLayer, which is returned.
 	 *
 	 * @param attributeName The name of the integer attribute to filter on.
 	 * @param listValues    A List of integer values used for filtering.
-	 * @param equal         If true, keeps features with attribute values matching
-	 *                      the list; if false, keeps others.
+	 * @param equal         If true, keeps features with attribute values matching the list; if false, keeps others.
 	 * @return A new VectorLayer containing the selected features.
 	 */
 	public VectorLayer selectFeatures(String attributeName, List<Integer> listValues, boolean equal) {
@@ -713,12 +662,10 @@ public class VectorLayer extends Layer {
 	// Feature Relationships
 
 	/**
-	 * Identifies the geometries in the VectorLayer that cover the input
-	 * MasonGeometry.
+	 * Identifies the geometries in the VectorLayer that cover the input MasonGeometry.
 	 *
 	 * @param inputMasonGeometry The MasonGeometry to find covering features for.
-	 * @return A List of MasonGeometry objects in the VectorLayer that cover the
-	 *         input MasonGeometry.
+	 * @return A List of MasonGeometry objects in the VectorLayer that cover the input MasonGeometry.
 	 */
 	public final List<MasonGeometry> coveringFeatures(MasonGeometry inputMasonGeometry) {
 		List<MasonGeometry> coveringFeatures = new ArrayList<MasonGeometry>();
@@ -735,12 +682,10 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Identifies the geometries in the VectorLayer that are covered by the input
-	 * MasonGeometry.
+	 * Identifies the geometries in the VectorLayer that are covered by the input MasonGeometry.
 	 *
 	 * @param inputMasonGeometry The MasonGeometry to find covered features for.
-	 * @return A List of MasonGeometry objects in the VectorLayer that are covered
-	 *         by the input MasonGeometry.
+	 * @return A List of MasonGeometry objects in the VectorLayer that are covered by the input MasonGeometry.
 	 */
 	public final List<MasonGeometry> coveredFeatures(MasonGeometry inputMasonGeometry) {
 		List<MasonGeometry> coveredFeatures = new ArrayList<MasonGeometry>();
@@ -758,12 +703,10 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Identifies the geometries in the VectorLayer that are covered by the input
-	 * MasonGeometry.
+	 * Identifies the geometries in the VectorLayer that are covered by the input MasonGeometry.
 	 *
 	 * @param inputMasonGeometry The MasonGeometry to find covered features for.
-	 * @return A List of MasonGeometry objects in the VectorLayer that are covered
-	 *         by the input MasonGeometry.
+	 * @return A List of MasonGeometry objects in the VectorLayer that are covered by the input MasonGeometry.
 	 */
 	public final List<MasonGeometry> touchingFeatures(MasonGeometry inputMasonGeometry) {
 		List<MasonGeometry> touchingFeatures = new ArrayList<MasonGeometry>();
@@ -785,12 +728,10 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Retrieves the geometries in the VectorLayer that contain the specified input
-	 * Geometry.
+	 * Retrieves the geometries in the VectorLayer that contain the specified input Geometry.
 	 *
 	 * @param inputGeometry The Geometry to be contained.
-	 * @return A List of MasonGeometry objects that contain the input Geometry in
-	 *         the VectorLayer.
+	 * @return A List of MasonGeometry objects that contain the input Geometry in the VectorLayer.
 	 */
 	public final List<MasonGeometry> containingFeatures(Geometry inputGeometry) {
 		List<MasonGeometry> containingFeatures = new ArrayList<MasonGeometry>();
@@ -808,13 +749,11 @@ public class VectorLayer extends Layer {
 	}
 
 	/**
-	 * Retrieves all the geometries in the VectorLayer that are fully contained
-	 * within the boundaries of a given Geometry.
+	 * Retrieves all the geometries in the VectorLayer that are fully contained within the boundaries of a given
+	 * Geometry.
 	 *
-	 * @param inputGeometry The reference geometry defining the containment
-	 *                      boundary.
-	 * @return A List containing the geometries that are entirely contained within
-	 *         the specified input geometry.
+	 * @param inputGeometry The reference geometry defining the containment boundary.
+	 * @return A List containing the geometries that are entirely contained within the specified input geometry.
 	 */
 	public final List<MasonGeometry> containedFeatures(Geometry inputGeometry) {
 		final List<MasonGeometry> containedFeatures = new ArrayList<>();
@@ -833,23 +772,20 @@ public class VectorLayer extends Layer {
 	// Other
 
 	/**
-	 * Reads a Shapefile from the specified input directory and populates the
-	 * provided VectorLayer with geometries. The Shapefile consists of two files: a
-	 * .shp file containing geometry information and a .dbf file containing
-	 * attribute data. The function reads both files and adds the geometries to the
-	 * VectorLayer.
+	 * Reads a Shapefile from the specified input directory and populates the provided VectorLayer with geometries. The
+	 * Shapefile consists of two files: a .shp file containing geometry information and a .dbf file containing attribute
+	 * data. The function reads both files and adds the geometries to the VectorLayer.
 	 *
-	 * @param urlShp The URL referring to the path to the .shp input file.
-	 * @param urlDbf The URL referring to the path to the .dbf input file.
-	 * @throws Exception If there is an error during Shapefile reading or geometry
-	 *                   population.
+	 * @param shpURL The URL referring to the path to the .shp input file.
+	 * @param dbfURL The URL referring to the path to the .dbf input file.
+	 * @throws Exception If there is an error during Shapefile reading or geometry population.
 	 */
-	public static void readShapefile(URL urlShp, URL urlDbf, VectorLayer vectorLayer) throws Exception {
-		ShapeFileImporter.read(urlShp, urlDbf, vectorLayer, MasonGeometry.class);
+	public static void readShapefile(URL shpURL, URL dbfURL, VectorLayer vectorLayer) throws Exception {
+		ShapeFileImporter.read(shpURL, dbfURL, vectorLayer, MasonGeometry.class);
 	}
 
-	public static void readGPKG(URL urlPkg, VectorLayer vectorLayer) throws Exception {
-		GeoPackageImporter.read(urlPkg, vectorLayer);
+	public static void readGPKG(URL gpkgURL, VectorLayer vectorLayer) throws Exception {
+		GeoPackageImporter.read(gpkgURL, vectorLayer);
 	}
 
 	public Envelope clipEnvelope;
@@ -860,8 +796,7 @@ public class VectorLayer extends Layer {
 	/**
 	 * Updates the transform using the provided DrawInfo2D object.
 	 *
-	 * @param info The DrawInfo2D object containing the necessary information for
-	 *             the update
+	 * @param info The DrawInfo2D object containing the necessary information for the update
 	 */
 	public void updateTransform(DrawInfo2D info) {
 		// need to update the transform
