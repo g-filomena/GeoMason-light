@@ -21,19 +21,20 @@ import sim.util.geo.GeometryUtilities;
 public class Astar {
 
 	NodeGraph destinationNode;
-	Set<EdgeGraph> finalEdgesToAvoid;
+	Set<Integer> finalEdgesToAvoid;
 
 	/**
-	 * Finds the shortest route between two nodes using the A* algorithm, avoiding specified edges.
+	 * Finds the shortest route between two nodes using the A* algorithm, avoiding
+	 * specified edges.
 	 *
 	 * @param originNode      the starting node for the route
 	 * @param destinationNode the destination node for the route
 	 * @param graph           the graph on which to calculate the route
 	 * @param edgesToAvoid    a set of edges to avoid during route calculation
-	 * @return a Route object representing the shortest path from originNode to destinationNode, or null if no path is
-	 *         found
+	 * @return a Route object representing the shortest path from originNode to
+	 *         destinationNode, or null if no path is found
 	 */
-	public Route astarRoute(NodeGraph originNode, NodeGraph destinationNode, Graph graph, Set<EdgeGraph> edgesToAvoid) {
+	public Route astarRoute(NodeGraph originNode, NodeGraph destinationNode, Graph graph, Set<Integer> edgesToAvoid) {
 
 		if (edgesToAvoid == null)
 			edgesToAvoid = new HashSet<>();
@@ -65,8 +66,9 @@ public class Astar {
 
 			validNeighbors = adjacentNodes.stream().filter(targetNode -> {
 				EdgeGraph edge = graph.getEdgeBetween(currentNode, targetNode);
-				return (!finalEdgesToAvoid.contains(edge) && !closedSet.contains(targetNode)); // Exclude disregarded
-																								// nodes
+				return (!finalEdgesToAvoid.contains(edge.getID()) && !closedSet.contains(targetNode)); // Exclude
+																										// disregarded
+				// nodes
 
 			}).collect(Collectors.toList());
 
@@ -103,7 +105,8 @@ public class Astar {
 	}
 
 	/**
-	 * Retrieves the NodeWrapper associated with the given node, creating it if it doesn't exist.
+	 * Retrieves the NodeWrapper associated with the given node, creating it if it
+	 * doesn't exist.
 	 *
 	 * @param node            the node to get the wrapper for
 	 * @param nodeWrappersMap a map storing NodeWrappers for each node
@@ -114,12 +117,14 @@ public class Astar {
 	}
 
 	/**
-	 * Reconstructs the path from the origin node to the destination node based on the node wrappers.
+	 * Reconstructs the path from the origin node to the destination node based on
+	 * the node wrappers.
 	 *
 	 * @param nodeWrapper     the NodeWrapper at the destination node
 	 * @param originNode      the starting node for the route
 	 * @param destinationNode the destination node for the route
-	 * @return a Route object representing the path from originNode to destinationNode
+	 * @return a Route object representing the path from originNode to
+	 *         destinationNode
 	 */
 	private static Route reconstructPath(NodeWrapper nodeWrapper, NodeGraph originNode, NodeGraph destinationNode) {
 
