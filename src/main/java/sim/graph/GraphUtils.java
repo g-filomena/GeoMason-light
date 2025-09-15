@@ -28,20 +28,18 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
 
 import sim.util.geo.GeometryUtilities;
 
 /**
- * The `GraphUtils` class provides utility methods for working {@link NodeGraph} objects.
+ * The `GraphUtils` class provides utility methods for working {@link NodeGraph}
+ * objects.
  */
 public class GraphUtils {
 
 	// Introduce a HashMap to cache previously computed distances
 	private static Map<Pair<Coordinate, Coordinate>, Double> distanceCache = new ConcurrentHashMap<>();
-	private static Map<Pair<Coordinate, Coordinate>, Polygon> visibilityPolygonsCache = new ConcurrentHashMap<>();
 	private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
-	static int DISTANCE_ALONG_VISIBILITY = 10;
 
 	/**
 	 * Calculates the Euclidean distance between two nodes in a graph.
@@ -68,9 +66,11 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Calculates the minimum enclosing circle (smallest circle that completely encloses a collection of nodes).
+	 * Calculates the minimum enclosing circle (smallest circle that completely
+	 * encloses a collection of nodes).
 	 *
-	 * @param nodes The collection of nodes for which to calculate the enclosing circle.
+	 * @param nodes The collection of nodes for which to calculate the enclosing
+	 *              circle.
 	 * @return A geometry representing the minimum enclosing circle.
 	 */
 	public static Geometry smallestEnclosingGeometryBetweenNodes(List<NodeGraph> nodes) {
@@ -84,10 +84,12 @@ public class GraphUtils {
 	}
 
 	/**
-	 * Calculates the convex hull from a list of nodes using Andrew's monotone chain algorithm.
+	 * Calculates the convex hull from a list of nodes using Andrew's monotone chain
+	 * algorithm.
 	 *
 	 * @param nodes The list of nodes to compute the convex hull from.
-	 * @return The convex hull polygon as a Geometry object, or null if there are fewer than 3 nodes.
+	 * @return The convex hull polygon as a Geometry object, or null if there are
+	 *         fewer than 3 nodes.
 	 */
 	private static Geometry convexHullFromNodes(List<NodeGraph> nodes) {
 
@@ -136,13 +138,15 @@ public class GraphUtils {
 	/**
 	 * Determines if three nodes form a counter-clockwise turn.
 	 *
-	 * This method uses the cross product of vectors to determine the relative orientation of three points (nodes). It
-	 * returns true if the points form a counter-clockwise turn, and false otherwise.
+	 * This method uses the cross product of vectors to determine the relative
+	 * orientation of three points (nodes). It returns true if the points form a
+	 * counter-clockwise turn, and false otherwise.
 	 *
 	 * @param a The first node.
 	 * @param b The second node.
 	 * @param c The third node.
-	 * @return true if the nodes a, b, and c form a counter-clockwise turn, false otherwise.
+	 * @return true if the nodes a, b, and c form a counter-clockwise turn, false
+	 *         otherwise.
 	 */
 	private static boolean isCounterClockwise(NodeGraph a, NodeGraph b, NodeGraph c) {
 		Coordinate p1 = a.getCoordinate();
@@ -168,8 +172,10 @@ public class GraphUtils {
 	/**
 	 * Finds the closest node to a target coordinate from a collection of nodes.
 	 *
-	 * @param targetCoordinates The target coordinate to which to find the closest node.
-	 * @param nodes             The collection of nodes to search for the closest node.
+	 * @param targetCoordinates The target coordinate to which to find the closest
+	 *                          node.
+	 * @param nodes             The collection of nodes to search for the closest
+	 *                          node.
 	 * @return The closest node to the target coordinate.
 	 */
 	public static NodeGraph findClosestNode(Coordinate targetCoordinates, Iterable<NodeGraph> nodes) {
