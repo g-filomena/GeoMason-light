@@ -228,6 +228,16 @@ public class Graph extends PlanarGraph {
   }
 
   /**
+   * Retrieves the list of edges in the graph.
+   *
+   * @return A List of EdgeGraph objects representing the edges in the graph.
+   */
+  @Override
+  public List<EdgeGraph> getEdges() {
+    return edgesGraph;
+  }
+
+  /**
    * Retrieves the IDs of all edges in the graph.
    *
    * @return a list of IDs corresponding to the edges in the graph
@@ -239,16 +249,6 @@ public class Graph extends PlanarGraph {
       edgeIDs.add(edge.getID());
     }
     return edgeIDs;
-  }
-
-  /**
-   * Retrieves the list of edges in the graph.
-   *
-   * @return A List of EdgeGraph objects representing the edges in the graph.
-   */
-  @Override
-  public List<EdgeGraph> getEdges() {
-    return edgesGraph;
   }
 
   /**
