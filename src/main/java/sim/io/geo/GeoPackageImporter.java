@@ -125,9 +125,8 @@ public class GeoPackageImporter {
       long longValue = (Long) value;
       if (longValue >= Integer.MIN_VALUE && longValue <= Integer.MAX_VALUE) {
         return new AttributeValue((int) longValue); // Fits in Integer range
-      } else {
-        return new AttributeValue(longValue); // Store as Long
       }
+      return new AttributeValue(longValue); // Store as Long
 
     } else if (value instanceof Integer) {
       return new AttributeValue(value);
