@@ -1,10 +1,9 @@
 /*
- * Copyright 2011 by Mark Coletti, Keith Sullivan, Sean Luke, and
- * George Mason University Mason University Licensed under the Academic
- * Free License version 3.0
+ * Copyright 2011 by Mark Coletti, Keith Sullivan, Sean Luke, and George Mason University Mason
+ * University Licensed under the Academic Free License version 3.0
  *
  * See the file "GEOMASON-LICENSE" for more information
- * 
+ *
  */
 package sim.util.geo;
 
@@ -12,150 +11,145 @@ import java.util.ArrayList;
 
 /**
  * This contains the values associated with MasonGeometry attributes.
- * 
- * This consists of a value, whether to display this attribute in the inspector
- * or not, and the number of bytes needed to store the value. The value can be
- * an Integer, Float, or String.
+ *
+ * This consists of a value, whether to display this attribute in the inspector or not, and the
+ * number of bytes needed to store the value. The value can be an Integer, Float, or String.
  *
  */
 public class AttributeValue implements java.io.Serializable {
-	private static final long serialVersionUID = -2342742107342686581L;
+  private static final long serialVersionUID = -2342742107342686581L;
 
-	/** Attribute value */
-	private Object value;
+  /** Attribute value */
+  private Object value;
 
-	/** Whether the attribute is displayed in the inspector or not */
-	private boolean hidden;
+  /** Whether the attribute is displayed in the inspector or not */
+  private boolean hidden;
 
-	public AttributeValue() {
-		this(null, false);
-	}
+  public AttributeValue() {
+    this(null, false);
+  }
 
-	public AttributeValue(Object v) {
-		this(v, false);
-	}
+  public AttributeValue(Object v) {
+    this(v, false);
+  }
 
-	public AttributeValue(Object v, boolean h) {
-		value = v;
-		hidden = h;
-	}
+  public AttributeValue(Object v, boolean h) {
+    value = v;
+    hidden = h;
+  }
 
-	/**
-	 * Human readable form
-	 */
-	@Override
-	public String toString() {
-		return "Value: " + getValue() + " Hidden: " + isHidden();
-	}
+  /**
+   * Human readable form
+   */
+  @Override
+  public String toString() {
+    return "Value: " + getValue() + " Hidden: " + isHidden();
+  }
 
-	/** Simple, shallow clone */
-	@Override
-	public Object clone() {
-		AttributeValue a = new AttributeValue(getValue(), isHidden());
-		return a;
-	}
+  /** Simple, shallow clone */
+  @Override
+  public Object clone() {
+    AttributeValue a = new AttributeValue(getValue(), isHidden());
+    return a;
+  }
 
-	@Override
-	public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
 
-		if (obj == null) {
-			return false;
-		}
+    if ((obj == null) || (getClass() != obj.getClass())) {
+      return false;
+    }
 
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
+    final AttributeValue other = (AttributeValue) obj;
 
-		final AttributeValue other = (AttributeValue) obj;
+    if (this.value != other.value && (this.value == null || !this.value.equals(other.value))) {
+      return false;
+    }
 
-		if (this.value != other.value && (this.value == null || !this.value.equals(other.value))) {
-			return false;
-		}
+    if (this.hidden != other.hidden) {
+      return false;
+    }
 
-		if (this.hidden != other.hidden) {
-			return false;
-		}
+    return true;
+  }
 
-		return true;
-	}
+  @Override
+  public int hashCode() {
+    int hash = 3;
 
-	@Override
-	public int hashCode() {
-		int hash = 3;
+    hash = 79 * hash + (this.value != null ? this.value.hashCode() : 0);
+    hash = 79 * hash + (this.hidden ? 1 : 0);
 
-		hash = 79 * hash + (this.value != null ? this.value.hashCode() : 0);
-		hash = 79 * hash + (this.hidden ? 1 : 0);
+    return hash;
+  }
 
-		return hash;
-	}
+  /**
+   * @return the value
+   */
+  public Object getValue() {
+    return value;
+  }
 
-	/**
-	 * @return the value
-	 */
-	public Object getValue() {
-		return value;
-	}
+  /**
+   * @param value the value to set
+   */
+  public void setValue(Object value) {
+    this.value = value;
+  }
 
-	/**
-	 * @param value the value to set
-	 */
-	public void setValue(Object value) {
-		this.value = value;
-	}
+  public void setInteger(int value) {
+    setValue(Integer.valueOf(value));
+  }
 
-	public void setInteger(int value) {
-		setValue(Integer.valueOf(value));
-	}
+  public Integer getInteger() {
+    return (Integer) getValue();
+  }
 
-	public Integer getInteger() {
-		return (Integer) getValue();
-	}
+  public void setDouble(double value) {
+    setValue(Double.valueOf(value));
+  }
 
-	public void setDouble(double value) {
-		setValue(Double.valueOf(value));
-	}
+  public Double getDouble() {
+    return (Double) getValue();
+  }
 
-	public Double getDouble() {
-		return (Double) getValue();
-	}
+  public void setBoolean(boolean value) {
+    setValue(Boolean.valueOf(value));
+  }
 
-	public void setBoolean(boolean value) {
-		setValue(Boolean.valueOf(value));
-	}
+  public boolean getBoolean() {
+    return (Boolean) getValue();
+  }
 
-	public boolean getBoolean() {
-		return (Boolean) getValue();
-	}
+  public void setString(String value) {
+    setValue(value);
+  }
 
-	public void setString(String value) {
-		setValue(value);
-	}
+  public String getString() {
+    return (String) getValue();
+  }
 
-	public String getString() {
-		return (String) getValue();
-	}
+  public <T> void setArray(ArrayList<T> array) {
+    setValue(array);
+  }
 
-	public <T> void setArray(ArrayList<T> array) {
-		setValue(array);
-	}
+  @SuppressWarnings("unchecked")
+  public <T> ArrayList<T> getArray() {
+    return (ArrayList<T>) getValue();
+  }
 
-	@SuppressWarnings("unchecked")
-	public <T> ArrayList<T> getArray() {
-		return (ArrayList<T>) getValue();
-	}
+  /**
+   * @return whether this is visible to the inspector
+   */
+  public boolean isHidden() {
+    return hidden;
+  }
 
-	/**
-	 * @return whether this is visible to the inspector
-	 */
-	public boolean isHidden() {
-		return hidden;
-	}
-
-	/**
-	 * @param hidden dictates visibility to the inspector
-	 */
-	public void setHidden(boolean hidden) {
-		this.hidden = hidden;
-	}
+  /**
+   * @param hidden dictates visibility to the inspector
+   */
+  public void setHidden(boolean hidden) {
+    this.hidden = hidden;
+  }
 
 }

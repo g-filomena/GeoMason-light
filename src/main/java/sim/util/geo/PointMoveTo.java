@@ -1,8 +1,9 @@
-/* Copyright 2011 by Mark Coletti, Keith Sullivan, Sean Luke, and George Mason University Mason University Licensed
- * under the Academic Free License version 3.0
- * 
+/*
+ * Copyright 2011 by Mark Coletti, Keith Sullivan, Sean Luke, and George Mason University Mason
+ * University Licensed under the Academic Free License version 3.0
+ *
  * See the file "LICENSE" for more information
- * 
+ *
  */
 package sim.util.geo;
 
@@ -16,37 +17,40 @@ import org.locationtech.jts.geom.CoordinateSequenceFilter;
  *
  */
 public class PointMoveTo implements CoordinateSequenceFilter, java.io.Serializable {
-	private static final long serialVersionUID = -2029180922944093196L;
+  private static final long serialVersionUID = -2029180922944093196L;
 
-	Coordinate newValue = null;
-	boolean isDone = false;
-	boolean geometryChanged = false;
+  Coordinate newValue = null;
+  boolean isDone = false;
+  boolean geometryChanged = false;
 
-	public PointMoveTo() {
-		super();
-	}
+  public PointMoveTo() {
+    super();
+  }
 
-	public PointMoveTo(Coordinate c) {
-		super();
-		newValue = c;
-	}
+  public PointMoveTo(Coordinate c) {
+    super();
+    newValue = c;
+  }
 
-	public void setCoordinate(Coordinate newValue) {
-		this.newValue = newValue;
-	}
+  public void setCoordinate(Coordinate newValue) {
+    this.newValue = newValue;
+  }
 
-	public void filter(CoordinateSequence coords, int pos) {
-		coords.setOrdinate(pos, 0, newValue.x);
-		coords.setOrdinate(pos, 1, newValue.y);
-		isDone = true;
-		geometryChanged = true;
-	}
+  @Override
+  public void filter(CoordinateSequence coords, int pos) {
+    coords.setOrdinate(pos, 0, newValue.x);
+    coords.setOrdinate(pos, 1, newValue.y);
+    isDone = true;
+    geometryChanged = true;
+  }
 
-	public boolean isDone() {
-		return isDone;
-	}
+  @Override
+  public boolean isDone() {
+    return isDone;
+  }
 
-	public boolean isGeometryChanged() {
-		return geometryChanged;
-	}
+  @Override
+  public boolean isGeometryChanged() {
+    return geometryChanged;
+  }
 }

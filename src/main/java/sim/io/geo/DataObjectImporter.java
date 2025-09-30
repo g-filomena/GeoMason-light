@@ -1,10 +1,9 @@
 /*
- * Copyright 2011 by Mark Coletti, Keith Sullivan, Sean Luke, and
- * George Mason University Mason University Licensed under the Academic
- * Free License version 3.0
+ * Copyright 2011 by Mark Coletti, Keith Sullivan, Sean Luke, and George Mason University Mason
+ * University Licensed under the Academic Free License version 3.0
  *
  * See the file "GEOMASON-LICENSE" for more information
- * 
+ *
  */
 package sim.io.geo;
 
@@ -13,10 +12,11 @@ import java.io.IOException;
 import java.net.URL;
 
 public class DataObjectImporter {
-	public static BufferedInputStream open(final URL url)
-			throws IllegalArgumentException, RuntimeException, IOException {
-		if (url == null)
-			throw new IllegalArgumentException("url is null; file is probably not found");
-		return new BufferedInputStream(url.openStream());
-	}
+  public static BufferedInputStream open(final URL url)
+      throws IllegalArgumentException, RuntimeException, IOException {
+    if (url == null) {
+      throw new IllegalArgumentException("url is null; file is probably not found");
+    }
+    return new BufferedInputStream(url.openStream());
+  }
 }

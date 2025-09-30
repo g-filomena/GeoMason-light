@@ -9,10 +9,8 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.planargraph.DirectedEdge;
-
 import sim.graph.EdgeGraph;
 import sim.graph.Graph;
 import sim.graph.NodeGraph;
@@ -20,139 +18,139 @@ import sim.util.geo.GeometryUtilities;
 
 public class Astar {
 
-	NodeGraph destinationNode;
-	Set<Integer> finalEdgesToAvoid;
+  NodeGraph destinationNode;
+  Set<Integer> finalEdgesToAvoid;
 
-	/**
-	 * Finds the shortest route between two nodes using the A* algorithm, avoiding
-	 * specified edges.
-	 *
-	 * @param originNode      the starting node for the route
-	 * @param destinationNode the destination node for the route
-	 * @param graph           the graph on which to calculate the route
-	 * @param edgesToAvoid    a set of edges to avoid during route calculation
-	 * @return a Route object representing the shortest path from originNode to
-	 *         destinationNode, or null if no path is found
-	 */
-	public Route astarRoute(NodeGraph originNode, NodeGraph destinationNode, Graph graph, Set<Integer> edgesToAvoid) {
+  /**
+   * Finds the shortest route between two nodes using the A* algorithm, avoiding specified edges.
+   *
+   * @param originNode the starting node for the route
+   * @param destinationNode the destination node for the route
+   * @param graph the graph on which to calculate the route
+   * @param edgesToAvoid a set of edges to avoid during route calculation
+   * @return a Route object representing the shortest path from originNode to destinationNode, or
+   *         null if no path is found
+   */
+  public Route astarRoute(NodeGraph originNode, NodeGraph destinationNode, Graph graph,
+      Set<Integer> edgesToAvoid) {
 
-		if (edgesToAvoid == null)
-			edgesToAvoid = new HashSet<>();
-		this.finalEdgesToAvoid = new HashSet<>(edgesToAvoid);
+    if (edgesToAvoid == null) {
+      edgesToAvoid = new HashSet<>();
+    }
+    this.finalEdgesToAvoid = new HashSet<>(edgesToAvoid);
 
-		// Data structures for A* algorithm
-		Map<NodeGraph, NodeWrapper> nodeWrappersMap = new HashMap<>();
-		PriorityQueue<NodeWrapper> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fx));
-		Set<NodeGraph> closedSet = new HashSet<>();
+    // Data structures for A* algorithm
+    Map<NodeGraph, NodeWrapper> nodeWrappersMap = new HashMap<>();
+    PriorityQueue<NodeWrapper> openSet = new PriorityQueue<>(Comparator.comparingDouble(n -> n.fx));
+    Set<NodeGraph> closedSet = new HashSet<>();
 
-		// Initialise the origin node wrapper
-		NodeWrapper originNodeWrapper = getNodeWrapper(originNode, nodeWrappersMap);
-		originNodeWrapper.gx = 0.0;
-		originNodeWrapper.hx = heuristic(originNode, destinationNode);
-		originNodeWrapper.fx = originNodeWrapper.hx;
-		openSet.add(originNodeWrapper);
+    // Initialise the origin node wrapper
+    NodeWrapper originNodeWrapper = getNodeWrapper(originNode, nodeWrappersMap);
+    originNodeWrapper.gx = 0.0;
+    originNodeWrapper.hx = heuristic(originNode, destinationNode);
+    originNodeWrapper.fx = originNodeWrapper.hx;
+    openSet.add(originNodeWrapper);
 
-		while (!openSet.isEmpty()) {
+    while (!openSet.isEmpty()) {
 
-			NodeWrapper currentNodeWrapper = openSet.poll();
-			NodeGraph currentNode = currentNodeWrapper.node;
+      NodeWrapper currentNodeWrapper = openSet.poll();
+      NodeGraph currentNode = currentNodeWrapper.node;
 
-			if (currentNode.equals(destinationNode))
-				return reconstructPath(currentNodeWrapper, originNode, destinationNode);
-			closedSet.add(currentNode);
+      if (currentNode.equals(destinationNode)) {
+        return reconstructPath(currentNodeWrapper, originNode, destinationNode);
+      }
+      closedSet.add(currentNode);
 
-			List<NodeGraph> adjacentNodes = currentNode.getAdjacentNodes();
-			List<NodeGraph> validNeighbors;
+      List<NodeGraph> adjacentNodes = currentNode.getAdjacentNodes();
+      List<NodeGraph> validNeighbors;
 
-			validNeighbors = adjacentNodes.stream().filter(targetNode -> {
-				EdgeGraph edge = graph.getEdgeBetween(currentNode, targetNode);
-				return (!finalEdgesToAvoid.contains(edge.getID()) && !closedSet.contains(targetNode)); // Exclude
-																										// disregarded
-				// nodes
+      validNeighbors = adjacentNodes.stream().filter(targetNode -> {
+        EdgeGraph edge = graph.getEdgeBetween(currentNode, targetNode);
+        return (!finalEdgesToAvoid.contains(edge.getID()) && !closedSet.contains(targetNode)); // Exclude
+                                                                                               // disregarded
+        // nodes
 
-			}).collect(Collectors.toList());
+      }).collect(Collectors.toList());
 
-			if (validNeighbors.isEmpty())
-				continue;
+      if (validNeighbors.isEmpty() || validNeighbors.isEmpty()) {
+        continue;
+      }
 
-			if (validNeighbors.isEmpty())
-				continue;
+      for (NodeGraph targetNode : validNeighbors) {
+        EdgeGraph edge = graph.getEdgeBetween(currentNode, targetNode);
+        NodeWrapper nextNodeWrapper = getNodeWrapper(targetNode, nodeWrappersMap);
+        double tentativeGx = currentNodeWrapper.gx + edge.getLength();
 
-			for (NodeGraph targetNode : validNeighbors) {
-				EdgeGraph edge = graph.getEdgeBetween(currentNode, targetNode);
-				NodeWrapper nextNodeWrapper = getNodeWrapper(targetNode, nodeWrappersMap);
-				double tentativeGx = currentNodeWrapper.gx + edge.getLength();
+        if (tentativeGx < nextNodeWrapper.gx) {
+          nextNodeWrapper.previousWrapper = currentNodeWrapper;
+          nextNodeWrapper.directedEdgeFrom = graph.getDirectedEdgeBetween(currentNode, targetNode);
+          nextNodeWrapper.gx = tentativeGx;
+          nextNodeWrapper.hx = heuristic(targetNode, destinationNode); // Update hx value
+          nextNodeWrapper.fx = tentativeGx + nextNodeWrapper.hx;
 
-				if (tentativeGx < nextNodeWrapper.gx) {
-					nextNodeWrapper.previousWrapper = currentNodeWrapper;
-					nextNodeWrapper.directedEdgeFrom = graph.getDirectedEdgeBetween(currentNode, targetNode);
-					nextNodeWrapper.gx = tentativeGx;
-					nextNodeWrapper.hx = heuristic(targetNode, destinationNode); // Update hx value
-					nextNodeWrapper.fx = tentativeGx + nextNodeWrapper.hx;
+          // Only add to open set if it's not already there
+          if (!openSet.contains(nextNodeWrapper)) {
+            openSet.add(nextNodeWrapper);
+          } else {
+            // Update the position in the priority queue
+            openSet.remove(nextNodeWrapper);
+            openSet.add(nextNodeWrapper);
+          }
+        }
+      }
+    }
+    return null;
+  }
 
-					// Only add to open set if it's not already there
-					if (!openSet.contains(nextNodeWrapper))
-						openSet.add(nextNodeWrapper);
-					else {
-						// Update the position in the priority queue
-						openSet.remove(nextNodeWrapper);
-						openSet.add(nextNodeWrapper);
-					}
-				}
-			}
-		}
-		return null;
-	}
+  /**
+   * Retrieves the NodeWrapper associated with the given node, creating it if it doesn't exist.
+   *
+   * @param node the node to get the wrapper for
+   * @param nodeWrappersMap a map storing NodeWrappers for each node
+   * @return the NodeWrapper for the given node
+   */
+  private static NodeWrapper getNodeWrapper(NodeGraph node,
+      Map<NodeGraph, NodeWrapper> nodeWrappersMap) {
+    return nodeWrappersMap.computeIfAbsent(node, NodeWrapper::new);
+  }
 
-	/**
-	 * Retrieves the NodeWrapper associated with the given node, creating it if it
-	 * doesn't exist.
-	 *
-	 * @param node            the node to get the wrapper for
-	 * @param nodeWrappersMap a map storing NodeWrappers for each node
-	 * @return the NodeWrapper for the given node
-	 */
-	private static NodeWrapper getNodeWrapper(NodeGraph node, Map<NodeGraph, NodeWrapper> nodeWrappersMap) {
-		return nodeWrappersMap.computeIfAbsent(node, NodeWrapper::new);
-	}
+  /**
+   * Reconstructs the path from the origin node to the destination node based on the node wrappers.
+   *
+   * @param nodeWrapper the NodeWrapper at the destination node
+   * @param originNode the starting node for the route
+   * @param destinationNode the destination node for the route
+   * @return a Route object representing the path from originNode to destinationNode
+   */
+  private static Route reconstructPath(NodeWrapper nodeWrapper, NodeGraph originNode,
+      NodeGraph destinationNode) {
 
-	/**
-	 * Reconstructs the path from the origin node to the destination node based on
-	 * the node wrappers.
-	 *
-	 * @param nodeWrapper     the NodeWrapper at the destination node
-	 * @param originNode      the starting node for the route
-	 * @param destinationNode the destination node for the route
-	 * @return a Route object representing the path from originNode to
-	 *         destinationNode
-	 */
-	private static Route reconstructPath(NodeWrapper nodeWrapper, NodeGraph originNode, NodeGraph destinationNode) {
+    Route route = new Route();
+    List<DirectedEdge> directedEdgesSequence = new ArrayList<>();
 
-		Route route = new Route();
-		List<DirectedEdge> directedEdgesSequence = new ArrayList<>();
+    NodeWrapper currentNodeWrapper = nodeWrapper;
+    while (currentNodeWrapper.previousWrapper != null) {
+      directedEdgesSequence.add(0, currentNodeWrapper.directedEdgeFrom);
+      currentNodeWrapper = currentNodeWrapper.previousWrapper;
+    }
+    route.directedEdgesSequence = directedEdgesSequence;
+    if (!route.directedEdgesSequence.isEmpty()) {
+      route.computeRouteSequences();
+    }
+    return route;
+  }
 
-		NodeWrapper currentNodeWrapper = nodeWrapper;
-		while (currentNodeWrapper.previousWrapper != null) {
-			directedEdgesSequence.add(0, currentNodeWrapper.directedEdgeFrom);
-			currentNodeWrapper = currentNodeWrapper.previousWrapper;
-		}
-		route.directedEdgesSequence = directedEdgesSequence;
-		if (!route.directedEdgesSequence.isEmpty())
-			route.computeRouteSequences();
-		return route;
-	}
+  /**
+   * Calculates the heuristic distance between two nodes using Euclidean distance.
+   *
+   * @param node the first node
+   * @param otherNode the second node
+   * @return the heuristic distance between the two nodes
+   */
+  private static double heuristic(NodeGraph node, NodeGraph otherNode) {
 
-	/**
-	 * Calculates the heuristic distance between two nodes using Euclidean distance.
-	 *
-	 * @param node      the first node
-	 * @param otherNode the second node
-	 * @return the heuristic distance between the two nodes
-	 */
-	private static double heuristic(NodeGraph node, NodeGraph otherNode) {
-
-		Coordinate nodeCoords = node.getCoordinate();
-		Coordinate otherNodeCoords = otherNode.getCoordinate();
-		return GeometryUtilities.euclideanDistance(nodeCoords, otherNodeCoords);
-	}
+    Coordinate nodeCoords = node.getCoordinate();
+    Coordinate otherNodeCoords = otherNode.getCoordinate();
+    return GeometryUtilities.euclideanDistance(nodeCoords, otherNodeCoords);
+  }
 }
