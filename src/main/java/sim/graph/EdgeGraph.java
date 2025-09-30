@@ -271,9 +271,8 @@ public class EdgeGraph extends Edge {
     }
     if (toNode.equals(edge.toNode) || toNode.equals(edge.fromNode)) {
       return toNode;
-    } else {
-      return null;
     }
+    return null;
   }
 
   private final AtomicInteger agentCount = new AtomicInteger(0);
