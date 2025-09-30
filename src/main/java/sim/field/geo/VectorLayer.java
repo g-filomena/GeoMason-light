@@ -509,11 +509,10 @@ public class VectorLayer extends Layer {
     }
     if (inclusive) {
       return intersectingGeometries;
-    } else {
-      List<MasonGeometry> notIntersecting = otherLayer.geometriesList;
-      notIntersecting.removeAll(intersectingGeometries);
-      return notIntersecting;
     }
+    List<MasonGeometry> notIntersecting = otherLayer.geometriesList;
+    notIntersecting.removeAll(intersectingGeometries);
+    return notIntersecting;
   }
 
   // Spatial Relations
