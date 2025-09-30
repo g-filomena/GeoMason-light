@@ -76,9 +76,8 @@ public class GraphUtils {
     }
     if (nodes.size() == 2) {
       return enclosingCircleBetweenTwoNodes(nodes.get(0), nodes.get(1));
-    } else {
-      return convexHullFromNodes(nodes);
     }
+    return convexHullFromNodes(nodes);
   }
 
   /**
