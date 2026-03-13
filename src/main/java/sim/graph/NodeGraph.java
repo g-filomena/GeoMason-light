@@ -58,8 +58,8 @@ public class NodeGraph extends Node {
   // public List<Building> visibleBuildings2d = new ArrayList<>();
   public List<Building> adjacentBuildings = new ArrayList<>();
   public List<Building> visibleBuildings3d = new ArrayList<>();
-  public String DMA = ""; // land use categorisation
   public boolean gateway = false;
+  public String dma;
 
   /**
    * Sets the ID of the node.
