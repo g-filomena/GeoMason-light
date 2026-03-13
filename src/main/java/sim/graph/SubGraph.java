@@ -330,7 +330,7 @@ public class SubGraph extends Graph {
   public void setAttributesChildNode(NodeGraph childNode, NodeGraph parentNode) {
 
     childNode.nodeID = parentNode.getID();
-    childNode.attributes = parentNode.attributes;
+    childNode.attributes = new HashMap<>(parentNode.attributes);
     // since this contains further attributes
     childNode.masonGeometry = parentNode.masonGeometry;
     childNode.regionID = parentNode.regionID;
@@ -341,7 +341,6 @@ public class SubGraph extends Graph {
     childNode.visibleBuildings3d = parentNode.visibleBuildings3d;
     // TODO
     childNode.adjacentRegions = parentNode.adjacentRegions;
-    childNode.DMA = parentNode.DMA;
 
     // for dualGraph only
     childNode.primalEdge = parentNode.primalEdge;
