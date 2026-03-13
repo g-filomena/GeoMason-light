@@ -30,7 +30,6 @@ public class NodesLookup {
   final static double MIN_DISTANCE = 100;
   final static double INITIAL_TOLERANCE = 50;
   final static double TOLERANCE_INCREMENT = 50;
-
   final static double DISTANCE_MULTIPLIER = 1.50;
 
   /**
@@ -341,13 +340,13 @@ public class NodesLookup {
   public static List<NodeGraph> getCandidatesByDMA(List<NodeGraph> nodes, String DMA) {
     if (DMA.equals("random")) {
       return nodes.stream().filter(
-          node -> node.DMA.equals("work") || node.DMA.equals("visit") || node.DMA.equals("live"))
+          node -> node.dma.equals("work") || node.dma.equals("visit") || node.dma.equals("live"))
           .collect(Collectors.toList());
     } else if (DMA.equals("workOrVisit")) {
-      return nodes.stream().filter(node -> node.DMA.equals("work") || node.DMA.equals("visit"))
+      return nodes.stream().filter(node -> node.dma.equals("work") || node.dma.equals("visit"))
           .collect(Collectors.toList());
     } else {
-      return nodes.stream().filter(node -> node.DMA.equals(DMA)).collect(Collectors.toList());
+      return nodes.stream().filter(node -> node.dma.equals(DMA)).collect(Collectors.toList());
     }
   }
 
