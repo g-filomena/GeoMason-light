@@ -18,7 +18,7 @@ import sim.util.geo.MasonGeometry;
  * A class representing building metadata within a geographic information system. Each instance of
  * this class stores information about a building, including its unique identifier, land use
  * classification, geographic geometry, associated node in a graph, local and global landmarkness
- * scores, and a label based on the Urban DMA categorisation.
+ * scores, and a label based on the Urban DMA categorisation (work-live-visit).
  *
  * This class is used to organize and manage data related to buildings in a geographical context,
  * facilitating various spatial analysis and modeling tasks.
@@ -29,9 +29,8 @@ public class Building {
   public String landUse; // Classification of land use for the building
   public MasonGeometry geometry; // Geographic geometry representing the building
   public NodeGraph node; // Associated node in a graph (if applicable)
-
   public Map<String, AttributeValue> attributes = new HashMap<>();
 
   public String dma; // Urban Density (D), Mix(M) and Access (A) classification: "live", "work",
-                     // "visit" - or "other"
+                     // "visit" - or "other
 }
