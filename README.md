@@ -11,6 +11,12 @@
 
 The original GeoMason documentation is available from the [GeoMason website](https://cs.gmu.edu/~eclab/projects/mason/extensions/geomason/).
 
+## Versioning note
+
+Versions up to `1.16` followed the original project numbering scheme.
+
+Starting from `2.0.0`, GeoMason-light adopts a clearer versioning scheme. Version `2.0.0` marks the start of the new release line and includes the Java 11 baseline, Maven Central packaging cleanup, package-level Javadocs, and the change of the MASON dependency to `provided`.
+
 ## Why GeoMason-light?
 
 ### Extended geospatial functionality
@@ -44,6 +50,10 @@ The library provides:
 Unlike the original GeoMason distribution, `GeoMason-light` does not include the full set of heavy example models and datasets. The focus is on the reusable core library.
 
 The codebase also uses the modern Java Topology Suite package namespace, `org.locationtech.jts`.
+
+## Requirements
+
+GeoMason-light `2.0.0` requires Java 11 or newer.
 
 ## Main dependencies
 
@@ -85,7 +95,7 @@ After that, downstream Maven projects can explicitly declare both dependencies:
 <dependency>
 	<groupId>uk.ac.liv.gdsl</groupId>
 	<artifactId>GeoMason-light</artifactId>
-	<version>1.1.9</version>
+	<version>2.0.0</version>
 </dependency>
 
 <dependency>
@@ -105,7 +115,7 @@ Add the following dependency to your project `pom.xml`:
 <dependency>
 	<groupId>uk.ac.liv.gdsl</groupId>
 	<artifactId>GeoMason-light</artifactId>
-	<version>1.1.9</version>
+	<version>2.0.0</version>
 </dependency>
 ```
 
@@ -120,19 +130,20 @@ mvn clean install
 ### Option 2: Use GeoMason-light in Eclipse
 
 1. Make sure Maven support is installed and enabled in Eclipse.
-2. Create or open a Maven project.
-3. Add the `GeoMason-light` dependency to your project `pom.xml`:
+2. Make sure the project uses Java 11 or newer.
+3. Create or open a Maven project.
+4. Add the `GeoMason-light` dependency to your project `pom.xml`:
 
 ```xml
 <dependency>
 	<groupId>uk.ac.liv.gdsl</groupId>
 	<artifactId>GeoMason-light</artifactId>
-	<version>1.1.9</version>
+	<version>2.0.0</version>
 </dependency>
 ```
 
-4. If your project needs MASON classes, install `mason-21.jar` locally and add the explicit `sim:mason:21` dependency.
-5. Update the Maven project:
+5. If your project needs MASON classes, install `mason-21.jar` locally and add the explicit `sim:mason:21` dependency.
+6. Update the Maven project:
 
 ```text
 Right click project → Maven → Update Project
