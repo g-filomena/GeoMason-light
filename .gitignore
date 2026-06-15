@@ -13,7 +13,6 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 # Local Maven settings / signing files
-.m2/settings.xml
 .m2/local_settings.xml
 .m2/local_signature.asc
 .m2/mason_settings.xml
@@ -58,6 +57,4 @@ Thumbs.db
 # Local review / patch artifacts
 patches/
 *.patch
-geomason-light-review-bundle.zip
-README-FIRST.md
-apply-new-files.sh
+
