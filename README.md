@@ -1,73 +1,204 @@
+# GeoMason-light
 
-
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/uk.ac.liv.gdsl/GeoMason-light/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/uk.ac.liv.gdsl/GeoMason-light)
+[![Maven Central](https://img.shields.io/maven-central/v/uk.ac.liv.gdsl/GeoMason-light.svg)](https://mvnrepository.com/artifact/uk.ac.liv.gdsl/GeoMason-light)
 [![GitHub CI](https://github.com/g-filomena/GeoMason-light/actions/workflows/build.yaml/badge.svg)](https://github.com/g-filomena/GeoMason-light/actions/workflows/build.yaml)
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![Javadoc](https://github.com/g-filomena/GeoMason-light/actions/workflows/javadoc.yml/badge.svg)](https://github.com/g-filomena/GeoMason-light/actions/workflows/javadoc.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 ## About
-`GeoMason-light` is an optional extension to MASON that adds support for vector and raster geospatial data.
 
-You can find the original manual of `Geomason` on the [Geomason Site](https://cs.gmu.edu/~eclab/projects/mason/extensions/geomason/).
+`GeoMason-light` is a lightweight geospatial extension for MASON. It provides support for vector and raster geospatial data, with additional utilities for graph-based spatial modelling, routing, and GIS-oriented agent-based simulations.
 
-### Why GeoMason-light?
-#### Content:
-* It includes a `graph` package that supports a way more advanced manipulation of graph components. This allows the users to develop flexible street network-based urban mobility/traffic agent-based models.
-* It explicitly allows the creation of `SubGraphs`.
-* It includes a `VectorLayer` class that allows for more geometric and spatial operations, usually common for GIS VectorLayers.
-* It supports loading GeoPackages through the library [Geopackage](https://github.com/ngageoint/geopackage-java).
+The original GeoMason documentation is available from the [GeoMason website](https://cs.gmu.edu/~eclab/projects/mason/extensions/geomason/).
 
-#### Open software:
-* The structure of the repository allows for smoother devleopments and contributions from users, compared both to the MASON and GeoMason source repositories.
-* It is fully mavenised and available on the [Maven Repository](https://mvnrepository.com).
-* It comes with javadoc and sources.
+## Why GeoMason-light?
 
-#### Light:
-* It comes without all the heavy examples included in the original geomason.
-* All the code now refers to the last version of Java Topology Suite (JTS).
+### Extended geospatial functionality
 
-### Main Dependencies:
+`GeoMason-light` builds on the original GeoMason framework and adds a more flexible structure for geospatial and network-based modelling.
+
+Main additions include:
+
+* a `graph` package for advanced manipulation of graph components;
+* support for `SubGraph` objects;
+* a `VectorLayer` class with additional GIS-style geometric and spatial operations;
+* support for loading GeoPackages through [GeoPackage Java](https://github.com/ngageoint/geopackage-java);
+* routing utilities for graph-based agent movement and street-network simulations.
+
+These features are intended to support flexible urban mobility, traffic, accessibility, and other spatial agent-based models.
+
+### Maven-based and easier to reuse
+
+The repository is structured as a Maven project, making it easier to build, reuse, document, and integrate into downstream projects.
+
+The library provides:
+
+* Maven-compatible project structure;
+* source JAR generation;
+* Javadoc JAR generation;
+* package-level API documentation;
+* CI support for build and Javadoc validation.
+
+### Lightweight distribution
+
+Unlike the original GeoMason distribution, `GeoMason-light` does not include the full set of heavy example models and datasets. The focus is on the reusable core library.
+
+The codebase also uses the modern Java Topology Suite package namespace, `org.locationtech.jts`.
+
+## Main dependencies
+
+Core dependencies include:
+
 * `mason`
 * `javatuples`
-* `jts`
+* `jts-core`
+* `geopackage-java`
 
-# Installation Instructions
+## MASON dependency
 
-Follow the steps below to install the necessary tools, and run the GeoMason-light project locally. Normally, packages relying on GeoMason-light are already configured to install GeoMason and its dependencies automatically.
+`GeoMason-light` depends on MASON.
 
-## Option 1: Installing GeoMason-light in Eclipse
+MASON is not available from Maven Central under the `sim:mason:21` coordinates. For this reason, the dependency is declared as `provided` in the `GeoMason-light` POM.
 
-1.  Ensure that **Maven** is installed and configured. If not, you can install it from the **Eclipse Marketplace**. 
-2. Create a New Maven Project (If you don't already have one).  In Eclipse, go to **File** → **New** → **Maven Project**.  Follow the prompts to create a new Maven project.
-3. Add GeoMason-light Dependency to the `pom.xml` file of your project:
-```
-<dependency> <groupId>uk.ac.liv.gdsl</groupId> 
-<artifactId>GeoMason-light</artifactId> 
-<version>1.17</version> </dependency>
-```
-Alternatively, if you are not using Maven, add `GeoMason-light-1.1.7` to your Java Project's **Class Path** (right-click on project, **Build Path...**, **Configure Path**) through the **Add External JARs...**
+This means that Maven will not try to pull MASON transitively when users add `GeoMason-light` to their project. Users must provide MASON manually.
 
-You can now start using GeoMason-light in your project.     
-   
-## Option 2: Installing GeoMason-light into Maven (Central Repository)
-GeoMason-light is available in **Maven Central**, so you can directly install it into your local Maven repository. This allows you to use it in other Maven projects, including those not in Eclipse.
+If you are building `GeoMason-light` from source, or if your downstream Maven project needs to compile against MASON classes, install `mason-21.jar` into your local Maven repository:
 
-1. Download Maven from the [official Maven website](https://maven.apache.org/download.cgi) and extract Maven to a directory on your machine.
-2.  Set up Environment Variables: Add Maven's `bin` directory to your system's `PATH` environment variable
-3. Add GeoMason-light Dependency to Your `pom.xml`, inside the `<dependencies>` section:
-
-```
-<dependency> <groupId>uk.ac.liv.gdsl</groupId> 
-<artifactId>GeoMason-light</artifactId> 
-<version>1.17</version> </dependency>
+```bash
+mvn install:install-file \
+	-Dfile=lib/mason-21.jar \
+	-DgroupId=sim \
+	-DartifactId=mason \
+	-Dversion=21 \
+	-Dpackaging=jar
 ```
 
-Since `GeoMason-light` is available in Maven Central, Maven will automatically resolve and download the dependency for you when you run a build. To install the dependency:
+On Windows PowerShell:
 
-1.  Open a terminal or command prompt.
-2.  Navigate to the root directory of your Maven project.
-3.  Run the following Maven command to download the dependencies and build your project:
-   
-`mvn clean install` 
+```powershell
+mvn install:install-file "-Dfile=.\lib\mason-21.jar" "-DgroupId=sim" "-DartifactId=mason" "-Dversion=21" "-Dpackaging=jar"
+```
 
-4. Verify the Dependency. After building your project, check that **GeoMason-light** has been added to the local Maven repository (typically located at `C:\Users\<user>\.m2\repository` on Windows). Once the dependency is added to your `pom.xml`, you can start using GeoMason-light in your Java classes:
+After that, downstream Maven projects can explicitly declare both dependencies:
 
+```xml
+<dependency>
+	<groupId>uk.ac.liv.gdsl</groupId>
+	<artifactId>GeoMason-light</artifactId>
+	<version>1.1.9</version>
+</dependency>
+
+<dependency>
+	<groupId>sim</groupId>
+	<artifactId>mason</artifactId>
+	<version>21</version>
+</dependency>
+```
+
+## Installation
+
+### Option 1: Use GeoMason-light as a Maven dependency
+
+Add the following dependency to your project `pom.xml`:
+
+```xml
+<dependency>
+	<groupId>uk.ac.liv.gdsl</groupId>
+	<artifactId>GeoMason-light</artifactId>
+	<version>1.1.9</version>
+</dependency>
+```
+
+If your project directly uses MASON classes, install `mason-21.jar` locally as described above and add the explicit `sim:mason:21` dependency to your own `pom.xml`.
+
+Then run:
+
+```bash
+mvn clean install
+```
+
+### Option 2: Use GeoMason-light in Eclipse
+
+1. Make sure Maven support is installed and enabled in Eclipse.
+2. Create or open a Maven project.
+3. Add the `GeoMason-light` dependency to your project `pom.xml`:
+
+```xml
+<dependency>
+	<groupId>uk.ac.liv.gdsl</groupId>
+	<artifactId>GeoMason-light</artifactId>
+	<version>1.1.9</version>
+</dependency>
+```
+
+4. If your project needs MASON classes, install `mason-21.jar` locally and add the explicit `sim:mason:21` dependency.
+5. Update the Maven project:
+
+```text
+Right click project → Maven → Update Project
+```
+
+You can then import and use GeoMason-light classes in your Java code.
+
+## Building GeoMason-light from source
+
+Clone the repository:
+
+```bash
+git clone https://github.com/g-filomena/GeoMason-light.git
+cd GeoMason-light
+```
+
+Install MASON into your local Maven repository:
+
+```bash
+mvn install:install-file \
+	-Dfile=lib/mason-21.jar \
+	-DgroupId=sim \
+	-DartifactId=mason \
+	-Dversion=21 \
+	-Dpackaging=jar
+```
+
+On Windows PowerShell:
+
+```powershell
+mvn install:install-file "-Dfile=.\lib\mason-21.jar" "-DgroupId=sim" "-DartifactId=mason" "-Dversion=21" "-Dpackaging=jar"
+```
+
+Then build the project:
+
+```bash
+mvn clean install
+```
+
+To generate the Javadoc locally:
+
+```bash
+mvn -DskipTests javadoc:javadoc
+```
+
+The generated documentation will be available under:
+
+```text
+target/site/apidocs/
+```
+
+## API documentation
+
+The project includes package-level Javadocs for the main API areas:
+
+* `sim.field.geo`
+* `sim.graph`
+* `sim.io.geo`
+* `sim.portrayal.geo`
+* `sim.routing`
+* `sim.util.geo`
+
+These packages cover vector/raster layers, geospatial import/export, graph structures, routing, portrayal, and geometry utilities.
+
+## License
+
+GeoMason-light is released under the GNU General Public License v3.0.
+
+See the [GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html) for details.

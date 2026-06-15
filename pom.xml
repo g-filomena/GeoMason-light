@@ -1,66 +1,73 @@
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>uk.ac.liv.gdsl</groupId>
-    <artifactId>GeoMason-light</artifactId>
-    <version>1.1.9</version>
-	
+	<groupId>uk.ac.liv.gdsl</groupId>
+	<artifactId>GeoMason-light</artifactId>
+	<version>1.1.9</version>
+
 	<name>${project.groupId}:${project.artifactId}</name>
-    <description>
-		GeoMason-light is an advanced and optional extension of MASON, a popular agent-based modeling toolkit. 
-		This extension enriches MASON's capabilities by introducing robust support for both vector and raster geospatial data. 
-		By building upon the functionality of its predecessor, GeoMason, the new GeoMason-light framework offers a lighter, more efficient, and versatile approach to integrate geospatial data into agent-based simulations
-    </description>
-    <url>https://github.com/g-filomena/GeoMason-light</url>
-	
+
+	<description>
+		GeoMason-light is an advanced and optional extension of MASON, a popular agent-based
+		modeling toolkit. This extension enriches MASON's capabilities by introducing robust
+		support for both vector and raster geospatial data. By building upon the functionality
+		of its predecessor, GeoMason, the new GeoMason-light framework offers a lighter,
+		more efficient, and versatile approach to integrate geospatial data into
+		agent-based simulations.
+	</description>
+
+	<url>https://github.com/g-filomena/GeoMason-light</url>
+
 	<developers>
 		<developer>
-		  <name>Gabriele Filomena</name>
-		  <email>gabriele.filomena@liverpool.ac.uk</email>
-		  <organization>University of Liverpool, Geographic Data Science Lab</organization>
-		  <organizationUrl>https://www.liverpool.ac.uk/geographic-data-science/</organizationUrl>
+			<name>Gabriele Filomena</name>
+			<email>gabriele.filomena@liverpool.ac.uk</email>
+			<organization>University of Liverpool, Geographic Data Science Lab</organization>
+			<organizationUrl>https://www.liverpool.ac.uk/geographic-data-science/</organizationUrl>
 		</developer>
-	 </developers>
-	 
-	<scm>
-	  <connection>scm:git:git://github.com/g-filomena/GeoMason-light.git</connection>
-	  <developerConnection>scm:git:ssh://github.com:g-filomena/GeoMason-light.git</developerConnection>
-	  <url>http://github.com/g-filomena/GeomMason-light/tree/master</url>
-	</scm>
-	
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
+	</developers>
 
-    <dependencies>
-		<!-- Commons math3 -->
+	<scm>
+		<connection>scm:git:https://github.com/g-filomena/GeoMason-light.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/g-filomena/GeoMason-light.git</developerConnection>
+		<url>https://github.com/g-filomena/GeoMason-light/tree/main</url>
+	</scm>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+		<!-- Commons Math -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 			<version>3.6.1</version>
 		</dependency>
-	
-        <!-- JavaTuples -->
-        <dependency>
-            <groupId>org.javatuples</groupId>
-            <artifactId>javatuples</artifactId>
-            <version>1.2</version>
-        </dependency>
 
-        <!-- JTS Core -->
-        <dependency>
-            <groupId>org.locationtech.jts</groupId>
-            <artifactId>jts-core</artifactId>
-            <version>1.19.0</version>
-        </dependency>
+		<!-- JavaTuples -->
+		<dependency>
+			<groupId>org.javatuples</groupId>
+			<artifactId>javatuples</artifactId>
+			<version>1.2</version>
+		</dependency>
 
-		<!-- Add GeoPackage dependencies -->
-		<!-- https://mvnrepository.com/artifact/mil.nga.geopackage/geopackage -->
+		<!-- JTS Core -->
+		<dependency>
+			<groupId>org.locationtech.jts</groupId>
+			<artifactId>jts-core</artifactId>
+			<version>1.19.0</version>
+		</dependency>
+
+		<!-- GeoPackage -->
 		<dependency>
 			<groupId>mil.nga.geopackage</groupId>
 			<artifactId>geopackage</artifactId>
@@ -72,164 +79,121 @@
 			<artifactId>geopackage-core</artifactId>
 			<version>6.6.7</version>
 		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/mil.nga/sf -->
+
 		<dependency>
 			<groupId>mil.nga</groupId>
 			<artifactId>sf</artifactId>
 			<version>2.2.2</version>
 		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/mil.nga/wkb -->
+
 		<dependency>
 			<groupId>mil.nga</groupId>
 			<artifactId>wkb</artifactId>
 			<version>1.0.6</version>
 		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/mil.nga/crs -->
+
 		<dependency>
 			<groupId>mil.nga</groupId>
 			<artifactId>crs</artifactId>
 			<version>1.1.5</version>
 		</dependency>
-				
-		<!-- https://mvnrepository.com/artifact/mil.nga/proj -->
+
 		<dependency>
 			<groupId>mil.nga</groupId>
 			<artifactId>proj</artifactId>
 			<version>1.1.4</version>
 		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/org.locationtech.proj4j/proj4j -->
+
 		<dependency>
 			<groupId>org.locationtech.proj4j</groupId>
 			<artifactId>proj4j</artifactId>
 			<version>1.4.0</version>
 		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/com.j256.ormlite/ormlite-jdbc -->
+
 		<dependency>
 			<groupId>com.j256.ormlite</groupId>
 			<artifactId>ormlite-jdbc</artifactId>
 			<version>6.1</version>
 		</dependency>
-		
-		<!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
+
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
 			<version>3.49.1.0</version>
 		</dependency>
-		
-		<!-- Add mason-21.jar as a system dependency -->
+
+		<!-- MASON is required at compile/runtime, but it is not available from Maven Central. -->
 		<dependency>
 			<groupId>sim</groupId>
 			<artifactId>mason</artifactId>
 			<version>21</version>
+			<scope>provided</scope>
 		</dependency>
+	</dependencies>
 
-		
-    </dependencies>
-    
-	<!-- Distribution management -->
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+
 		<repository>
 			<id>ossrh</id>
 			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
-    </distributionManagement>
-	
+	</distributionManagement>
+
 	<build>
 		<plugins>
-				
-			<!-- Install mason-21.jar to the local Maven repository -->
-
+			<!-- Compiler -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-install-plugin</artifactId>
-				<version>3.0.0-M1</version>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
+				<configuration>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+
+			<!-- Javadoc -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.3.0</version>
+				<configuration>
+					<doclint>all,-missing</doclint>
+					<encoding>${project.build.sourceEncoding}</encoding>
+					<charset>${project.build.sourceEncoding}</charset>
+					<docencoding>${project.build.sourceEncoding}</docencoding>
+					<quiet>true</quiet>
+				</configuration>
 				<executions>
 					<execution>
-						<id>install-mason</id>
-						<phase>initialize</phase> <!-- Run early in the build lifecycle -->
+						<id>attach-javadocs</id>
 						<goals>
-							<goal>install-file</goal>
+							<goal>jar</goal>
 						</goals>
-						<configuration>
-							<file>${project.basedir}/lib/mason-21.jar</file> <!-- Path to mason-21.jar -->
-							<groupId>sim</groupId>
-							<artifactId>mason</artifactId>
-							<version>21</version>
-							<packaging>jar</packaging>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>
 
-
-			
+			<!-- Sources -->
 			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.13</version>
-				<extensions>true</extensions>
-				<configuration>
-					<serverId>ossrh</serverId>
-					<nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
-				</configuration>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
-				
-            <!-- Compiler Plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
 
-            <!-- Javadoc -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <doclint>all,-missing</doclint>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- Sources -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-			
 			<!-- Copy POM to target -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -256,7 +220,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<!-- Checksum -->
 			<plugin>
 				<groupId>net.ju-n.maven.plugins</groupId>
@@ -280,16 +244,15 @@
 						<fileSet>
 							<directory>${project.build.directory}</directory>
 							<includes>
-                                <include>${project.build.finalName}.jar</include>
-                                <include>${project.build.finalName}.pom</include>
-                                <include>${project.build.finalName}-javadoc.jar</include>
-                                <include>${project.build.finalName}-sources.jar</include>
-                            </includes>
+								<include>${project.build.finalName}.jar</include>
+								<include>${project.build.finalName}-javadoc.jar</include>
+								<include>${project.build.finalName}-sources.jar</include>
+							</includes>
 						</fileSet>
 					</fileSets>
 				</configuration>
 			</plugin>
-		
+
 			<!-- Signing -->
 			<plugin>
 				<groupId>org.simplify4u.plugins</groupId>
@@ -306,21 +269,34 @@
 					</execution>
 				</executions>
 			</plugin>
-        
+
+			<!-- Nexus staging -->
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.13</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
-    <licenses>
-        <license>
-            <name>GNU General Public License, Version 3.0</name>
-            <url>https://www.gnu.org/licenses/gpl-3.0.html</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>GNU General Public License, Version 3.0</name>
+			<url>https://www.gnu.org/licenses/gpl-3.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
-    <organization>
-        <name>University of Liverpool, Department of Geography and Planning, Geographic Data Science Lab</name>
-        <url>https://www.liverpool.ac.uk/geography-and-planning/</url>
-    </organization>
+	<organization>
+		<name>University of Liverpool, Department of Geography and Planning, Geographic Data Science Lab</name>
+		<url>https://www.liverpool.ac.uk/geography-and-planning/</url>
+	</organization>
 
 </project>
+```

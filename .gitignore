@@ -1,3 +1,4 @@
+# Maven / build output
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -6,26 +7,56 @@ pom.xml.next
 release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
-.mvn/timing.properties
 
+# Maven wrapper / timing
+.mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
-secrets.properties
+# Local Maven settings / signing files
+.m2/local_settings.xml
+.m2/local_signature.asc
+.m2/mason_settings.xml
 
-# Eclipse m2e generated files
-# Eclipse Core
+# Local deploy helper files
+deploy.bat
+deploy.sh
+deploy.ps1
+deploy.*
+howToDeploy.txt
+
+# Secrets / credentials
+secrets.properties
+*.secret
+*.secrets
+*.key
+*.pem
+*.p12
+*.jks
+
+# Eclipse / m2e generated files
 .project
 .classpath
-.metadata
+.metadata/
 .settings/
 .loadpath
+.recommenders/
+
+# IDE / editor temporary files
 bin/
 tmp/
 *.tmp
 *.bak
 *.swp
+*~
 *~.nib
-.recommenders
 
-.m2/local_settings.xml
-.m2/local_signature.asc
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Local review / patch artifacts
+patches/
+*.patch
+geomason-light-review-bundle.zip
+README-FIRST.md
+apply-new-files.sh
