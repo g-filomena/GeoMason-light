@@ -1,3 +1,4 @@
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -13,10 +14,12 @@
 	<name>${project.groupId}:${project.artifactId}</name>
 
 	<description>
-		GeoMason-light is an advanced and optional extension of MASON, a popular agent-based modeling toolkit.
-		This extension enriches MASON's capabilities by introducing robust support for both vector and raster geospatial data.
-		By building upon the functionality of its predecessor, GeoMason, the new GeoMason-light framework offers a lighter,
-		more efficient, and versatile approach to integrate geospatial data into agent-based simulations.
+		GeoMason-light is an advanced and optional extension of MASON, a popular agent-based
+		modeling toolkit. This extension enriches MASON's capabilities by introducing robust
+		support for both vector and raster geospatial data. By building upon the functionality
+		of its predecessor, GeoMason, the new GeoMason-light framework offers a lighter,
+		more efficient, and versatile approach to integrate geospatial data into
+		agent-based simulations.
 	</description>
 
 	<url>https://github.com/g-filomena/GeoMason-light</url>
@@ -119,11 +122,12 @@
 			<version>3.49.1.0</version>
 		</dependency>
 
-		<!-- MASON -->
+		<!-- MASON is required at compile/runtime, but it is not available from Maven Central. -->
 		<dependency>
 			<groupId>sim</groupId>
 			<artifactId>mason</artifactId>
 			<version>21</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
@@ -141,41 +145,6 @@
 
 	<build>
 		<plugins>
-			<!-- Install mason-21.jar to the local Maven repository -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-install-plugin</artifactId>
-				<version>3.0.0-M1</version>
-				<executions>
-					<execution>
-						<id>install-mason</id>
-						<phase>initialize</phase>
-						<goals>
-							<goal>install-file</goal>
-						</goals>
-						<configuration>
-							<file>${project.basedir}/lib/mason-21.jar</file>
-							<groupId>sim</groupId>
-							<artifactId>mason</artifactId>
-							<version>21</version>
-							<packaging>jar</packaging>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.13</version>
-				<extensions>true</extensions>
-				<configuration>
-					<serverId>ossrh</serverId>
-					<nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
-				</configuration>
-			</plugin>
-
 			<!-- Compiler -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -276,7 +245,6 @@
 							<directory>${project.build.directory}</directory>
 							<includes>
 								<include>${project.build.finalName}.jar</include>
-								<include>${project.build.finalName}.pom</include>
 								<include>${project.build.finalName}-javadoc.jar</include>
 								<include>${project.build.finalName}-sources.jar</include>
 							</includes>
@@ -301,6 +269,19 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<!-- Nexus staging -->
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.13</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -318,3 +299,4 @@
 	</organization>
 
 </project>
+```
