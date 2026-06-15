@@ -20,5 +20,8 @@ jobs:
           java-version: '8'
           cache: maven
 
+      - name: Install MASON dependency locally
+        run: mvn -B install:install-file -Dfile=lib/mason-21.jar -DgroupId=sim -DartifactId=mason -Dversion=21 -Dpackaging=jar
+
       - name: Generate Javadoc
         run: mvn -B -DskipTests javadoc:javadoc
