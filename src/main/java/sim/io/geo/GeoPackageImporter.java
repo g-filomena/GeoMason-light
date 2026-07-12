@@ -178,28 +178,38 @@ public class GeoPackageImporter {
           .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new));
     } else if (geometryType.equals(GeometryType.MULTILINESTRING)) {
       mil.nga.sf.MultiLineString mls = (mil.nga.sf.MultiLineString) sfGeometry;
+      GeometryFactory gf = new GeometryFactory();
       if (mls.getLineStrings().size() == 1) {
         mil.nga.sf.LineString singleLineString = mls.getLineStrings().get(0);
-        return new GeometryFactory().createLineString(singleLineString.getPoints().stream()
+        return gf.createLineString(singleLineString.getPoints().stream()
             .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new));
       }
+      org.locationtech.jts.geom.LineString[] lineStrings = mls.getLineStrings().stream()
+          .map(ls -> gf.createLineString(ls.getPoints().stream()
+              .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new)))
+          .toArray(org.locationtech.jts.geom.LineString[]::new);
+      return gf.createMultiLineString(lineStrings);
     } else if (geometryType.equals(GeometryType.POLYGON)) {
       mil.nga.sf.Polygon pg = (mil.nga.sf.Polygon) sfGeometry;
       return new GeometryFactory().createPolygon(pg.getExteriorRing().getPoints().stream()
           .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new));
     } else if (geometryType.equals(GeometryType.MULTIPOLYGON)) {
       mil.nga.sf.MultiPolygon mpg = (mil.nga.sf.MultiPolygon) sfGeometry;
+      GeometryFactory gf = new GeometryFactory();
       if (mpg.getPolygons().size() == 1) {
         mil.nga.sf.Polygon singlePolygon = mpg.getPolygons().get(0);
-        return new GeometryFactory().createPolygon(singlePolygon.getExteriorRing().getPoints()
+        return gf.createPolygon(singlePolygon.getExteriorRing().getPoints()
             .stream().map(point -> new Coordinate(point.getX(), point.getY()))
             .toArray(Coordinate[]::new));
       }
+      org.locationtech.jts.geom.Polygon[] polygons = mpg.getPolygons().stream()
+          .map(pg -> gf.createPolygon(pg.getExteriorRing().getPoints().stream()
+              .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new)))
+          .toArray(org.locationtech.jts.geom.Polygon[]::new);
+      return gf.createMultiPolygon(polygons);
     } else {
       throw new IllegalArgumentException(
           "Unsupported GeoPackage geometry type: " + sfGeometry.getGeometryType());
     }
-
-    return null;
   }
 }
