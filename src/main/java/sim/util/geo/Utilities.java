@@ -16,8 +16,6 @@ import java.util.stream.Collectors;
  */
 public class Utilities {
 
-  static Random random = new Random();
-
   /**
    * Sorts a Map based on its values.
    *
@@ -69,6 +67,26 @@ public class Utilities {
    * @return A random value from the distribution.
    */
   public static double fromDistribution(double mean, double sd, String direction) {
+    // ThreadLocalRandom instead of a shared static Random: the shared instance serialises all
+    // threads on one atomic seed, which badly contends when simulations draw per-edge costs
+    // from several worker threads. This draw was never seedable, so reproducibility semantics
+    // are unchanged; use the Random-parameter overload for seeded, reproducible draws.
+    return fromDistribution(mean, sd, direction,
+        java.util.concurrent.ThreadLocalRandom.current());
+  }
+
+  /**
+   * Same as {@link #fromDistribution(double, double, String)}, but draws from the caller's own
+   * {@link Random} so simulations can keep draws under their seeded, per-job RNG.
+   *
+   * @param mean The mean of the distribution.
+   * @param sd The standard deviation of the distribution.
+   * @param direction Either "left" (for values lower than the mean), "right" (for values higher
+   *        than the mean), or null.
+   * @param random The random generator to draw from.
+   * @return A random value from the distribution.
+   */
+  public static double fromDistribution(double mean, double sd, String direction, Random random) {
 
     double result = random.nextGaussian() * sd + mean;
     if (direction != null) {
