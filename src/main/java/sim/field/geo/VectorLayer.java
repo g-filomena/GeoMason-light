@@ -13,10 +13,12 @@ import java.awt.geom.Point2D;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collectors;
 import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequenceFilter;
@@ -28,8 +30,11 @@ import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.locationtech.jts.index.quadtree.Quadtree;
+import org.locationtech.jts.operation.union.UnaryUnionOp;
 import sim.engine.SimState;
 import sim.engine.Steppable;
+import sim.io.geo.GeoJSONExporter;
+import sim.io.geo.GeoPackageExporter;
 import sim.io.geo.GeoPackageImporter;
 import sim.io.geo.ShapeFileImporter;
 import sim.portrayal.DrawInfo2D;
@@ -50,6 +55,21 @@ public class VectorLayer extends Layer {
    * A spatial index of all the geometries in the field.
    */
   private Quadtree spatialIndex = new Quadtree();
+
+  /**
+   * Whether the spatial index is out of date with respect to {@link #geometriesList}. Mutations
+   * (moves, removals) only mark the index dirty; the rebuild happens lazily, at most once per
+   * batch of mutations, when the next spatial query needs it. This turns N per-move rebuilds
+   * (each O(N)) into a single rebuild per query round.
+   */
+  private volatile boolean spatialIndexDirty = false;
+
+  /**
+   * Lookup from geometry id (the {@code userData} set by {@link #setID(String)}) to the geometries
+   * carrying it, built on demand so {@link #getGeometriesFromIDs(Set)} runs in the size of the
+   * requested set rather than in the size of the whole layer. Rebuilt after any structural change.
+   */
+  private transient volatile Map<Object, List<MasonGeometry>> idIndex;
 
   /**
    * The convex hull of all the geometries in this field.
@@ -115,6 +135,7 @@ public class VectorLayer extends Layer {
     MBR.expandToInclude(envelope);
     spatialIndex.insert(envelope, masonGeometry);
     geometriesList.add(masonGeometry);
+    idIndex = null;
   }
 
   /**
@@ -136,12 +157,16 @@ public class VectorLayer extends Layer {
   }
 
   /**
-   * Removes the given geometry.
+   * Removes the given geometry. The spatial index is marked stale and rebuilt lazily on the next
+   * query, so the removed geometry can no longer be returned by spatial queries (previously the
+   * index kept a stale entry until {@link #updateSpatialIndex()} was called manually).
    *
    * @param masonGeometry The MasonGeometry to be removed from the VectorLayer.
    */
   public void removeGeometry(final MasonGeometry masonGeometry) {
     geometriesList.remove(masonGeometry);
+    spatialIndexDirty = true;
+    idIndex = null;
   }
 
   /**
@@ -151,6 +176,43 @@ public class VectorLayer extends Layer {
    */
   public List<MasonGeometry> getGeometries() {
     return new ArrayList<>(geometriesList);
+  }
+
+  /**
+   * Returns a read-only view of this layer's geometries, without copying. Prefer this over
+   * {@link #getGeometries()} when the result is only iterated or read.
+   *
+   * @return an unmodifiable view of the geometries.
+   */
+  public List<MasonGeometry> geometriesView() {
+    return Collections.unmodifiableList(geometriesList);
+  }
+
+  /**
+   * Returns the number of geometries in this layer.
+   *
+   * @return the geometry count.
+   */
+  public int size() {
+    return geometriesList.size();
+  }
+
+  /**
+   * Returns whether this layer holds no geometries.
+   *
+   * @return {@code true} if the layer is empty.
+   */
+  public boolean isEmpty() {
+    return geometriesList.isEmpty();
+  }
+
+  /**
+   * Returns whether this layer holds at least one geometry.
+   *
+   * @return {@code true} if the layer contains any geometry.
+   */
+  public boolean isPopulated() {
+    return !geometriesList.isEmpty();
   }
 
   /**
@@ -166,6 +228,7 @@ public class VectorLayer extends Layer {
     for (final MasonGeometry masonGeometry : geometriesList) {
       masonGeometry.setUserData(masonGeometry.getIntegerAttribute(attributeName));
     }
+    idIndex = null;
   }
 
   /**
@@ -190,15 +253,46 @@ public class VectorLayer extends Layer {
    * This method filters the MasonGeometry objects based on the IDs contained in the provided set
    * and returns a list of MasonGeometry objects associated with those IDs.
    *
-   * The method uses Java Streams to efficiently filter and collect the MasonGeometry objects.
+   * The lookup is resolved through an id index, so the cost scales with the size of {@code IDs}
+   * rather than with the number of geometries in the layer.
    *
    * @param IDs A set of Integer IDs used to filter the MasonGeometry objects.
    * @return A list of MasonGeometry objects corresponding to the provided IDs.
    */
   public List<MasonGeometry> getGeometriesFromIDs(Set<Integer> IDs) {
-    return geometriesList.stream()
-        .filter(masonGeometry -> IDs.contains(masonGeometry.getUserData()))
-        .collect(Collectors.toList());
+    final Map<Object, List<MasonGeometry>> index = idIndex();
+    final List<MasonGeometry> matches = new ArrayList<>();
+    for (final Integer id : IDs) {
+      final List<MasonGeometry> withId = index.get(id);
+      if (withId != null) {
+        matches.addAll(withId);
+      }
+    }
+    return matches;
+  }
+
+  /**
+   * Returns the id index, building it once on demand. Uses double-checked locking so concurrent
+   * readers share a single build; the layer is expected to be static while it is being queried.
+   */
+  private Map<Object, List<MasonGeometry>> idIndex() {
+    Map<Object, List<MasonGeometry>> index = idIndex;
+    if (index == null) {
+      synchronized (this) {
+        index = idIndex;
+        if (index == null) {
+          index = new HashMap<>();
+          for (final MasonGeometry masonGeometry : geometriesList) {
+            final Object id = masonGeometry.getUserData();
+            if (id != null) {
+              index.computeIfAbsent(id, key -> new ArrayList<>()).add(masonGeometry);
+            }
+          }
+          idIndex = index;
+        }
+      }
+    }
+    return index;
   }
 
   /**
@@ -221,9 +315,9 @@ public class VectorLayer extends Layer {
   // Geometry Manipulation
 
   /**
-   * Moves the centroid of the given geometry to the provided point. The spatial index is not
-   * notified of the geometry changes. It is strongly recommended that updateSpatialIndex() be
-   * invoked after all geometry position changes.
+   * Moves the centroid of the given geometry to the provided point. The spatial index is marked
+   * stale and rebuilt lazily on the next spatial query, so moving many geometries in a batch costs
+   * a single rebuild instead of one full rebuild per move.
    *
    * @param masonGeometry The geometry to move.
    * @param coordsFilter The coordinate sequence filter.
@@ -235,12 +329,13 @@ public class VectorLayer extends Layer {
       otherMasonGeometry.geometry.apply(coordsFilter);
       otherMasonGeometry.geometry.geometryChanged();
     }
-    updateSpatialIndex();
+    spatialIndexDirty = true;
   }
 
   /**
-   * Sets the geometry location of the given MasonGeometry to a new location and updates the spatial
-   * index.
+   * Sets the geometry location of the given MasonGeometry to a new location. The spatial index is
+   * marked stale and rebuilt lazily on the next spatial query, so moving many geometries in a
+   * batch costs a single rebuild instead of one full rebuild per move.
    *
    * @param masonGeometry the MasonGeometry object to update
    * @param newLocation the new location to set for the MasonGeometry
@@ -248,7 +343,7 @@ public class VectorLayer extends Layer {
   public void setGeometryLocation(MasonGeometry masonGeometry, Point newLocation) {
     MasonGeometry otherMasonGeometry = findGeometry(masonGeometry);
     otherMasonGeometry.geometry = newLocation;
-    updateSpatialIndex();
+    spatialIndexDirty = true;
   }
 
   /**
@@ -273,6 +368,7 @@ public class VectorLayer extends Layer {
    */
   public synchronized MasonGeometry findGeometry(MasonGeometry masonGeometry) {
 
+    ensureSpatialIndex();
     List<?> geometriesList = spatialIndex.query(masonGeometry.getGeometry().getEnvelopeInternal());
 
     for (final Object geometry : geometriesList) {
@@ -289,10 +385,26 @@ public class VectorLayer extends Layer {
   /**
    * Updates the spatial index with the current geometries in the geometriesList.
    */
-  public void updateSpatialIndex() {
-    spatialIndex = new Quadtree();
+  public synchronized void updateSpatialIndex() {
+    Quadtree freshIndex = new Quadtree();
     for (MasonGeometry masonGeometry : geometriesList) {
-      spatialIndex.insert(masonGeometry.getGeometry().getEnvelopeInternal(), masonGeometry);
+      freshIndex.insert(masonGeometry.getGeometry().getEnvelopeInternal(), masonGeometry);
+    }
+    spatialIndex = freshIndex;
+    spatialIndexDirty = false;
+  }
+
+  /**
+   * Rebuilds the spatial index if a mutation has marked it stale. Called by every spatial query
+   * before touching the index, so the rebuild cost is paid at most once per mutation batch.
+   *
+   * <p>Note: mutations applied directly to a stored geometry's {@code geometry} field (without
+   * going through this layer's methods) cannot be detected here; callers doing that must still
+   * invoke {@link #updateSpatialIndex()} (or schedule {@link #scheduleSpatialIndexUpdater()}).
+   */
+  private synchronized void ensureSpatialIndex() {
+    if (spatialIndexDirty) {
+      updateSpatialIndex();
     }
   }
 
@@ -320,6 +432,8 @@ public class VectorLayer extends Layer {
     super.clear();
     spatialIndex = new Quadtree();
     geometriesList.clear();
+    spatialIndexDirty = false;
+    idIndex = null;
   }
 
   // Geometric Computations
@@ -365,18 +479,17 @@ public class VectorLayer extends Layer {
    * of the layer geometries.
    */
   private void computeUnion() {
-    Geometry polygon = new Polygon(null, null, geomFactory);
-
     if (geometriesList.isEmpty()) {
       return;
     }
 
+    // Cascaded union of all geometries at once: unioning incrementally, one geometry at a
+    // time, is O(n^2) and dominated by re-unioning the ever-growing accumulator.
+    final List<Geometry> geometries = new ArrayList<>(geometriesList.size());
     for (MasonGeometry masonGeometry : geometriesList) {
-      Geometry geometry = masonGeometry.getGeometry();
-      polygon = polygon.union(geometry);
+      geometries.add(masonGeometry.getGeometry());
     }
-
-    polygon = polygon.union();
+    Geometry polygon = UnaryUnionOp.union(geometries);
     union = new PreparedPolygon((Polygon) polygon);
   }
 
@@ -403,6 +516,7 @@ public class VectorLayer extends Layer {
    * @return A List of MasonGeometry objects that intersect with the provided envelope.
    */
   public synchronized List<MasonGeometry> queryField(Envelope envelope) {
+    ensureSpatialIndex();
     List<?> geometriesList = spatialIndex.query(envelope);
     List<MasonGeometry> geometries = new ArrayList<>(geometriesList.size());
 
@@ -433,15 +547,15 @@ public class VectorLayer extends Layer {
     final List<MasonGeometry> featuresBetween = new ArrayList<>();
     final Envelope envelope = inputGeometry.getEnvelopeInternal();
     envelope.expandBy(upperLimit);
+    ensureSpatialIndex();
     final List<?> geometriesList = spatialIndex.query(envelope);
 
     for (final Object geometry : geometriesList) {
       final MasonGeometry otherMasonGeometry = (MasonGeometry) geometry;
-      if (inputGeometry.distance(otherMasonGeometry.getGeometry()) >= lowerLimit
-          & inputGeometry.distance(otherMasonGeometry.getGeometry()) <= upperLimit) {
+      // JTS distance is not cheap: compute it once per candidate, not twice
+      final double distance = inputGeometry.distance(otherMasonGeometry.getGeometry());
+      if (distance >= lowerLimit && distance <= upperLimit) {
         featuresBetween.add(otherMasonGeometry);
-      } else {
-        continue;
       }
     }
     return featuresBetween;
@@ -461,6 +575,7 @@ public class VectorLayer extends Layer {
     final List<MasonGeometry> featuresWithin = new ArrayList<>();
     final Envelope envelope = inputGeometry.getEnvelopeInternal();
     envelope.expandBy(radius);
+    ensureSpatialIndex();
     final List<?> geometriesList = spatialIndex.query(envelope);
 
     for (final Object geometry : geometriesList) {
@@ -482,6 +597,7 @@ public class VectorLayer extends Layer {
     ConcurrentLinkedQueue<MasonGeometry> intersectingFeatures = new ConcurrentLinkedQueue<>();
     final Envelope envelope = inputGeometry.getEnvelopeInternal();
     envelope.expandBy(Math.max(envelope.getHeight(), envelope.getWidth()) * 0.01);
+    ensureSpatialIndex();
     final List<?> geometriesList = spatialIndex.query(envelope);
 
     geometriesList.parallelStream().map(geometry -> (MasonGeometry) geometry)
@@ -510,7 +626,9 @@ public class VectorLayer extends Layer {
     if (inclusive) {
       return intersectingGeometries;
     }
-    List<MasonGeometry> notIntersecting = otherLayer.geometriesList;
+    // Work on a copy: removing from otherLayer.geometriesList directly would silently delete
+    // features from the other layer and desynchronise its spatial index.
+    List<MasonGeometry> notIntersecting = new ArrayList<>(otherLayer.geometriesList);
     notIntersecting.removeAll(intersectingGeometries);
     return notIntersecting;
   }
@@ -527,6 +645,7 @@ public class VectorLayer extends Layer {
    */
   public boolean isCovered(MasonGeometry inputMasonGeometry) {
     Envelope envelope = inputMasonGeometry.getGeometry().getEnvelopeInternal();
+    ensureSpatialIndex();
     List<?> geometriesList = spatialIndex.query(envelope);
     if (inputMasonGeometry.preparedGeometry == null) {
       inputMasonGeometry.preparedGeometry =
@@ -585,6 +704,7 @@ public class VectorLayer extends Layer {
   public boolean intersects(Geometry inputGeometry) {
     final Envelope envelope = inputGeometry.getEnvelopeInternal();
     envelope.expandBy(Math.max(envelope.getHeight(), envelope.getWidth()) * 0.01);
+    ensureSpatialIndex();
     final List<?> geometriesList = spatialIndex.query(envelope);
 
     for (final Object geometry : geometriesList) {
@@ -647,11 +767,11 @@ public class VectorLayer extends Layer {
       final String attribute = masonGeometry.getStringAttribute(attributeName);
       if (!equal && !listValues.contains(attribute)) {
         filteredFeatures.add(masonGeometry);
-      } else if (listValues.contains(attribute)) {
+      } else if (equal && listValues.contains(attribute)) {
         filteredFeatures.add(masonGeometry);
       }
     }
-    return null;
+    return filteredFeatures;
   }
 
   /**
@@ -723,6 +843,7 @@ public class VectorLayer extends Layer {
   public final List<MasonGeometry> coveringFeatures(MasonGeometry inputMasonGeometry) {
     List<MasonGeometry> coveringFeatures = new ArrayList<>();
     Envelope envelope = inputMasonGeometry.getGeometry().getEnvelopeInternal();
+    ensureSpatialIndex();
     List<?> geometriesList = spatialIndex.query(envelope);
 
     for (final Object geometry : geometriesList) {
@@ -770,6 +891,7 @@ public class VectorLayer extends Layer {
     List<MasonGeometry> touchingFeatures = new ArrayList<>();
     Envelope envelope = inputMasonGeometry.getGeometry().getEnvelopeInternal();
     envelope.expandBy(Math.max(envelope.getHeight(), envelope.getWidth()) * 0.01);
+    ensureSpatialIndex();
     List<?> geometriesList = spatialIndex.query(envelope);
 
     if (inputMasonGeometry.preparedGeometry == null) {
@@ -797,6 +919,7 @@ public class VectorLayer extends Layer {
     List<MasonGeometry> containingFeatures = new ArrayList<>();
     Envelope envelope = inputGeometry.getEnvelopeInternal();
     envelope.expandBy(Math.max(envelope.getHeight(), envelope.getWidth()) * 0.01);
+    ensureSpatialIndex();
     List<?> geometriesList = spatialIndex.query(envelope);
 
     for (final Object geometry : geometriesList) {
@@ -821,6 +944,7 @@ public class VectorLayer extends Layer {
     final List<MasonGeometry> containedFeatures = new ArrayList<>();
     final Envelope envelope = inputGeometry.getEnvelopeInternal();
     envelope.expandBy(Math.max(envelope.getHeight(), envelope.getWidth()) * 0.01);
+    ensureSpatialIndex();
     final List<?> geometriesList = spatialIndex.query(envelope);
 
     for (final Object geometry : geometriesList) {
@@ -851,6 +975,29 @@ public class VectorLayer extends Layer {
 
   public static void readGPKG(URL gpkgURL, VectorLayer vectorLayer) throws Exception {
     GeoPackageImporter.read(gpkgURL, vectorLayer);
+  }
+
+  /**
+   * Writes the given VectorLayer to a single-file GeoPackage (.gpkg). The read counterpart of
+   * {@link #readGPKG(URL, VectorLayer)}.
+   *
+   * @param fileName output path; a {@code .gpkg} extension is added when none is present.
+   * @param vectorLayer the layer to export.
+   * @throws Exception If there is an error during GeoPackage writing.
+   */
+  public static void writeGPKG(String fileName, VectorLayer vectorLayer) throws Exception {
+    GeoPackageExporter.write(fileName, vectorLayer);
+  }
+
+  /**
+   * Writes the given VectorLayer to a GeoJSON FeatureCollection.
+   *
+   * @param fileName output path; a {@code .geojson} extension is added when none is present.
+   * @param vectorLayer the layer to export.
+   * @throws Exception If there is an error during GeoJSON writing.
+   */
+  public static void writeGeoJSON(String fileName, VectorLayer vectorLayer) throws Exception {
+    GeoJSONExporter.write(fileName, vectorLayer);
   }
 
   public Envelope clipEnvelope;
