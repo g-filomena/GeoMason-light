@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 2.1.0
+
+* [Enhancement] Added `GeoPackageExporter`: writes a `VectorLayer` to a single-file OGC GeoPackage (`.gpkg`), the write counterpart of `GeoPackageImporter`. Uses typed columns and imposes no field-name or field-length limits.
+* [Enhancement] Added `GeoJSONExporter`: writes a `VectorLayer` to a GeoJSON `FeatureCollection`, with no external JSON dependency. `toFeatureCollection(layer[, includeProperties])` returns the same document as a string.
+* [Enhancement] Added `VectorLayer.writeGPKG(...)` and `VectorLayer.writeGeoJSON(...)` convenience methods, mirroring the existing `readGPKG(...)`.
+* [Breaking] Removed `ShapeFileExporter`. Vector features are now written in the open GeoPackage and GeoJSON formats; `ShapeFileImporter` is retained, so existing shapefiles can still be read.
+* [Enhancement] Added non-copying `VectorLayer` accessors — `isEmpty()`, `isPopulated()`, `size()` and `geometriesView()` (an unmodifiable view) — so callers that only read the geometries avoid the defensive copy made by `getGeometries()`.
+* [Performance] `VectorLayer.getGeometriesFromIDs(Set)` now resolves through a lazily-built id index, so its cost scales with the size of the requested set rather than with the number of geometries in the layer.
+
 ## Version 2.0.0
 
 * [Breaking] Started a new versioning line after the legacy `1.x` numbering scheme.
