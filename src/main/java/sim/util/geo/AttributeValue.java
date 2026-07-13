@@ -102,7 +102,8 @@ public class AttributeValue implements java.io.Serializable {
   }
 
   public Integer getInteger() {
-    return (Integer) getValue();
+    Object v = getValue();
+    return (v instanceof Number) ? ((Number) v).intValue() : (Integer) v;
   }
 
   public void setDouble(double value) {
@@ -110,7 +111,8 @@ public class AttributeValue implements java.io.Serializable {
   }
 
   public Double getDouble() {
-    return (Double) getValue();
+    Object v = getValue();
+    return (v instanceof Number) ? ((Number) v).doubleValue() : (Double) v;
   }
 
   public void setBoolean(boolean value) {
