@@ -10,6 +10,7 @@ package sim.graph;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -24,10 +25,17 @@ import sim.util.geo.MasonGeometry;
  *
  * <p>
  * Selection methods return {@code null} when no candidate satisfies the
- * criteria; they never throw on empty candidate sets. Random draws use
- * {@link ThreadLocalRandom} (these lookups were never seedable, so
- * reproducibility semantics are unchanged, but parallel simulations no longer
- * contend on a shared generator).
+ * criteria; they never throw on empty candidate sets.
+ *
+ * <p>
+ * Every drawing method comes in two forms. The one without a generator draws
+ * from {@link ThreadLocalRandom}: convenient, contention-free under parallel
+ * simulation, and not reproducible, which is what these lookups have always
+ * been. The overload taking a {@link Random} draws from it instead, so a caller
+ * that owns a seeded generator - one per agent, say, seeded from the model's
+ * seed - gets the same nodes on every run of the same seed, concurrency
+ * included. A simulation whose origins and destinations come from the first
+ * form cannot be replayed, however carefully everything else is seeded.
  */
 public class NodesLookup {
 
@@ -54,8 +62,19 @@ public class NodesLookup {
 	 * @return A randomly chosen NodeGraph object from the graph.
 	 */
 	public static NodeGraph randomNode(Graph graph) {
+		return randomNode(graph, ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As {@link #randomNode(Graph)}, drawing from the supplied generator.
+	 *
+	 * @param graph  The graph from which a random node is to be selected.
+	 * @param random The generator to draw from.
+	 * @return A randomly chosen NodeGraph object from the graph.
+	 */
+	public static NodeGraph randomNode(Graph graph, Random random) {
 		final List<NodeGraph> candidates = new ArrayList<>(graph.nodesGraph);
-		return selectRandomNode(candidates);
+		return selectRandomNode(candidates, random);
 	}
 
 	/**
@@ -67,7 +86,19 @@ public class NodesLookup {
 	 *         {@code null} if the list is empty.
 	 */
 	public static NodeGraph randomNodeFromList(List<NodeGraph> nodes) {
-		return selectRandomNode(nodes);
+		return selectRandomNode(nodes, ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As {@link #randomNodeFromList(List)}, drawing from the supplied generator.
+	 *
+	 * @param nodes  The list of nodes.
+	 * @param random The generator to draw from.
+	 * @return A NodeGraph object randomly selected from the given list, or
+	 *         {@code null} if the list is empty.
+	 */
+	public static NodeGraph randomNodeFromList(List<NodeGraph> nodes, Random random) {
+		return selectRandomNode(nodes, random);
 	}
 
 	/**
@@ -81,10 +112,25 @@ public class NodesLookup {
 	 * @return A NodeGraph object randomly selected from the specified geometries.
 	 */
 	public static NodeGraph randomNodeFromGeometries(Graph graph, List<MasonGeometry> nodesGeometries) {
+		return randomNodeFromGeometries(graph, nodesGeometries, ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As {@link #randomNodeFromGeometries(Graph, List)}, drawing from the supplied
+	 * generator.
+	 *
+	 * @param graph           The graph containing the nodes.
+	 * @param nodesGeometries A List of MasonGeometry objects representing specific
+	 *                        node locations.
+	 * @param random          The generator to draw from.
+	 * @return A NodeGraph object randomly selected from the specified geometries.
+	 */
+	public static NodeGraph randomNodeFromGeometries(Graph graph, List<MasonGeometry> nodesGeometries,
+			Random random) {
 		if (nodesGeometries.isEmpty()) {
 			return null;
 		}
-		Integer randomInt = ThreadLocalRandom.current().nextInt(nodesGeometries.size());
+		Integer randomInt = random.nextInt(nodesGeometries.size());
 		MasonGeometry geoNode = nodesGeometries.get(randomInt);
 		return graph.findNode(geoNode.geometry.getCoordinate());
 	}
@@ -102,6 +148,21 @@ public class NodesLookup {
 	 *         criteria.
 	 */
 	public static NodeGraph randomNodeRegion(Graph graph, NodeGraph originNode, double radius) {
+		return randomNodeRegion(graph, originNode, radius, ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As {@link #randomNodeRegion(Graph, NodeGraph, double)}, drawing from the
+	 * supplied generator.
+	 *
+	 * @param graph      The graph from which to select the node.
+	 * @param originNode The origin node serving as the center of the search radius.
+	 * @param radius     The radius within which to search for a suitable node.
+	 * @param random     The generator to draw from.
+	 * @return A randomly selected NodeGraph object that meets the specified
+	 *         criteria.
+	 */
+	public static NodeGraph randomNodeRegion(Graph graph, NodeGraph originNode, double radius, Random random) {
 
 		final MasonGeometry originNodeGeometry = originNode.masonGeometry;
 		double expandingRadius = radius;
@@ -127,7 +188,7 @@ public class NodesLookup {
 				continue;
 			}
 
-			MasonGeometry nodeGeometry = regionFilter.get(ThreadLocalRandom.current().nextInt(regionFilter.size()));
+			MasonGeometry nodeGeometry = regionFilter.get(random.nextInt(regionFilter.size()));
 			NodeGraph node = graph.findNode(nodeGeometry.geometry.getCoordinate());
 
 			if (node != null) {
@@ -151,13 +212,30 @@ public class NodesLookup {
 	 */
 	public static NodeGraph randomNodeFromDistancesSet(Graph graph, VectorLayer junctions, NodeGraph originNode,
 			List<Float> distances) {
+		return randomNodeFromDistancesSet(graph, junctions, originNode, distances, ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As {@link #randomNodeFromDistancesSet(Graph, VectorLayer, NodeGraph, List)},
+	 * drawing from the supplied generator.
+	 *
+	 * @param graph      The input graph.
+	 * @param junctions  The vector layer representing junctions.
+	 * @param originNode The origin node.
+	 * @param distances  The list of possible distances used to identify the node.
+	 * @param random     The generator to draw from.
+	 * @return A randomly selected node that matches the specified distance
+	 *         criteria.
+	 */
+	public static NodeGraph randomNodeFromDistancesSet(Graph graph, VectorLayer junctions, NodeGraph originNode,
+			List<Float> distances, Random random) {
 
 		if (distances.isEmpty()) {
 			return null;
 		}
 
 		// Select a random distance from the list
-		double distance = distances.get(ThreadLocalRandom.current().nextInt(distances.size()));
+		double distance = distances.get(random.nextInt(distances.size()));
 		if (distance < MIN_DISTANCE) {
 			distance = MIN_DISTANCE;
 		}
@@ -178,12 +256,12 @@ public class NodesLookup {
 		// Prefer a candidate that is not directly connected to the origin; bounded so that a
 		// candidate set made entirely of neighbours cannot spin this loop forever.
 		for (int attempt = 0; attempt < MAX_DRAW_ATTEMPTS; attempt++) {
-			NodeGraph node = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+			NodeGraph node = candidates.get(random.nextInt(candidates.size()));
 			if (node.getID() != originNode.getID() && graph.getEdgeBetween(originNode, node) == null) {
 				return node;
 			}
 		}
-		return selectRandomNode(candidates);
+		return selectRandomNode(candidates, random);
 	}
 
 	/**
@@ -219,9 +297,27 @@ public class NodesLookup {
 	 */
 	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode, double lowerLimit,
 			double upperLimit) {
+		return randomNodeBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit,
+				ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As {@link #randomNodeBetweenDistanceInterval(Graph, NodeGraph, double, double)},
+	 * drawing from the supplied generator.
+	 *
+	 * @param graph      The graph to search within.
+	 * @param originNode The origin node to measure distances from.
+	 * @param lowerLimit The minimum distance from the origin node.
+	 * @param upperLimit The maximum distance from the origin node.
+	 * @param random     The generator to draw from.
+	 * @return A NodeGraph object randomly selected within the specified distance
+	 *         range.
+	 */
+	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode, double lowerLimit,
+			double upperLimit, Random random) {
 
 		final List<NodeGraph> candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
-		return selectRandomNode(candidates);
+		return selectRandomNode(candidates, random);
 	}
 
 	/**
@@ -256,9 +352,28 @@ public class NodesLookup {
 	 */
 	public static NodeGraph randomNodeBetweenDistanceIntervalRegion(Graph graph, NodeGraph originNode,
 			double lowerLimit, double upperLimit) {
+		return randomNodeBetweenDistanceIntervalRegion(graph, originNode, lowerLimit, upperLimit,
+				ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As
+	 * {@link #randomNodeBetweenDistanceIntervalRegion(Graph, NodeGraph, double, double)},
+	 * drawing from the supplied generator.
+	 *
+	 * @param graph      The graph to search within.
+	 * @param originNode The origin node to measure distances from.
+	 * @param lowerLimit The minimum distance from the origin node.
+	 * @param upperLimit The maximum distance from the origin node.
+	 * @param random     The generator to draw from.
+	 * @return A NodeGraph object randomly selected within the specified distance
+	 *         range and different region.
+	 */
+	public static NodeGraph randomNodeBetweenDistanceIntervalRegion(Graph graph, NodeGraph originNode,
+			double lowerLimit, double upperLimit, Random random) {
 
 		List<NodeGraph> candidates = getNodesBetweenDistanceIntervalRegion(graph, originNode, lowerLimit, upperLimit);
-		return selectRandomNode(candidates);
+		return selectRandomNode(candidates, random);
 	}
 
 	/**
@@ -276,6 +391,26 @@ public class NodesLookup {
 	 */
 	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode,
 			double lowerLimit, double upperLimit, double percentile) {
+		return randomSalientNodeBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit, percentile,
+				ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As
+	 * {@link #randomSalientNodeBetweenDistanceInterval(Graph, NodeGraph, double, double, double)},
+	 * drawing from the supplied generator.
+	 *
+	 * @param graph      The input graph.
+	 * @param originNode The origin node.
+	 * @param lowerLimit The minimum distance from the origin node.
+	 * @param upperLimit The maximum distance from the origin node.
+	 * @param percentile The percentile used as a threshold for centrality values.
+	 * @param random     The generator to draw from.
+	 * @return A randomly selected node that satisfies the specified distance and
+	 *         centrality criteria.
+	 */
+	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode,
+			double lowerLimit, double upperLimit, double percentile, Random random) {
 
 		NodeGraph node = null;
 
@@ -287,7 +422,7 @@ public class NodesLookup {
 				return null; // Return null if no candidates are found
 			}
 
-			node = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+			node = candidates.get(random.nextInt(candidates.size()));
 
 			// Reduce percentile for the next iteration if node is not found
 			percentile -= PERCENTILE_DECREASE;
@@ -317,6 +452,26 @@ public class NodesLookup {
 	 */
 	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph graph, NodeGraph originNode, double lowerLimit,
 			double upperLimit, String DMA) {
+		return randomNodeBetweenDistanceIntervalDMA(graph, originNode, lowerLimit, upperLimit, DMA,
+				ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As
+	 * {@link #randomNodeBetweenDistanceIntervalDMA(Graph, NodeGraph, double, double, String)},
+	 * drawing from the supplied generator.
+	 *
+	 * @param graph      The graph to search within.
+	 * @param originNode The origin node to measure distances from.
+	 * @param lowerLimit The minimum distance from the origin node.
+	 * @param upperLimit The maximum distance from the origin node.
+	 * @param DMA        The category label, or "random" for any category.
+	 * @param random     The generator to draw from.
+	 * @return A NodeGraph object randomly selected based on the specified distance
+	 *         and category criteria.
+	 */
+	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph graph, NodeGraph originNode, double lowerLimit,
+			double upperLimit, String DMA, Random random) {
 
 		// DMA filtering applies until the interval has been widened past this cap; beyond it, any
 		// candidate is accepted. The previous cap condition (upperLimit > upperLimit * multiplier)
@@ -329,10 +484,10 @@ public class NodesLookup {
 			if (upperLimit <= maxUpperLimitDMA) {
 				List<NodeGraph> candidatesDMA = getCandidatesByDMA(candidates, DMA);
 				if (!candidatesDMA.isEmpty()) {
-					return selectRandomNode(candidatesDMA);
+					return selectRandomNode(candidatesDMA, random);
 				}
 			} else if (!candidates.isEmpty()) {
-				return selectRandomNode(candidates);
+				return selectRandomNode(candidates, random);
 			}
 			upperLimit += INITIAL_TOLERANCE;
 		}
@@ -351,9 +506,23 @@ public class NodesLookup {
 	 *         DMA.
 	 */
 	public static NodeGraph randomNodeDMA(Graph graph, String DMA) {
+		return randomNodeDMA(graph, DMA, ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As {@link #randomNodeDMA(Graph, String)}, drawing from the supplied
+	 * generator.
+	 *
+	 * @param graph  The input graph.
+	 * @param DMA    The desired node category ("live," "work," "visit") or "random".
+	 * @param random The generator to draw from.
+	 * @return A randomly selected node from the specified category based on the
+	 *         DMA.
+	 */
+	public static NodeGraph randomNodeDMA(Graph graph, String DMA, Random random) {
 		List<NodeGraph> candidates = graph.getNodes();
 		List<NodeGraph> candidatesDMA = getCandidatesByDMA(candidates, DMA);
-		return selectRandomNode(candidatesDMA);
+		return selectRandomNode(candidatesDMA, random);
 	}
 
 	/**
@@ -405,9 +574,21 @@ public class NodesLookup {
 	 *         wrap every lookup in try/catch).
 	 */
 	public static NodeGraph selectRandomNode(List<NodeGraph> nodes) {
+		return selectRandomNode(nodes, ThreadLocalRandom.current());
+	}
+
+	/**
+	 * As {@link #selectRandomNode(List)}, drawing from the supplied generator.
+	 *
+	 * @param nodes  List of nodes from which to select randomly.
+	 * @param random The generator to draw from.
+	 * @return A randomly selected node from the list, or {@code null} if the list
+	 *         is empty.
+	 */
+	public static NodeGraph selectRandomNode(List<NodeGraph> nodes, Random random) {
 		if (nodes == null || nodes.isEmpty()) {
 			return null;
 		}
-		return nodes.get(ThreadLocalRandom.current().nextInt(nodes.size()));
+		return nodes.get(random.nextInt(nodes.size()));
 	}
 }
