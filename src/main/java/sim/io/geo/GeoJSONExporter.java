@@ -15,7 +15,9 @@ import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Function;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
@@ -42,6 +44,14 @@ import sim.util.geo.MasonGeometry;
  */
 public class GeoJSONExporter {
 
+  /** Properties provider for the attribute-carrying form: the feature attributes, unwrapped. */
+  private static final Function<MasonGeometry, Map<String, Object>> ATTRIBUTE_PROPERTIES =
+      GeoJSONExporter::attributeProperties;
+
+  /** Properties provider for the geometry-only form. */
+  private static final Function<MasonGeometry, Map<String, Object>> NO_PROPERTIES =
+      masonGeometry -> null;
+
   private GeoJSONExporter() {}
 
   /**
@@ -52,9 +62,23 @@ public class GeoJSONExporter {
    * @throws IOException if the file cannot be written
    */
   public static void write(String fileName, VectorLayer vectorLayer) throws IOException {
+    write(fileName, vectorLayer, ATTRIBUTE_PROPERTIES);
+  }
+
+  /**
+   * Writes the layer to a GeoJSON file, taking each feature's properties from {@code properties}
+   * rather than from its attributes.
+   *
+   * @param fileName output path; a {@code .geojson} extension is added when none is present
+   * @param vectorLayer the layer to export
+   * @param properties the properties to emit for a feature; may return null or an empty map
+   * @throws IOException if the file cannot be written
+   */
+  public static void write(String fileName, VectorLayer vectorLayer,
+      Function<MasonGeometry, Map<String, Object>> properties) throws IOException {
     String path = hasGeoExtension(fileName) ? fileName : fileName + ".geojson";
     try (Writer writer = new BufferedWriter(new FileWriter(new File(path)))) {
-      writeFeatureCollection(writer, vectorLayer, true);
+      writeFeatureCollection(writer, vectorLayer, properties);
     }
   }
 
@@ -79,17 +103,53 @@ public class GeoJSONExporter {
    * @return the GeoJSON FeatureCollection as a string
    */
   public static String toFeatureCollection(VectorLayer vectorLayer, boolean includeProperties) {
+    return toFeatureCollection(vectorLayer,
+        includeProperties ? ATTRIBUTE_PROPERTIES : NO_PROPERTIES);
+  }
+
+  /**
+   * Serialises the layer to a GeoJSON {@code FeatureCollection} string, taking each feature's
+   * properties from {@code properties} rather than from its attributes.
+   *
+   * <p>For the common case of writing a layer alongside values the model computed - a pedestrian
+   * volume per street, say - rather than the attributes it was imported with. Without this,
+   * callers ended up rebuilding the document by hand and re-implementing the JSON escaping and
+   * number formatting below.
+   *
+   * <p>Values are typed as they are for attributes: numbers and booleans become JSON literals,
+   * null becomes {@code null}, anything else is written as a string. A null or empty map yields
+   * {@code "properties":{}}.
+   *
+   * @param vectorLayer the layer to serialise
+   * @param properties the properties to emit for a feature
+   * @return the GeoJSON FeatureCollection as a string
+   */
+  public static String toFeatureCollection(VectorLayer vectorLayer,
+      Function<MasonGeometry, Map<String, Object>> properties) {
     StringWriter writer = new StringWriter();
     try {
-      writeFeatureCollection(writer, vectorLayer, includeProperties);
+      writeFeatureCollection(writer, vectorLayer, properties);
     } catch (IOException e) {
       throw new UncheckedIOException(e); // StringWriter does not perform I/O
     }
     return writer.toString();
   }
 
-  private static void writeFeatureCollection(
-      Writer writer, VectorLayer vectorLayer, boolean includeProperties) throws IOException {
+  /** The feature attributes with the {@link AttributeValue} wrappers taken off. */
+  private static Map<String, Object> attributeProperties(MasonGeometry masonGeometry) {
+    Map<String, AttributeValue> attributes = masonGeometry.getAttributes();
+    if (attributes == null) {
+      return null;
+    }
+    Map<String, Object> values = new LinkedHashMap<>();
+    for (Map.Entry<String, AttributeValue> entry : attributes.entrySet()) {
+      values.put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().getValue());
+    }
+    return values;
+  }
+
+  private static void writeFeatureCollection(Writer writer, VectorLayer vectorLayer,
+      Function<MasonGeometry, Map<String, Object>> properties) throws IOException {
     writer.write("{\"type\":\"FeatureCollection\",\"features\":[");
     boolean firstFeature = true;
     for (MasonGeometry masonGeometry : vectorLayer.geometriesView()) {
@@ -101,29 +161,27 @@ public class GeoJSONExporter {
         writer.write(",");
       }
       firstFeature = false;
-      writeFeature(writer, masonGeometry, geometry, includeProperties);
+      writeFeature(writer, masonGeometry, geometry, properties);
     }
     writer.write("]}");
   }
 
-  private static void writeFeature(
-      Writer writer, MasonGeometry masonGeometry, Geometry geometry, boolean includeProperties)
-      throws IOException {
+  private static void writeFeature(Writer writer, MasonGeometry masonGeometry, Geometry geometry,
+      Function<MasonGeometry, Map<String, Object>> properties) throws IOException {
     writer.write("{\"type\":\"Feature\",\"geometry\":");
     writeGeometry(writer, geometry);
     writer.write(",\"properties\":{");
-    Map<String, AttributeValue> attributes =
-        includeProperties ? masonGeometry.getAttributes() : null;
-    if (attributes != null) {
-      boolean firstAttribute = true;
-      for (Map.Entry<String, AttributeValue> entry : attributes.entrySet()) {
-        if (!firstAttribute) {
+    Map<String, Object> values = properties.apply(masonGeometry);
+    if (values != null) {
+      boolean firstValue = true;
+      for (Map.Entry<String, Object> entry : values.entrySet()) {
+        if (!firstValue) {
           writer.write(",");
         }
-        firstAttribute = false;
+        firstValue = false;
         writeString(writer, entry.getKey());
         writer.write(":");
-        writeValue(writer, entry.getValue() == null ? null : entry.getValue().getValue());
+        writeValue(writer, entry.getValue());
       }
     }
     writer.write("}}");
