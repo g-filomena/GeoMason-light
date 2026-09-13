@@ -15,8 +15,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.locationtech.jts.algorithm.ConvexHull;
@@ -38,6 +40,7 @@ import sim.io.geo.GeoPackageExporter;
 import sim.io.geo.GeoPackageImporter;
 import sim.io.geo.ShapeFileImporter;
 import sim.portrayal.DrawInfo2D;
+import sim.util.geo.AttributeValue;
 import sim.util.geo.GeometryUtilities;
 import sim.util.geo.MasonGeometry;
 
@@ -149,7 +152,16 @@ public class VectorLayer extends Layer {
   public MasonGeometry getGeometry(String name, Object value) {
 
     for (MasonGeometry masonGeometry : geometriesList) {
-      if (masonGeometry.hasAttribute(name) && masonGeometry.getAttribute(name).equals(value)) {
+      if (!masonGeometry.hasAttribute(name)) {
+        continue;
+      }
+      // getAttribute() hands back the AttributeValue wrapper, not the value inside it, so
+      // comparing it against the value the caller asked for never matched and this lookup always
+      // returned null. Unwrap before comparing.
+      final Object attribute = masonGeometry.getAttribute(name);
+      final Object stored =
+          attribute instanceof AttributeValue ? ((AttributeValue) attribute).getValue() : attribute;
+      if (Objects.equals(stored, value)) {
         return masonGeometry;
       }
     }
@@ -158,8 +170,8 @@ public class VectorLayer extends Layer {
 
   /**
    * Removes the given geometry. The spatial index is marked stale and rebuilt lazily on the next
-   * query, so the removed geometry can no longer be returned by spatial queries (previously the
-   * index kept a stale entry until {@link #updateSpatialIndex()} was called manually).
+   * query, so the removed geometry is not returned by subsequent spatial queries and there is no
+   * need to call {@link #updateSpatialIndex()} by hand.
    *
    * @param masonGeometry The MasonGeometry to be removed from the VectorLayer.
    */
@@ -619,18 +631,24 @@ public class VectorLayer extends Layer {
    * @return A List of intersecting or non-intersecting MasonGeometry features.
    */
   public List<MasonGeometry> intersection(VectorLayer otherLayer, boolean inclusive) {
-    List<MasonGeometry> intersectingGeometries = new ArrayList<>();
-    for (final MasonGeometry masonGeometry : otherLayer.geometriesList) {
-      intersectingGeometries.addAll(intersectingFeatures(masonGeometry.getGeometry()));
+
+    // Both branches answer about this layer, so inclusive = false is the exact complement of
+    // inclusive = true. Previously only the inclusive branch did: the other one returned the
+    // features of otherLayer that were not features of this one, which is the complement of
+    // nothing, and the inclusive branch repeated a feature once per geometry of otherLayer it
+    // happened to meet.
+    final Set<MasonGeometry> intersecting = Collections.newSetFromMap(new IdentityHashMap<>());
+    for (final MasonGeometry masonGeometry : otherLayer.geometriesView()) {
+      intersecting.addAll(intersectingFeatures(masonGeometry.getGeometry()));
     }
-    if (inclusive) {
-      return intersectingGeometries;
+
+    final List<MasonGeometry> selected = new ArrayList<>();
+    for (final MasonGeometry masonGeometry : geometriesList) {
+      if (intersecting.contains(masonGeometry) == inclusive) {
+        selected.add(masonGeometry);
+      }
     }
-    // Work on a copy: removing from otherLayer.geometriesList directly would silently delete
-    // features from the other layer and desynchronise its spatial index.
-    List<MasonGeometry> notIntersecting = new ArrayList<>(otherLayer.geometriesList);
-    notIntersecting.removeAll(intersectingGeometries);
-    return notIntersecting;
+    return selected;
   }
 
   // Spatial Relations
@@ -738,9 +756,12 @@ public class VectorLayer extends Layer {
     final List<MasonGeometry> filteredFeatures = new ArrayList<>();
     for (final MasonGeometry masonGeometry : geometriesList) {
       final String attribute = masonGeometry.getStringAttribute(attributeName);
+      // Both branches are guarded on `equal`. Without the guard on the second, a feature matching
+      // the value would satisfy it as well when equal = false, and the filter would return the whole
+      // layer instead of its complement.
       if (!equal && !attribute.equals(attributeValue)) {
         filteredFeatures.add(masonGeometry);
-      } else if (attribute.equals(attributeValue)) {
+      } else if (equal && attribute.equals(attributeValue)) {
         filteredFeatures.add(masonGeometry);
       }
     }
@@ -795,9 +816,11 @@ public class VectorLayer extends Layer {
     final List<MasonGeometry> filteredFeatures = new ArrayList<>();
     for (final MasonGeometry masonGeometry : geometriesList) {
       final Integer attribute = masonGeometry.getIntegerAttribute(attributeName);
+      // As in the String overload above: without the equal guard, equal = false kept the matching
+      // features too and the filter returned everything.
       if (!equal && !attribute.equals(attributeValue)) {
         filteredFeatures.add(masonGeometry);
-      } else if (attribute.equals(attributeValue)) {
+      } else if (equal && attribute.equals(attributeValue)) {
         filteredFeatures.add(masonGeometry);
       }
     }
@@ -848,6 +871,13 @@ public class VectorLayer extends Layer {
 
     for (final Object geometry : geometriesList) {
       MasonGeometry otherMasonGeometry = (MasonGeometry) geometry;
+      // Prepare on demand, as the sibling relation queries do: nothing else populates
+      // preparedGeometry for the geometries held by this layer, so reading it unguarded threw a
+      // NullPointerException on any layer that had not been through isCovered() first.
+      if (otherMasonGeometry.preparedGeometry == null) {
+        otherMasonGeometry.preparedGeometry =
+            PreparedGeometryFactory.prepare(otherMasonGeometry.getGeometry());
+      }
       if (!inputMasonGeometry.equals(otherMasonGeometry)
           && otherMasonGeometry.preparedGeometry.covers(inputMasonGeometry.getGeometry())) {
         coveringFeatures.add(otherMasonGeometry);
