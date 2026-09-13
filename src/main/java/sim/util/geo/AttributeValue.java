@@ -103,7 +103,10 @@ public class AttributeValue implements java.io.Serializable {
 
   public Integer getInteger() {
     Object v = getValue();
-    return (v instanceof Number) ? ((Number) v).intValue() : (Integer) v;
+    // Box explicitly. With an int on one arm and an Integer on the other, the conditional is of
+    // primitive type and the Integer arm gets unboxed, so an attribute that carries no value
+    // threw a NullPointerException from a method whose return type says it may be null.
+    return (v instanceof Number) ? Integer.valueOf(((Number) v).intValue()) : (Integer) v;
   }
 
   public void setDouble(double value) {
@@ -112,7 +115,8 @@ public class AttributeValue implements java.io.Serializable {
 
   public Double getDouble() {
     Object v = getValue();
-    return (v instanceof Number) ? ((Number) v).doubleValue() : (Double) v;
+    // Boxed explicitly, for the same reason as getInteger() above.
+    return (v instanceof Number) ? Double.valueOf(((Number) v).doubleValue()) : (Double) v;
   }
 
   public void setBoolean(boolean value) {

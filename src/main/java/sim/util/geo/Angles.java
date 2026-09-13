@@ -145,9 +145,12 @@ public class Angles {
       limitRight = limitRight - 360.0;
     }
 
-    // over the 0
+    // over the 0: the cone is split in two, one arc running up to 360 and one running on from
+    // it, and an angle belongs to the cone if it falls in either. Testing only the first arc
+    // rejected every direction just clockwise of the cone axis, so a cone pointing near north
+    // accepted only its anticlockwise half.
     if (limitLeft > limitRight) {
-      if (angleON >= limitLeft) {
+      if (angleON >= limitLeft || angleON <= limitRight) {
         return true;
       }
     } else if (limitLeft < limitRight) {
