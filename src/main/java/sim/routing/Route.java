@@ -74,6 +74,12 @@ public class Route {
     originNode = nodesSequence.get(0);
     destinationNode = nodesSequence.get(nodesSequence.size() - 1);
     obtainRouteLineGeometry();
+    // Summed here, where the edge sequence has just been built, and recomputed on every
+    // resetRoute, so getLength() follows the route rather than going stale.
+    length = 0.0;
+    for (EdgeGraph edge : edgesSequence) {
+      length += edge.getLength();
+    }
   }
 
   /**
@@ -151,7 +157,11 @@ public class Route {
   }
 
   /**
-   * Returns the length of the route.
+   * Returns the length of the route: the sum of its edges, in the units of the projection.
+   *
+   * <p>Recomputed whenever the edge sequence is, including by {@code resetRoute}, so a route that
+   * has been cut back to the edges actually walked reports the walked length rather than the
+   * planned one.
    *
    * @return The length of the route.
    */
