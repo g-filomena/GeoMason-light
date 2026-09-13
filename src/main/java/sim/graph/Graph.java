@@ -62,11 +62,21 @@ public class Graph extends PlanarGraph {
   }
 
   /**
-   * Populates the graph with nodes and edges based on street junctions and segments. Adds
-   * LineStrings from the street segments to the graph and creates nodes at the junctions. Also sets
-   * the 'junctions' field with the provided street junctions.
+   * Populates the graph with nodes and edges from street junctions and segments. The segments
+   * supply the edges and, through their endpoints, the nodes; the junctions supply each node's
+   * geometry and therefore its attributes.
    *
-   * @param streetJunctions The VectorLayer containing street junction geometries.
+   * <p>Building a node creates a bare point for it, since a segment endpoint carries no
+   * attributes of its own. Where {@code streetJunctions} holds a geometry at a node's coordinate,
+   * that geometry replaces the bare point, so {@link NodeGraph#getMasonGeometry()} and the
+   * {@code junctions} layer this class queries both carry the imported attributes - a node id, a
+   * centrality score, a district - so a caller does not need to re-attach them afterwards.
+   *
+   * <p>Junction geometries that match no node are skipped, so the {@code junctions} layer stays in
+   * one-to-one correspondence with the nodes; passing an empty layer leaves every node on its
+   * generated point.
+   *
+   * @param streetJunctions The VectorLayer containing street junction geometries; may be empty.
    * @param streetSegments The VectorLayer containing street segment geometries.
    */
   public void fromStreetJunctionsSegments(VectorLayer streetJunctions, VectorLayer streetSegments) {
@@ -75,12 +85,43 @@ public class Graph extends PlanarGraph {
     geometries.stream().filter(masonGeometry -> masonGeometry.geometry instanceof LineString)
         .forEach(this::addLineString);
 
+    adoptJunctionGeometries(streetJunctions);
     nodesGraph.forEach(NodeGraph::setNeighbouringComponents);
     generateAdjacencyMatrix();
 
     for (NodeGraph node : getNodes()) {
       index.insert(node.masonGeometry.getGeometry().getEnvelopeInternal(), node);
     }
+  }
+
+  /**
+   * Gives each node the supplied junction geometry that sits at its coordinate, then rebuilds the
+   * {@code junctions} layer from the nodes so the layer and the graph cannot drift apart.
+   *
+   * @param streetJunctions the imported junction geometries; may be null or empty.
+   */
+  private void adoptJunctionGeometries(VectorLayer streetJunctions) {
+
+    if (streetJunctions == null || streetJunctions.isEmpty()) {
+      return;
+    }
+
+    for (MasonGeometry junction : streetJunctions.geometriesView()) {
+      Geometry geometry = junction.getGeometry();
+      if (geometry == null || geometry.isEmpty()) {
+        continue;
+      }
+      NodeGraph node = findNode(geometry.getCoordinate());
+      if (node != null) {
+        node.masonGeometry = junction;
+      }
+    }
+
+    VectorLayer refreshed = new VectorLayer();
+    for (NodeGraph node : nodesGraph) {
+      refreshed.addGeometry(node.masonGeometry);
+    }
+    junctions = refreshed;
   }
 
   /**
@@ -333,9 +374,14 @@ public class Graph extends PlanarGraph {
    */
   public Map<NodeGraph, Double> getSalientNodes(double percentile) {
 
-    int position = (int) (centralityMap.size() * percentile);
     ArrayList<Double> values = new ArrayList<>(centralityMap.values());
+    if (values.isEmpty()) {
+      return new LinkedHashMap<>();
+    }
     values.sort(Double::compareTo); // Sort values to determine the boundary
+    // Clamped: an index derived from a ratio reaches size() at a percentile of 1.0, which is a
+    // legitimate thing to ask for and would otherwise be out of bounds.
+    int position = Math.min((int) (values.size() * percentile), values.size() - 1);
     double boundary = values.get(position);
 
     return centralityMap.entrySet().stream().filter(entry -> entry.getValue() >= boundary)
@@ -374,8 +420,10 @@ public class Graph extends PlanarGraph {
       return spatialfilteredMap;
     }
 
-    int position = (int) (spatialfilteredMap.size() * percentile);
-    double boundary = new ArrayList<>(spatialfilteredMap.values()).get(position);
+    // Clamped, as in getSalientNodes: a percentile of 1.0 pushes the index to size().
+    List<Double> values = new ArrayList<>(spatialfilteredMap.values());
+    int position = Math.min((int) (values.size() * percentile), values.size() - 1);
+    double boundary = values.get(position);
     Map<NodeGraph, Double> valueFilteredMap =
         spatialfilteredMap.entrySet().stream().filter(entry -> entry.getValue() >= boundary)
             .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));

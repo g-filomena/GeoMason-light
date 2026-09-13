@@ -401,9 +401,13 @@ public class SubGraph extends Graph {
    */
   public Map<NodeGraph, Double> getSubGraphSalientNodes(double percentile) {
 
-    int position;
-    position = (int) (centralityMap.size() * percentile);
-    final double boundary = new ArrayList<>(centralityMap.values()).get(position);
+    final List<Double> values = new ArrayList<>(centralityMap.values());
+    if (values.isEmpty()) {
+      return null;
+    }
+    // Clamped, as in Graph.getSalientNodes: a percentile of 1.0 pushes the index to size().
+    final int position = Math.min((int) (values.size() * percentile), values.size() - 1);
+    final double boundary = values.get(position);
 
     final Map<NodeGraph, Double> filteredMap =
         centralityMap.entrySet().stream().filter(entry -> entry.getValue() >= boundary)

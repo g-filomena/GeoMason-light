@@ -10,11 +10,11 @@ package sim.graph;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
+import ec.util.MersenneTwisterFast;
 import java.util.stream.Collectors;
 
 import sim.field.geo.VectorLayer;
+
 import sim.util.geo.MasonGeometry;
 
 /**
@@ -29,15 +29,27 @@ import sim.util.geo.MasonGeometry;
  *
  * <p>
  * Every drawing method comes in two forms. The one without a generator draws
- * from {@link ThreadLocalRandom}: convenient, contention-free under parallel
- * simulation, and not reproducible, which is what these lookups have always
- * been. The overload taking a {@link Random} draws from it instead, so a caller
+ * from a per-thread {@link MersenneTwisterFast}: contention-free under
+ * parallel simulation, and not reproducible, which is what these lookups have
+ * always been. The overload taking a {@link MersenneTwisterFast} draws from it instead, so a caller
  * that owns a seeded generator - one per agent, say, seeded from the model's
  * seed - gets the same nodes on every run of the same seed, concurrency
  * included. A simulation whose origins and destinations come from the first
  * form cannot be replayed, however carefully everything else is seeded.
  */
 public class NodesLookup {
+
+	/**
+	 * The generator used by the methods that are not given one: one per thread, so nothing is
+	 * shared and nothing contends, seeded from the clock and therefore not reproducible. That is
+	 * what these lookups have always been; pass a generator to get repeatability.
+	 */
+	private static final ThreadLocal<MersenneTwisterFast> FALLBACK =
+			ThreadLocal.withInitial(MersenneTwisterFast::new);
+
+	private static MersenneTwisterFast fallbackGenerator() {
+		return FALLBACK.get();
+	}
 
 	final static double PERCENTILE_DECREASE = 0.05;
 	final static double EXPANSION_FACTOR = 1.10;
@@ -62,7 +74,7 @@ public class NodesLookup {
 	 * @return A randomly chosen NodeGraph object from the graph.
 	 */
 	public static NodeGraph randomNode(Graph graph) {
-		return randomNode(graph, ThreadLocalRandom.current());
+		return randomNode(graph, fallbackGenerator());
 	}
 
 	/**
@@ -72,33 +84,9 @@ public class NodesLookup {
 	 * @param random The generator to draw from.
 	 * @return A randomly chosen NodeGraph object from the graph.
 	 */
-	public static NodeGraph randomNode(Graph graph, Random random) {
+	public static NodeGraph randomNode(Graph graph, MersenneTwisterFast random) {
 		final List<NodeGraph> candidates = new ArrayList<>(graph.nodesGraph);
 		return selectRandomNode(candidates, random);
-	}
-
-	/**
-	 * Returns a randomly selected node from a specified list of NodedGraph
-	 * elements.
-	 *
-	 * @param nodes The list of nodes.
-	 * @return A NodeGraph object randomly selected from the given list, or
-	 *         {@code null} if the list is empty.
-	 */
-	public static NodeGraph randomNodeFromList(List<NodeGraph> nodes) {
-		return selectRandomNode(nodes, ThreadLocalRandom.current());
-	}
-
-	/**
-	 * As {@link #randomNodeFromList(List)}, drawing from the supplied generator.
-	 *
-	 * @param nodes  The list of nodes.
-	 * @param random The generator to draw from.
-	 * @return A NodeGraph object randomly selected from the given list, or
-	 *         {@code null} if the list is empty.
-	 */
-	public static NodeGraph randomNodeFromList(List<NodeGraph> nodes, Random random) {
-		return selectRandomNode(nodes, random);
 	}
 
 	/**
@@ -112,7 +100,7 @@ public class NodesLookup {
 	 * @return A NodeGraph object randomly selected from the specified geometries.
 	 */
 	public static NodeGraph randomNodeFromGeometries(Graph graph, List<MasonGeometry> nodesGeometries) {
-		return randomNodeFromGeometries(graph, nodesGeometries, ThreadLocalRandom.current());
+		return randomNodeFromGeometries(graph, nodesGeometries, fallbackGenerator());
 	}
 
 	/**
@@ -126,7 +114,7 @@ public class NodesLookup {
 	 * @return A NodeGraph object randomly selected from the specified geometries.
 	 */
 	public static NodeGraph randomNodeFromGeometries(Graph graph, List<MasonGeometry> nodesGeometries,
-			Random random) {
+			MersenneTwisterFast random) {
 		if (nodesGeometries.isEmpty()) {
 			return null;
 		}
@@ -136,10 +124,11 @@ public class NodesLookup {
 	}
 
 	/**
-	 * Returns a randomly selected node from a graph within a specified radius from
-	 * an origin node and outside the origin node's region. This method is used to
-	 * generate nodes that are geographically spread yet regionally distinct from
-	 * the origin.
+	 * Returns a randomly selected node lying within a radius of the origin node
+	 * and in the same region as it; use
+	 * {@link #randomNodeBetweenDistanceIntervalRegion(Graph, NodeGraph, double, double)}
+	 * for a node in a different region. The radius grows until a candidate is
+	 * found or it has doubled.
 	 *
 	 * @param graph      The graph from which to select the node.
 	 * @param originNode The origin node serving as the center of the search radius.
@@ -148,7 +137,7 @@ public class NodesLookup {
 	 *         criteria.
 	 */
 	public static NodeGraph randomNodeRegion(Graph graph, NodeGraph originNode, double radius) {
-		return randomNodeRegion(graph, originNode, radius, ThreadLocalRandom.current());
+		return randomNodeRegion(graph, originNode, radius, fallbackGenerator());
 	}
 
 	/**
@@ -162,41 +151,33 @@ public class NodesLookup {
 	 * @return A randomly selected NodeGraph object that meets the specified
 	 *         criteria.
 	 */
-	public static NodeGraph randomNodeRegion(Graph graph, NodeGraph originNode, double radius, Random random) {
+	public static NodeGraph randomNodeRegion(Graph graph, NodeGraph originNode, double radius, MersenneTwisterFast random) {
 
 		final MasonGeometry originNodeGeometry = originNode.masonGeometry;
 		double expandingRadius = radius;
 
-		while (true) {
-			if (expandingRadius >= radius * RADIUS_THRESHOLD) {
-				return null;
-			}
+		// The region is read off the node, as it is in getNodesBetweenDistanceIntervalRegion.
+		// Do not read it from a "district" attribute on the junction geometry: a node generated
+		// from a segment endpoint carries no attributes at all.
+		while (expandingRadius < radius * RADIUS_THRESHOLD) {
 
 			List<MasonGeometry> spatialFilter = graph.junctions.featuresWithinDistance(originNodeGeometry.geometry,
 					expandingRadius);
-			if (spatialFilter.isEmpty()) {
-				expandingRadius *= EXPANSION_FACTOR;
-				continue;
+			List<NodeGraph> candidates = new ArrayList<>();
+
+			for (MasonGeometry junction : spatialFilter) {
+				NodeGraph node = graph.findNode(junction.geometry.getCoordinate());
+				if (node != null && !node.equals(originNode) && node.getRegionID() == originNode.getRegionID()) {
+					candidates.add(node);
+				}
 			}
 
-			List<MasonGeometry> regionFilter = spatialFilter.stream()
-					.filter(geo -> Integer.parseInt(geo.getStringAttribute("district")) == originNode.regionID)
-					.collect(Collectors.toList());
-
-			if (regionFilter.isEmpty()) {
-				expandingRadius *= EXPANSION_FACTOR;
-				continue;
+			if (!candidates.isEmpty()) {
+				return selectRandomNode(candidates, random);
 			}
-
-			MasonGeometry nodeGeometry = regionFilter.get(random.nextInt(regionFilter.size()));
-			NodeGraph node = graph.findNode(nodeGeometry.geometry.getCoordinate());
-
-			if (node != null) {
-				return node;
-			}
-
 			expandingRadius *= EXPANSION_FACTOR;
 		}
+		return null;
 	}
 
 	/**
@@ -212,7 +193,7 @@ public class NodesLookup {
 	 */
 	public static NodeGraph randomNodeFromDistancesSet(Graph graph, VectorLayer junctions, NodeGraph originNode,
 			List<Float> distances) {
-		return randomNodeFromDistancesSet(graph, junctions, originNode, distances, ThreadLocalRandom.current());
+		return randomNodeFromDistancesSet(graph, junctions, originNode, distances, fallbackGenerator());
 	}
 
 	/**
@@ -228,7 +209,7 @@ public class NodesLookup {
 	 *         criteria.
 	 */
 	public static NodeGraph randomNodeFromDistancesSet(Graph graph, VectorLayer junctions, NodeGraph originNode,
-			List<Float> distances, Random random) {
+			List<Float> distances, MersenneTwisterFast random) {
 
 		if (distances.isEmpty()) {
 			return null;
@@ -298,7 +279,7 @@ public class NodesLookup {
 	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode, double lowerLimit,
 			double upperLimit) {
 		return randomNodeBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit,
-				ThreadLocalRandom.current());
+				fallbackGenerator());
 	}
 
 	/**
@@ -314,7 +295,7 @@ public class NodesLookup {
 	 *         range.
 	 */
 	public static NodeGraph randomNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode, double lowerLimit,
-			double upperLimit, Random random) {
+			double upperLimit, MersenneTwisterFast random) {
 
 		final List<NodeGraph> candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
 		return selectRandomNode(candidates, random);
@@ -353,7 +334,7 @@ public class NodesLookup {
 	public static NodeGraph randomNodeBetweenDistanceIntervalRegion(Graph graph, NodeGraph originNode,
 			double lowerLimit, double upperLimit) {
 		return randomNodeBetweenDistanceIntervalRegion(graph, originNode, lowerLimit, upperLimit,
-				ThreadLocalRandom.current());
+				fallbackGenerator());
 	}
 
 	/**
@@ -370,7 +351,7 @@ public class NodesLookup {
 	 *         range and different region.
 	 */
 	public static NodeGraph randomNodeBetweenDistanceIntervalRegion(Graph graph, NodeGraph originNode,
-			double lowerLimit, double upperLimit, Random random) {
+			double lowerLimit, double upperLimit, MersenneTwisterFast random) {
 
 		List<NodeGraph> candidates = getNodesBetweenDistanceIntervalRegion(graph, originNode, lowerLimit, upperLimit);
 		return selectRandomNode(candidates, random);
@@ -392,7 +373,7 @@ public class NodesLookup {
 	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode,
 			double lowerLimit, double upperLimit, double percentile) {
 		return randomSalientNodeBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit, percentile,
-				ThreadLocalRandom.current());
+				fallbackGenerator());
 	}
 
 	/**
@@ -410,27 +391,21 @@ public class NodesLookup {
 	 *         centrality criteria.
 	 */
 	public static NodeGraph randomSalientNodeBetweenDistanceInterval(Graph graph, NodeGraph originNode,
-			double lowerLimit, double upperLimit, double percentile, Random random) {
+			double lowerLimit, double upperLimit, double percentile, MersenneTwisterFast random) {
 
-		NodeGraph node = null;
-
-		while (node == null) {
+		// Lower the centrality bar until the interval yields a candidate: an empty candidate set
+		// retries at a lower percentile, and a set that yields a node returns it immediately rather
+		// than falling through to the next decrement.
+		while (percentile > 0.0) {
 			List<NodeGraph> candidates = graph.getSalientNodesBetweenDistanceInterval(originNode, lowerLimit,
 					upperLimit, percentile);
 
-			if (candidates.isEmpty()) {
-				return null; // Return null if no candidates are found
+			if (!candidates.isEmpty()) {
+				return selectRandomNode(candidates, random);
 			}
-
-			node = candidates.get(random.nextInt(candidates.size()));
-
-			// Reduce percentile for the next iteration if node is not found
 			percentile -= PERCENTILE_DECREASE;
-			if (percentile <= 0.0) {
-				return null; // Return null if percentile reaches 0 or below
-			}
 		}
-		return node;
+		return null;
 	}
 
 	/**
@@ -453,7 +428,7 @@ public class NodesLookup {
 	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph graph, NodeGraph originNode, double lowerLimit,
 			double upperLimit, String DMA) {
 		return randomNodeBetweenDistanceIntervalDMA(graph, originNode, lowerLimit, upperLimit, DMA,
-				ThreadLocalRandom.current());
+				fallbackGenerator());
 	}
 
 	/**
@@ -471,7 +446,7 @@ public class NodesLookup {
 	 *         and category criteria.
 	 */
 	public static NodeGraph randomNodeBetweenDistanceIntervalDMA(Graph graph, NodeGraph originNode, double lowerLimit,
-			double upperLimit, String DMA, Random random) {
+			double upperLimit, String DMA, MersenneTwisterFast random) {
 
 		// DMA filtering applies until the interval has been widened past this cap; beyond it, any
 		// candidate is accepted. The previous cap condition (upperLimit > upperLimit * multiplier)
@@ -489,6 +464,10 @@ public class NodesLookup {
 			} else if (!candidates.isEmpty()) {
 				return selectRandomNode(candidates, random);
 			}
+			// Widen both ends. Moving only the upper one, as this did, meant a graph too sparse to
+			// answer the first interval could only ever be answered by a node further away than
+			// asked for - a bias in one direction, produced by the search rather than by the data.
+			lowerLimit = Math.max(0.0, lowerLimit - INITIAL_TOLERANCE);
 			upperLimit += INITIAL_TOLERANCE;
 		}
 		return null;
@@ -506,7 +485,7 @@ public class NodesLookup {
 	 *         DMA.
 	 */
 	public static NodeGraph randomNodeDMA(Graph graph, String DMA) {
-		return randomNodeDMA(graph, DMA, ThreadLocalRandom.current());
+		return randomNodeDMA(graph, DMA, fallbackGenerator());
 	}
 
 	/**
@@ -519,7 +498,7 @@ public class NodesLookup {
 	 * @return A randomly selected node from the specified category based on the
 	 *         DMA.
 	 */
-	public static NodeGraph randomNodeDMA(Graph graph, String DMA, Random random) {
+	public static NodeGraph randomNodeDMA(Graph graph, String DMA, MersenneTwisterFast random) {
 		List<NodeGraph> candidates = graph.getNodes();
 		List<NodeGraph> candidatesDMA = getCandidatesByDMA(candidates, DMA);
 		return selectRandomNode(candidatesDMA, random);
@@ -574,7 +553,7 @@ public class NodesLookup {
 	 *         wrap every lookup in try/catch).
 	 */
 	public static NodeGraph selectRandomNode(List<NodeGraph> nodes) {
-		return selectRandomNode(nodes, ThreadLocalRandom.current());
+		return selectRandomNode(nodes, fallbackGenerator());
 	}
 
 	/**
@@ -585,7 +564,7 @@ public class NodesLookup {
 	 * @return A randomly selected node from the list, or {@code null} if the list
 	 *         is empty.
 	 */
-	public static NodeGraph selectRandomNode(List<NodeGraph> nodes, Random random) {
+	public static NodeGraph selectRandomNode(List<NodeGraph> nodes, MersenneTwisterFast random) {
 		if (nodes == null || nodes.isEmpty()) {
 			return null;
 		}
