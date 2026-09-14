@@ -611,12 +611,10 @@ public class VectorLayer extends Layer {
     ensureSpatialIndex();
     final List<?> geometriesList = spatialIndex.query(envelope);
 
-    // Sequential, and collected in the order the spatial index returns. This used to run as a
-    // parallelStream into a ConcurrentLinkedQueue, which put the results in whatever order the
-    // threads happened to finish in - so the returned list differed between two runs on one
-    // machine, not merely between machines. Callers that only ask "does this contain x" could not
-    // see it; any caller that walks the list in order could. The candidate list here is whatever
-    // the index returns for one envelope, which is small, so there was little to parallelise.
+    // Sequential, and collected in the order the spatial index returns, so the list is the same on
+    // every run and every machine - which matters to any caller that walks it in order rather than
+    // only testing membership. The candidates are whatever the index returns for one envelope,
+    // which is a small set, so there is little here to parallelise.
     for (final Object geometry : geometriesList) {
       final MasonGeometry otherMasonGeometry = (MasonGeometry) geometry;
       if (inputGeometry.intersects(otherMasonGeometry.getGeometry())) {
@@ -640,10 +638,8 @@ public class VectorLayer extends Layer {
   public List<MasonGeometry> intersection(VectorLayer otherLayer, boolean inclusive) {
 
     // Both branches answer about this layer, so inclusive = false is the exact complement of
-    // inclusive = true. Previously only the inclusive branch did: the other one returned the
-    // features of otherLayer that were not features of this one, which is the complement of
-    // nothing, and the inclusive branch repeated a feature once per geometry of otherLayer it
-    // happened to meet.
+    // inclusive = true. Identity-based, so a feature meeting several geometries of otherLayer is
+    // returned once.
     final Set<MasonGeometry> intersecting = Collections.newSetFromMap(new IdentityHashMap<>());
     for (final MasonGeometry masonGeometry : otherLayer.geometriesView()) {
       intersecting.addAll(intersectingFeatures(masonGeometry.getGeometry()));

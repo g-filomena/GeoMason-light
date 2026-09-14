@@ -125,4 +125,28 @@ class RouteTest {
     assertEquals("work", route.attributes.get("purpose"));
     assertTrue(route.social);
   }
+
+  @Test
+  @DisplayName("computing the sequences twice does not double the edges or the length")
+  void computeRouteSequencesIsIdempotent() {
+    Graph graph = Fixtures.grid(3, 3, 100.0);
+    NodeGraph from = Fixtures.nodeAt(graph, 0.0, 0.0);
+    NodeGraph via = Fixtures.nodeAt(graph, 100.0, 0.0);
+    NodeGraph to = Fixtures.nodeAt(graph, 200.0, 0.0);
+
+    Route route = new Route();
+    route.directedEdgesSequence.add(graph.getDirectedEdgeBetween(from, via));
+    route.directedEdgesSequence.add(graph.getDirectedEdgeBetween(via, to));
+
+    route.computeRouteSequences();
+    int edges = route.edgesSequence.size();
+    int nodes = route.nodesSequence.size();
+    double length = route.getLength();
+
+    // Both sequence builders assign, so a second computation replaces rather than extends.
+    route.computeRouteSequences();
+    assertEquals(edges, route.edgesSequence.size());
+    assertEquals(nodes, route.nodesSequence.size());
+    assertEquals(length, route.getLength(), 1e-9);
+  }
 }

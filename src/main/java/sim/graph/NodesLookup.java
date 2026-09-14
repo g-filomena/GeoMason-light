@@ -449,8 +449,7 @@ public class NodesLookup {
 			double upperLimit, String DMA, MersenneTwisterFast random) {
 
 		// DMA filtering applies until the interval has been widened past this cap; beyond it, any
-		// candidate is accepted. The previous cap condition (upperLimit > upperLimit * multiplier)
-		// was always false, so a graph without matching DMA nodes span this loop forever.
+		// candidate is accepted, so a graph holding no node of this DMA still terminates.
 		final double maxUpperLimitDMA = upperLimit * DISTANCE_MULTIPLIER;
 
 		for (int expansion = 0; expansion < MAX_EXPANSIONS; expansion++) {
@@ -549,8 +548,7 @@ public class NodesLookup {
 	 *
 	 * @param nodes List of nodes from which to select randomly.
 	 * @return A randomly selected node from the list, or {@code null} if the list
-	 *         is empty (previously this threw on empty lists, forcing callers to
-	 *         wrap every lookup in try/catch).
+	 *         is empty, so callers need not guard the call.
 	 */
 	public static NodeGraph selectRandomNode(List<NodeGraph> nodes) {
 		return selectRandomNode(nodes, fallbackGenerator());

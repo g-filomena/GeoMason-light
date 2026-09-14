@@ -58,8 +58,6 @@ public class Route {
    */
   public void resetRoute(List<DirectedEdge> directedEdgeSequence) {
     directedEdgesSequence = new ArrayList<>(directedEdgeSequence);
-    nodesSequence = new ArrayList<>();
-    edgesSequence = new ArrayList<>();
     computeRouteSequences();
   }
 
@@ -108,10 +106,6 @@ public class Route {
    * @return A list of primal nodes.
    */
   private void nodesSequence() {
-    if (directedEdgesSequence.isEmpty()) {
-      return;
-    }
-
     nodesSequence = directedEdgesSequence.stream()
         .map(directedEdge -> (NodeGraph) directedEdge.getFromNode()).collect(Collectors.toList());
 
@@ -120,13 +114,14 @@ public class Route {
   }
 
   /**
-   * Populates the edgesSequence list with edges from the directed edges sequence.
+   * Builds the edgesSequence list from the directed edges sequence.
+   *
+   * <p>Assigns rather than appends, matching {@code nodesSequence()}, so computing the sequences
+   * twice on one Route is idempotent.
    */
   private void edgeSequence() {
-
-    for (DirectedEdge directedEdge : directedEdgesSequence) {
-      edgesSequence.add((EdgeGraph) directedEdge.getEdge());
-    }
+    edgesSequence = directedEdgesSequence.stream()
+        .map(directedEdge -> (EdgeGraph) directedEdge.getEdge()).collect(Collectors.toList());
   }
 
   /**

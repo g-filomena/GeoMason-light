@@ -200,8 +200,8 @@ class NodesLookupTest {
   @Test
   @DisplayName("randomNodeRegion() draws a node of the same region as the origin")
   void randomNodeRegionDrawsFromTheSameRegion() {
-    // The region is a node property. Reading it out of a "district" attribute on the junction
-    // geometries, as this used to, could not work: nothing put attributes there.
+    // The region is a node property, read from the node itself: the junction geometries carry no
+    // "district" attribute to read it from.
     Graph graph = Fixtures.grid(5, 5, 100.0);
     NodeGraph origin = Fixtures.nodeAt(graph, 200.0, 200.0);
     for (NodeGraph node : graph.getNodes()) {

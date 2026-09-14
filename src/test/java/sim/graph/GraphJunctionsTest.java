@@ -14,8 +14,8 @@ import sim.testing.Fixtures;
 import sim.util.geo.MasonGeometry;
 
 /**
- * What {@code fromStreetJunctionsSegments} does with the junction layer it is handed. The layer
- * used to be accepted and ignored, leaving every node on a bare generated point.
+ * What {@code fromStreetJunctionsSegments} does with the junction layer it is handed: every node
+ * takes its geometry from that layer rather than from a bare generated point.
  */
 class GraphJunctionsTest {
 

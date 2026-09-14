@@ -18,11 +18,11 @@ import sim.testing.Fixtures;
 /**
  * The hashing contract that makes a seeded run reproduce on a different machine.
  *
- * <p>{@code NodeGraph} and {@code EdgeGraph} used to inherit {@code Object}'s identity hash, which
- * HotSpot draws from a per-JVM generator. Every {@code HashMap} or {@code HashSet} keyed on one
- * therefore iterated in an order that differed between JVM builds, and any decision taken by
- * walking such a collection in order reached a different answer on a different machine from the
- * same seed.
+ * <p>{@code NodeGraph} and {@code EdgeGraph} hash on their geometry rather than on identity.
+ * HotSpot draws an identity hash from a per-JVM generator, so a {@code HashMap} or {@code HashSet}
+ * keyed on one would iterate in an order differing between JVM builds, and any decision taken by
+ * walking such a collection in order would reach a different answer on a different machine from
+ * the same seed.
  */
 class GraphHashOrderTest {
 

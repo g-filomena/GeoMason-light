@@ -230,20 +230,17 @@ public class Islands {
   /**
    * Finds an edge that can act as a bridge to connect two disconnected islands in the graph.
    *
-   * <p>Each unordered island pair once, and it stops at the first edge it finds - the previous
-   * version built the same doubled cross product as the closest-pair search above before calling
-   * {@code findAny()}.
+   * <p>Considers each unordered island pair once, and stops at the first edge it finds.
    *
    * @param islands the list of sets of nodes representing the disconnected islands
    * @param graph the graph to analyze for potential connecting bridges
    * @return an edge that connects two islands, or null if no such edge exists
    */
   private static EdgeGraph findConnectingBridge(List<Set<NodeGraph>> islands, Graph graph) {
-    // An edge between two nodes exists only if they are adjacent, so there is no reason to ask
-    // about pairs that are not. The previous version built the full cross product of every node in
-    // every island against every node in every other - the same doubled O(N^2) scan as the
-    // closest-pair search - and called getEdgeBetween on all of it, when a street node has three
-    // or four neighbours. Same answer, O(N x degree) instead of O(N^2).
+    // An edge between two nodes exists only if they are adjacent, so only adjacent pairs are worth
+    // asking about. Walking each node's own neighbours is O(N x degree), where a street node has
+    // three or four, rather than the O(N^2) of every node in every island against every node in
+    // every other.
     Map<NodeGraph, Integer> islandOf = new HashMap<>();
     for (int i = 0; i < islands.size(); i++) {
       for (NodeGraph node : islands.get(i)) {

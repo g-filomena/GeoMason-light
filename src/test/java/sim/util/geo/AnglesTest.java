@@ -63,9 +63,8 @@ class AnglesTest {
   @Test
   @DisplayName("isInDirection() accepts both sides of a cone straddling 0")
   void isInDirectionHandlesConeAcrossZero() {
-    // A cone pointing due north spans, say, 344..16 degrees. Both halves belong to it: the
-    // clockwise half used to be rejected, so an agent heading north only ever saw destinations
-    // to its left.
+    // A cone pointing due north spans, say, 344..16 degrees. Both halves belong to it, so an agent
+    // heading north sees destinations on either side of its heading.
     assertTrue(Angles.isInDirection(0.0, 350.0, 30.0));
     assertTrue(Angles.isInDirection(0.0, 5.0, 30.0));
     assertTrue(Angles.isInDirection(350.0, 5.0, 30.0));
