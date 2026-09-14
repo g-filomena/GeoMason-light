@@ -168,6 +168,16 @@ public class EdgeGraph extends Edge {
   }
 
   /**
+   * A hash derived from this edge's centroid, so that hash-based collections iterate in an order
+   * that is the same on every machine. See {@link NodeGraph#hashCode()} for why this is the
+   * centroid and not {@link #getID()}, and why {@code equals} stays as identity.
+   */
+  @Override
+  public int hashCode() {
+    return centroidCoords == null ? 0 : centroidCoords.hashCode();
+  }
+
+  /**
    * Sets the ID of the edge's region.
    *
    * @param regionID The ID to set for the edge's region.

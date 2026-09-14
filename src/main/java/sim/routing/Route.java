@@ -69,6 +69,25 @@ public class Route {
    */
   public void computeRouteSequences() {
 
+    // Say which contract was broken, here, rather than letting it surface as a
+    // NullPointerException inside a stream in nodesSequence() or as an IndexOutOfBoundsException on
+    // the get(0) below - both of which point at this class and not at the caller that built the
+    // sequence, which is where the mistake always is.
+    if (directedEdgesSequence.isEmpty()) {
+      throw new IllegalStateException(
+          "cannot compute route sequences: the directed edges sequence is empty");
+    }
+    for (int index = 0; index < directedEdgesSequence.size(); index++) {
+      if (directedEdgesSequence.get(index) == null) {
+        throw new IllegalStateException(
+            "cannot compute route sequences: null directed edge at position "
+                + index
+                + " of "
+                + directedEdgesSequence.size()
+                + " (a graph lookup returned no edge and the result was added unchecked)");
+      }
+    }
+
     nodesSequence();
     edgeSequence();
     originNode = nodesSequence.get(0);

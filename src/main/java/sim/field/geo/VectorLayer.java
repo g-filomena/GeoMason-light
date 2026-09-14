@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequenceFilter;
@@ -606,17 +605,25 @@ public class VectorLayer extends Layer {
    * @return A List containing the geometries that intersect with the specified input geometry.
    */
   public final List<MasonGeometry> intersectingFeatures(Geometry inputGeometry) {
-    ConcurrentLinkedQueue<MasonGeometry> intersectingFeatures = new ConcurrentLinkedQueue<>();
+    final List<MasonGeometry> intersectingFeatures = new ArrayList<>();
     final Envelope envelope = inputGeometry.getEnvelopeInternal();
     envelope.expandBy(Math.max(envelope.getHeight(), envelope.getWidth()) * 0.01);
     ensureSpatialIndex();
     final List<?> geometriesList = spatialIndex.query(envelope);
 
-    geometriesList.parallelStream().map(geometry -> (MasonGeometry) geometry)
-        .filter(otherMasonGeometry -> inputGeometry.intersects(otherMasonGeometry.getGeometry()))
-        .forEach(intersectingFeatures::add);
-
-    return new ArrayList<>(intersectingFeatures);
+    // Sequential, and collected in the order the spatial index returns. This used to run as a
+    // parallelStream into a ConcurrentLinkedQueue, which put the results in whatever order the
+    // threads happened to finish in - so the returned list differed between two runs on one
+    // machine, not merely between machines. Callers that only ask "does this contain x" could not
+    // see it; any caller that walks the list in order could. The candidate list here is whatever
+    // the index returns for one envelope, which is small, so there was little to parallelise.
+    for (final Object geometry : geometriesList) {
+      final MasonGeometry otherMasonGeometry = (MasonGeometry) geometry;
+      if (inputGeometry.intersects(otherMasonGeometry.getGeometry())) {
+        intersectingFeatures.add(otherMasonGeometry);
+      }
+    }
+    return intersectingFeatures;
   }
 
   /**

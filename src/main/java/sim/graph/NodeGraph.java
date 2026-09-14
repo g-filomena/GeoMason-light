@@ -80,6 +80,34 @@ public class NodeGraph extends Node {
   }
 
   /**
+   * A hash derived from this node's coordinate, so that hash-based collections iterate in an order
+   * that is the same on every machine.
+   *
+   * <p>{@code equals} is deliberately left as identity. This class does not define it, so two nodes
+   * are equal only when they are the same object, and the {@code equals}/{@code hashCode} contract
+   * is satisfied by any deterministic hash: distinct nodes sharing a coordinate simply share a
+   * bucket, and {@code equals} still tells them apart. Nothing about which objects are considered
+   * equal changes here - only the order a {@code HashMap} or {@code HashSet} walks them in.
+   *
+   * <p>Without this, the hash is {@code Object}'s identity hash, which HotSpot draws from a
+   * per-JVM generator. Any collection keyed on a node then iterates in an order that differs
+   * between JVM builds, and an ordered decision taken over such a collection - walking entries into
+   * a cumulative distribution and picking by position, say - silently reaches a different answer on
+   * a different machine from the same seed.
+   *
+   * <p><b>Not the node ID.</b> {@link #setID(int)} is called <i>after</i> the graph is built, and
+   * {@code Graph.generateAdjacencyMatrix} has by then already stored {@code Pair<NodeGraph,
+   * NodeGraph>} keys whose hash delegates to these nodes. Hashing on a field that changes after
+   * insertion moves every such key to a bucket it is not stored in, and adjacency lookups begin
+   * returning null. The coordinate is fixed at construction and never reassigned, so it is safe.
+   */
+  @Override
+  public int hashCode() {
+    Coordinate coordinate = getCoordinate();
+    return coordinate == null ? 0 : coordinate.hashCode();
+  }
+
+  /**
    * Sets the ID of the node's region.
    *
    * @param regionID The ID to set for the node's region.
