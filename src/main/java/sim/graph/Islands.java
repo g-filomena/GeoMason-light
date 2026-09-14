@@ -3,6 +3,7 @@ package sim.graph;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +39,11 @@ public class Islands {
    * @return a list of sets, each representing a disconnected island of nodes
    */
   public List<Set<NodeGraph>> findDisconnectedIslands(Set<EdgeGraph> edges) {
-    Set<NodeGraph> nodes = new HashSet<>(GraphUtils.nodesFromEdges(edges));
+    // LinkedHashSet: NodeGraph has no hashCode of its own, so a HashSet iterates in identity-hash
+    // order, which differs between JVM builds. The search below is seeded from these nodes in turn,
+    // so their order becomes the island order, and mergeConnectedIslands bridges the first
+    // cross-island edge it finds in it.
+    Set<NodeGraph> nodes = new LinkedHashSet<>(GraphUtils.nodesFromEdges(edges));
     this.visitedNodes = new HashSet<>();
     islands.clear();
 
@@ -50,7 +55,9 @@ public class Islands {
       if (visitedNodes.contains(currentNode)) {
         continue;
       }
-      Set<NodeGraph> currentIsland = new HashSet<>();
+      // Insertion-ordered too: findConnectingBridge stops at the first node adjacent to another
+      // island, and the closest-pair search breaks ties on whichever it reaches first.
+      Set<NodeGraph> currentIsland = new LinkedHashSet<>();
       dfs(currentNode, currentIsland, nodes, edges);
       islands.add(currentIsland);
     }
@@ -97,7 +104,8 @@ public class Islands {
    */
   public Set<EdgeGraph> mergeConnectedIslands(Set<EdgeGraph> edges) {
 
-    Set<EdgeGraph> bridges = new HashSet<>();
+    // Insertion-ordered: these go into the caller's set and are iterated again downstream.
+    Set<EdgeGraph> bridges = new LinkedHashSet<>();
     islands = findDisconnectedIslands(edges);
     if (islands.size() == 1) {
       return edges;

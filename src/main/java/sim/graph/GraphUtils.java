@@ -200,9 +200,8 @@ public class GraphUtils {
    * @return a set containing all unique nodes from the given edges
    */
   public static Set<NodeGraph> nodesFromEdges(Set<EdgeGraph> edges) {
-    // Insertion-ordered, because the order survives into the caller: Islands seeds its
-    // depth-first search from these nodes in turn, and NodeGraph inherits identity hashing,
-    // which differs between JVM builds. Collectors.toSet() makes no ordering promise at all.
+    // Insertion-ordered: Islands seeds its search from these in turn, and NodeGraph inherits
+    // identity hashing, which differs between JVM builds. Collectors.toSet() promises no order.
     return edges.stream().flatMap(edge -> edge.getNodes().stream())
         .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
   }
