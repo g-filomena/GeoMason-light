@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -117,5 +118,83 @@ class AstarTest {
 
     assertEquals(first.edgesSequence, second.edgesSequence);
     assertEquals(first.getLength(), second.getLength(), 0.0);
+  }
+
+  @Test
+  @DisplayName("a predicate admits exactly what the equivalent set of avoided edges admits")
+  void predicateMatchesAvoidSet() {
+    Graph graph = Fixtures.grid(4, 4, 100.0);
+    NodeGraph origin = Fixtures.nodeAt(graph, 0.0, 0.0);
+    NodeGraph destination = Fixtures.nodeAt(graph, 300.0, 300.0);
+    EdgeGraph direct = graph.getEdgeBetween(origin, Fixtures.nodeAt(graph, 100.0, 0.0));
+    Set<Integer> avoid = new HashSet<>(Collections.singletonList(direct.getID()));
+
+    Route bySet = new Astar().astarRoute(origin, destination, graph, avoid);
+    Route byPredicate =
+        new Astar().astarRouteAllowing(origin, destination, graph, edge -> edge.getID() != direct.getID());
+
+    assertNotNull(byPredicate);
+    assertEquals(bySet.edgesSequence, byPredicate.edgesSequence);
+    assertEquals(bySet.getLength(), byPredicate.getLength(), 1e-9);
+  }
+
+  @Test
+  @DisplayName("with several targets the nearest reachable one is returned and named")
+  void multipleTargetsReturnTheNearest() {
+    Graph graph = Fixtures.grid(4, 4, 100.0);
+    NodeGraph origin = Fixtures.nodeAt(graph, 0.0, 0.0);
+    NodeGraph near = Fixtures.nodeAt(graph, 100.0, 100.0);
+    NodeGraph far = Fixtures.nodeAt(graph, 300.0, 300.0);
+
+    Astar aStar = new Astar();
+    Route route = aStar.astarRouteAllowing(origin, Arrays.asList(far, near), graph, edge -> true);
+
+    assertNotNull(route);
+    assertSame(near, aStar.reachedTarget());
+    assertSame(near, route.destinationNode);
+    assertEquals(200.0, route.getLength(), 1e-9);
+  }
+
+  @Test
+  @DisplayName("a multi-target search costs no more than the best of the single-target searches")
+  void multipleTargetsAgreeWithSeparateSearches() {
+    Graph graph = Fixtures.grid(4, 4, 100.0);
+    NodeGraph origin = Fixtures.nodeAt(graph, 0.0, 0.0);
+    NodeGraph first = Fixtures.nodeAt(graph, 300.0, 0.0);
+    NodeGraph second = Fixtures.nodeAt(graph, 100.0, 200.0);
+
+    double bestSeparately =
+        Math.min(
+            new Astar().astarRoute(origin, first, graph, null).getLength(),
+            new Astar().astarRoute(origin, second, graph, null).getLength());
+
+    Route together =
+        new Astar().astarRouteAllowing(origin, Arrays.asList(first, second), graph, edge -> true);
+
+    assertNotNull(together);
+    assertEquals(bestSeparately, together.getLength(), 1e-9);
+  }
+
+  @Test
+  @DisplayName("when no target is reachable the route is null and none is named")
+  void noReachableTargetNamesNothing() {
+    Graph graph = Fixtures.twoDisjointPaths();
+    NodeGraph origin = Fixtures.nodeAt(graph, 0.0, 0.0);
+    NodeGraph unreachable = Fixtures.nodeAt(graph, 10000.0, 0.0);
+
+    Astar aStar = new Astar();
+    assertNull(aStar.astarRouteAllowing(origin, Collections.singletonList(unreachable), graph,
+        edge -> true));
+    assertNull(aStar.reachedTarget());
+  }
+
+  @Test
+  @DisplayName("a predicate admitting nothing leaves every destination unreachable")
+  void predicateAdmittingNothingReachesNothing() {
+    Graph graph = Fixtures.grid(3, 3, 100.0);
+    NodeGraph origin = Fixtures.nodeAt(graph, 0.0, 0.0);
+    NodeGraph destination = Fixtures.nodeAt(graph, 200.0, 200.0);
+
+    assertNull(new Astar().astarRouteAllowing(origin, destination, graph, edge -> false));
   }
 }
