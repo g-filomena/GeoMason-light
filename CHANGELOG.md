@@ -1,5 +1,29 @@
 # Changelog
 
+## Version 2.2.2
+
+* [Enhancement] `Astar.astarRouteAllowing(origin, destination, graph, Predicate<EdgeGraph>)` admits
+  edges by a test applied as the search reaches them, instead of by a set enumerated over the whole
+  graph beforehand. A search settles a few hundred edges, so a caller whose exclusion rule is derived
+  rather than listed no longer has to materialise it across the network before it can ask.
+* [Enhancement] `Astar.astarRouteAllowing(origin, Collection<NodeGraph> targets, graph, predicate)`
+  searches for several targets at once and returns the route to whichever is settled first, with
+  `reachedTarget()` naming it. The heuristic becomes the distance to the nearest target, which keeps
+  it admissible. Scanning candidates previously cost one search each - and when none was reachable,
+  one exhaustive failure each.
+* [Note] The predicate methods carry their own name rather than overloading `astarRoute`: as
+  overloads, `astarRoute(a, b, graph, null)` is ambiguous between `Set<Integer>` and the predicate,
+  which stopped this library's own `Islands` compiling and would silently break any caller passing a
+  literal null.
+* [Fix] `Astar`'s inner loop no longer copies the avoid-set into a fresh `HashSet` per call, resolves
+  each neighbour through three `Pair`-allocating map lookups, scans the open set with `contains()`
+  and `remove()`, or reconstructs the path by head-insertion into an `ArrayList`. It walks the node's
+  own outgoing directed edges, defers deletion, and reverses once. Three of these `Dijkstra` had
+  fixed long ago; `Astar` never received them.
+* [Enhancement] `AstarTest` covers the new surface: predicate and avoid-set admit the same edges, a
+  multi-target search names the nearest target and agrees with the best of the separate searches, an
+  unreachable target names nothing, and a predicate admitting nothing reaches nothing.
+
 ## Version 2.2.1
 
 * [Fix] `NodeGraph` and `EdgeGraph` now override `hashCode()`, deriving it from the node's coordinate and the edge's centroid. Neither declared one before, so both inherited `Object`'s identity hash, which HotSpot draws from a per-JVM generator - and every `HashMap` or `HashSet` keyed on one iterated in an order that differed between JVM builds. Any decision taken by walking such a collection in order, such as accumulating weights into a cumulative distribution and picking by position, therefore reached a different answer on a different machine from the same seed. Version 2.2.0 addressed this one collection at a time with `LinkedHashSet`; this addresses the cause, and covers callers' collections too. **This changes results**, on every machine, wherever a hash-ordered collection of graph objects was walked - a one-time change, after which the same seed gives the same run anywhere.
