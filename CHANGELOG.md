@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 2.2.3
+
+* [Breaking] `VectorLayer.readGPKG(url, layer)` refuses a GeoPackage holding more than one feature table, with an `IllegalStateException` naming them. It used to read every feature table into the one layer, so a file carrying two versions of the same data - an old layer left beside a rewritten one, which writing a GeoPackage layer by name does - loaded as their union, with no error. A file with a single feature table reads exactly as before, and one with none still adds nothing.
+* [Enhancement] `VectorLayer.readGPKG(url, layer, tableName)` reads one named feature table, for a file that is meant to hold several. A name the file does not contain is an `IllegalArgumentException` listing the tables it does.
+* [Fix] `GeoPackageImporter.read` closes the GeoPackage when reading fails, and closes the stream it copies a jar resource from; neither was closed before.
+* [Enhancement] Added `GeoPackageImporterTest`: a single-table file is read, a two-table file is refused and adds nothing, a named table is read alone, and an unknown table name is refused.
+
 ## Version 2.2.2
 
 * [Enhancement] `Astar.astarRouteAllowing(origin, destination, graph, Predicate<EdgeGraph>)` admits

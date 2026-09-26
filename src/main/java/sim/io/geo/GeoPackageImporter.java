@@ -25,68 +25,111 @@ import sim.util.geo.MasonGeometry;
 public class GeoPackageImporter {
 
   /**
-   * Reads GeoPackage data and populates the provided VectorLayer with geometries and attributes.
+   * Reads the feature table of a GeoPackage holding exactly one, and populates the provided
+   * VectorLayer with its geometries and attributes. A GeoPackage without feature tables adds
+   * nothing.
    *
    * @param gpkgURL The URL to the GeoPackage file.
    * @param vectorLayer The VectorLayer to populate with data.
+   * @throws IllegalStateException If the GeoPackage holds more than one feature table; use {@link
+   *     #read(URL, VectorLayer, String)} to name the one to read.
    * @throws Exception If an error occurs during GeoPackage reading or processing.
    */
   public static void read(URL gpkgURL, VectorLayer vectorLayer) throws Exception {
+    read(gpkgURL, vectorLayer, null);
+  }
 
-    File file;
-
-    if ("file".equals(gpkgURL.getProtocol())) {
-      // Normal filesystem
-      file = new File(gpkgURL.toURI());
-    } else if ("jar".equals(gpkgURL.getProtocol())) {
-      // Inside a jar: extract to temp file
-      InputStream input = gpkgURL.openStream();
-      file = File.createTempFile("temp_", ".gpkg");
-      file.deleteOnExit();
-      Files.copy(input, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-    } else {
-      throw new IllegalArgumentException("Unsupported URL protocol: " + gpkgURL.getProtocol());
-    }
-
-    GeoPackage geoPackage = GeoPackageManager.open(file);
-    // Feature and tile tables
-    List<String> features = geoPackage.getFeatureTables();
-    // Iterate through feature tables
-    for (String featureTableName : features) {
-      FeatureDao featureDao = geoPackage.getFeatureDao(featureTableName);
-
-      // Iterate through features
-      for (FeatureRow row : featureDao.queryForAll()) {
-        // Parse geometry using GeoPackage-Java's GeometryReader
-        GeoPackageGeometryData geometryData = row.getGeometry();
-
-        Geometry sfGeometry = null;
-        if (geometryData != null && !geometryData.isEmpty()) {
-          sfGeometry = geometryData.getGeometry();
-        }
-
-        // Convert to JTS Geometry
-        org.locationtech.jts.geom.Geometry jtsGeometry = convertToJTSGeometry(sfGeometry);
-        // Extract attributes
-        Map<String, AttributeValue> attributes = new HashMap<>();
-        for (String columnName : featureDao.getTable().getColumnNames()) {
-
-          if (!columnName.equalsIgnoreCase("geometry")) {
-            Object value = row.getValue(columnName);
-            attributes.put(columnName, parseAttributeValue(value));
-          }
-        }
-
-        // Add to VectorLayer
-        MasonGeometry masonGeometry = new MasonGeometry();
-        masonGeometry.geometry = jtsGeometry;
-        masonGeometry.addAttributes(attributes);
-        vectorLayer.addGeometry(masonGeometry);
-
+  /**
+   * Reads one feature table of a GeoPackage and populates the provided VectorLayer with its
+   * geometries and attributes.
+   *
+   * @param gpkgURL The URL to the GeoPackage file.
+   * @param vectorLayer The VectorLayer to populate with data.
+   * @param tableName The feature table to read, or null to read the file's only feature table.
+   * @throws IllegalArgumentException If the named table is not a feature table of the file.
+   * @throws IllegalStateException If no table is named and the file holds more than one.
+   * @throws Exception If an error occurs during GeoPackage reading or processing.
+   */
+  public static void read(URL gpkgURL, VectorLayer vectorLayer, String tableName)
+      throws Exception {
+    try (GeoPackage geoPackage = GeoPackageManager.open(toFile(gpkgURL))) {
+      String table = selectTable(geoPackage.getFeatureTables(), tableName, gpkgURL);
+      if (table != null) {
+        readTable(geoPackage.getFeatureDao(table), vectorLayer);
       }
     }
+  }
 
-    geoPackage.close();
+  /**
+   * The table to read: {@code requested} when named, otherwise the only feature table, or null when
+   * there is none. A file with several feature tables and no name is refused rather than read as
+   * the union of its tables.
+   */
+  static String selectTable(List<String> tables, String requested, URL gpkgURL) {
+    if (requested != null) {
+      if (!tables.contains(requested)) {
+        throw new IllegalArgumentException(
+            gpkgURL + " has no feature table '" + requested + "'; it holds " + tables);
+      }
+      return requested;
+    }
+    if (tables.size() > 1) {
+      throw new IllegalStateException(
+          gpkgURL
+              + " holds "
+              + tables.size()
+              + " feature tables "
+              + tables
+              + "; name the one to read with readGPKG(url, layer, tableName)");
+    }
+    return tables.isEmpty() ? null : tables.get(0);
+  }
+
+  /** The file behind {@code gpkgURL}; a resource inside a jar is copied to a temporary file. */
+  private static File toFile(URL gpkgURL) throws Exception {
+    if ("file".equals(gpkgURL.getProtocol())) {
+      return new File(gpkgURL.toURI());
+    }
+    if ("jar".equals(gpkgURL.getProtocol())) {
+      File file = File.createTempFile("temp_", ".gpkg");
+      file.deleteOnExit();
+      try (InputStream input = gpkgURL.openStream()) {
+        Files.copy(input, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      }
+      return file;
+    }
+    throw new IllegalArgumentException("Unsupported URL protocol: " + gpkgURL.getProtocol());
+  }
+
+  /** Adds every feature of one table to {@code vectorLayer}. */
+  private static void readTable(FeatureDao featureDao, VectorLayer vectorLayer) {
+    for (FeatureRow row : featureDao.queryForAll()) {
+      // Parse geometry using GeoPackage-Java's GeometryReader
+      GeoPackageGeometryData geometryData = row.getGeometry();
+
+      Geometry sfGeometry = null;
+      if (geometryData != null && !geometryData.isEmpty()) {
+        sfGeometry = geometryData.getGeometry();
+      }
+
+      // Convert to JTS Geometry
+      org.locationtech.jts.geom.Geometry jtsGeometry = convertToJTSGeometry(sfGeometry);
+      // Extract attributes
+      Map<String, AttributeValue> attributes = new HashMap<>();
+      for (String columnName : featureDao.getTable().getColumnNames()) {
+
+        if (!columnName.equalsIgnoreCase("geometry")) {
+          Object value = row.getValue(columnName);
+          attributes.put(columnName, parseAttributeValue(value));
+        }
+      }
+
+      // Add to VectorLayer
+      MasonGeometry masonGeometry = new MasonGeometry();
+      masonGeometry.geometry = jtsGeometry;
+      masonGeometry.addAttributes(attributes);
+      vectorLayer.addGeometry(masonGeometry);
+    }
   }
 
   /**

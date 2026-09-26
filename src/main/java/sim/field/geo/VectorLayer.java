@@ -1006,8 +1006,26 @@ public class VectorLayer extends Layer {
     ShapeFileImporter.read(shpURL, dbfURL, vectorLayer, MasonGeometry.class);
   }
 
+  /**
+   * Reads the feature table of a GeoPackage holding exactly one into {@code vectorLayer}.
+   *
+   * @throws IllegalStateException If the GeoPackage holds more than one feature table; use {@link
+   *     #readGPKG(URL, VectorLayer, String)} to name the one to read.
+   * @throws Exception If there is an error during GeoPackage reading.
+   */
   public static void readGPKG(URL gpkgURL, VectorLayer vectorLayer) throws Exception {
     GeoPackageImporter.read(gpkgURL, vectorLayer);
+  }
+
+  /**
+   * Reads the named feature table of a GeoPackage into {@code vectorLayer}.
+   *
+   * @throws IllegalArgumentException If the file has no feature table of that name.
+   * @throws Exception If there is an error during GeoPackage reading.
+   */
+  public static void readGPKG(URL gpkgURL, VectorLayer vectorLayer, String tableName)
+      throws Exception {
+    GeoPackageImporter.read(gpkgURL, vectorLayer, tableName);
   }
 
   /**
