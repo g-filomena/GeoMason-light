@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Random;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -104,5 +105,19 @@ class AnglesTest {
     NodeGraph destination = node(0.0, 1000.0);
     assertEquals(Angles.viewField(origin, destination, 140.0).getArea(),
         Angles.viewField(origin, destination, 220.0).getArea(), 1e-6);
+  }
+
+  @Test
+  @DisplayName("a destination due north is at 0 degrees, never NaN")
+  void dueNorthIsNeverNaN() {
+    Random random = new Random(1);
+    for (int i = 0; i < 10000; i++) {
+      double x = random.nextDouble() * 1e6;
+      double y = random.nextDouble() * 1e6;
+      Coordinate origin = new Coordinate(x, y);
+      Coordinate north = new Coordinate(x, y + 1 + random.nextDouble() * 1e3);
+
+      assertEquals(0.0, Angles.angle(origin, north), 1e-6);
+    }
   }
 }

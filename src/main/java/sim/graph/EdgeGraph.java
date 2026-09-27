@@ -118,6 +118,8 @@ public class EdgeGraph extends Edge {
   public void setNodes(final NodeGraph fromNode, final NodeGraph toNode) {
     this.fromNode = fromNode;
     this.toNode = toNode;
+    // Replaced, not appended to, so setting the nodes again does not leave the old ones listed.
+    nodes = new ArrayList<>(2);
     nodes.add(fromNode);
     nodes.add(toNode);
   }

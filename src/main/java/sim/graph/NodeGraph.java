@@ -236,12 +236,12 @@ public class NodeGraph extends Node {
       return null;
     }
 
-    List<Integer> adjacentRegions =
-        adjacentNodes.stream().filter(opposite -> opposite.regionID != this.regionID)
-            .peek(opposite -> adjacentRegionEntries.add(opposite))
-            .map(opposite -> opposite.regionID).collect(Collectors.toList());
-
-    return adjacentRegions;
+    // Rebuilt, not appended to: adding to adjacentRegionEntries on every call filled it with a
+    // fresh copy of the same nodes each time it was asked.
+    List<NodeGraph> entries = adjacentNodes.stream()
+        .filter(opposite -> opposite.regionID != this.regionID).collect(Collectors.toList());
+    adjacentRegionEntries = entries;
+    return entries.stream().map(opposite -> opposite.regionID).collect(Collectors.toList());
   }
 
   /**
@@ -299,7 +299,9 @@ public class NodeGraph extends Node {
           continue;
         }
         if (regionBasedNavigation) {
-          List<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(originNode).getEdges());
+          // The far end of this edge from this node. It was taken from originNode, which is only
+          // the same thing when this node is the origin; elsewhere it came back null.
+          List<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(this).getEdges());
           nextEdges.remove(edge);
           boolean bridges = true;
           for (EdgeGraph next : nextEdges) {
@@ -351,6 +353,9 @@ public class NodeGraph extends Node {
         continue;
       }
       NodeGraph dualNode = edge.getDualNode();
+      if (dualNode == null) {
+        continue; // as in getDualNode: an edge with no dual counterpart cannot be a departure
+      }
 
       if (this.equals(destinationNode)) {
         double cost = GraphUtils.nodesDistance(edge.getOtherNode(this), originNode);
@@ -362,7 +367,9 @@ public class NodeGraph extends Node {
         }
         if (regionBasedNavigation) {
           // avoid edges that lead to gateways
-          List<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(originNode).getEdges());
+          // The far end of this edge from this node. It was taken from originNode, which is only
+          // the same thing when this node is the origin; elsewhere it came back null.
+          List<EdgeGraph> nextEdges = new ArrayList<>(edge.getOtherNode(this).getEdges());
           nextEdges.remove(edge);
           boolean bridge = true;
           for (EdgeGraph next : nextEdges) {

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.features.user.FeatureDao;
@@ -103,6 +104,9 @@ public class GeoPackageImporter {
 
   /** Adds every feature of one table to {@code vectorLayer}. */
   private static void readTable(FeatureDao featureDao, VectorLayer vectorLayer) {
+    // The geometry column is whatever the table declares - QGIS and GDAL call it "geom", not
+    // "geometry" - so ask for its name rather than assuming it.
+    String geometryColumn = featureDao.getGeometryColumnName();
     for (FeatureRow row : featureDao.queryForAll()) {
       // Parse geometry using GeoPackage-Java's GeometryReader
       GeoPackageGeometryData geometryData = row.getGeometry();
@@ -111,6 +115,12 @@ public class GeoPackageImporter {
       if (geometryData != null && !geometryData.isEmpty()) {
         sfGeometry = geometryData.getGeometry();
       }
+      if (sfGeometry == null) {
+        // A feature without a geometry has no place in a spatial layer, and converting it threw a
+        // NullPointerException that aborted the whole read. Skipped, as the Shapefile importer
+        // skips null shapes.
+        continue;
+      }
 
       // Convert to JTS Geometry
       org.locationtech.jts.geom.Geometry jtsGeometry = convertToJTSGeometry(sfGeometry);
@@ -118,7 +128,7 @@ public class GeoPackageImporter {
       Map<String, AttributeValue> attributes = new HashMap<>();
       for (String columnName : featureDao.getTable().getColumnNames()) {
 
-        if (!columnName.equalsIgnoreCase("geometry")) {
+        if (!columnName.equalsIgnoreCase(geometryColumn)) {
           Object value = row.getValue(columnName);
           attributes.put(columnName, parseAttributeValue(value));
         }
@@ -133,36 +143,18 @@ public class GeoPackageImporter {
   }
 
   /**
-   * Parses an attribute value and converts it into an AttributeValue object.
+   * Wraps an attribute value read from the table in an AttributeValue.
    *
-   * @param value The raw value to parse.
-   * @return An AttributeValue representing the parsed data.
+   * <p>The value keeps the type its column declares. Text is not re-interpreted: a TEXT column
+   * holding "007" or an 11-digit identifier is text, and guessing a number from it lost the leading
+   * zeros or, past the int range, threw and aborted the read.
+   *
+   * @param value The raw value to wrap.
+   * @return An AttributeValue holding the value.
    */
   private static AttributeValue parseAttributeValue(Object value) {
     if (value instanceof String) {
-      String rawAttributeValue = ((String) value).trim();
-      AttributeValue attributeValue = new AttributeValue();
-
-      if (rawAttributeValue.isEmpty()) {
-        attributeValue.setString(rawAttributeValue);
-      } else {
-        switch (determineType(rawAttributeValue)) {
-          case "double":
-            attributeValue.setDouble(Double.valueOf(rawAttributeValue));
-            break;
-          case "integer":
-            attributeValue.setInteger(Integer.valueOf(rawAttributeValue));
-            break;
-          case "boolean":
-            attributeValue.setValue(Boolean.valueOf(rawAttributeValue));
-            break;
-          default:
-            attributeValue.setString(rawAttributeValue);
-            break;
-        }
-      }
-
-      return attributeValue;
+      return new AttributeValue(((String) value).trim());
     } else if (value instanceof Long) {
       // Handle Long values explicitly
       long longValue = (Long) value;
@@ -170,36 +162,8 @@ public class GeoPackageImporter {
         return new AttributeValue((int) longValue); // Fits in Integer range
       }
       return new AttributeValue(longValue); // Store as Long
-
-    } else if (value instanceof Integer) {
-      return new AttributeValue(value);
-    } else if (value instanceof Double) {
-      return new AttributeValue(value);
-    } else if (value instanceof Boolean) {
-      return new AttributeValue(value);
-    } else {
-      return new AttributeValue(value);
     }
-
-  }
-
-  /**
-   * Determines the type of a string value (double, integer, boolean, or string).
-   *
-   * @param rawAttributeValue The raw string value to analyze.
-   * @return A string representing the determined type.
-   */
-  private static String determineType(String rawAttributeValue) {
-    if (rawAttributeValue.matches("^-?\\d+\\.\\d+$")) {
-      return "double";
-    } else if (rawAttributeValue.matches("^-?\\d+$")) {
-      return "integer";
-    } else if (rawAttributeValue.equalsIgnoreCase("true")
-        || rawAttributeValue.equalsIgnoreCase("false")) {
-      return "boolean";
-    } else {
-      return "string";
-    }
+    return new AttributeValue(value);
   }
 
   /**
@@ -233,26 +197,39 @@ public class GeoPackageImporter {
           .toArray(org.locationtech.jts.geom.LineString[]::new);
       return gf.createMultiLineString(lineStrings);
     } else if (geometryType.equals(GeometryType.POLYGON)) {
-      mil.nga.sf.Polygon pg = (mil.nga.sf.Polygon) sfGeometry;
-      return new GeometryFactory().createPolygon(pg.getExteriorRing().getPoints().stream()
-          .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new));
+      return toJTSPolygon((mil.nga.sf.Polygon) sfGeometry, new GeometryFactory());
     } else if (geometryType.equals(GeometryType.MULTIPOLYGON)) {
       mil.nga.sf.MultiPolygon mpg = (mil.nga.sf.MultiPolygon) sfGeometry;
       GeometryFactory gf = new GeometryFactory();
       if (mpg.getPolygons().size() == 1) {
-        mil.nga.sf.Polygon singlePolygon = mpg.getPolygons().get(0);
-        return gf.createPolygon(singlePolygon.getExteriorRing().getPoints()
-            .stream().map(point -> new Coordinate(point.getX(), point.getY()))
-            .toArray(Coordinate[]::new));
+        return toJTSPolygon(mpg.getPolygons().get(0), gf);
       }
       org.locationtech.jts.geom.Polygon[] polygons = mpg.getPolygons().stream()
-          .map(pg -> gf.createPolygon(pg.getExteriorRing().getPoints().stream()
-              .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new)))
-          .toArray(org.locationtech.jts.geom.Polygon[]::new);
+          .map(pg -> toJTSPolygon(pg, gf)).toArray(org.locationtech.jts.geom.Polygon[]::new);
       return gf.createMultiPolygon(polygons);
     } else {
       throw new IllegalArgumentException(
           "Unsupported GeoPackage geometry type: " + sfGeometry.getGeometryType());
     }
+  }
+
+  /**
+   * Converts a polygon with its holes. Only the exterior ring was read before, so every hole - a
+   * courtyard, a lake - was filled in.
+   */
+  private static org.locationtech.jts.geom.Polygon toJTSPolygon(mil.nga.sf.Polygon polygon,
+      GeometryFactory gf) {
+    List<mil.nga.sf.LineString> rings = polygon.getRings();
+    LinearRing shell = gf.createLinearRing(toCoordinates(rings.get(0)));
+    LinearRing[] holes = new LinearRing[rings.size() - 1];
+    for (int i = 1; i < rings.size(); i++) {
+      holes[i - 1] = gf.createLinearRing(toCoordinates(rings.get(i)));
+    }
+    return gf.createPolygon(shell, holes);
+  }
+
+  private static Coordinate[] toCoordinates(mil.nga.sf.LineString ring) {
+    return ring.getPoints().stream().map(point -> new Coordinate(point.getX(), point.getY()))
+        .toArray(Coordinate[]::new);
   }
 }

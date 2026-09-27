@@ -165,7 +165,6 @@ public class GeomPortrayal extends SimplePortrayal2D {
         gm.shape = path;
       } else if (geometry instanceof LineString) {
         gm.shape = drawGeometry(geometry, gInfo, false);
-        filled = false;
       } else if (geometry instanceof Polygon) {
         gm.shape = drawPolygon((Polygon) geometry, gInfo, filled);
       } else if (geometry instanceof MultiLineString) {
@@ -179,7 +178,6 @@ public class GeomPortrayal extends SimplePortrayal2D {
             gm.shape.append(p, false);
           }
         }
-        filled = false;
       } else if (geometry instanceof MultiPolygon) {
         // draw each Polygon individually
         MultiPolygon multiPolygon = (MultiPolygon) geometry;
@@ -196,8 +194,11 @@ public class GeomPortrayal extends SimplePortrayal2D {
       }
     }
 
-    // now draw it!
-    if (filled) {
+    // now draw it! Lines are only ever stroked. This is decided per geometry: it used to be done by
+    // setting this.filled = false, which, since one portrayal is shared by every geometry it
+    // draws, left every polygon drawn after the first line unfilled.
+    boolean lineal = geometry instanceof LineString || geometry instanceof MultiLineString;
+    if (filled && !lineal) {
       graphics.fill(gm.shape);
     } else {
       graphics.draw(gm.shape);
@@ -251,8 +252,9 @@ public class GeomPortrayal extends SimplePortrayal2D {
       return false;
     }
 
+    // Grown by SLOP / 2 on every side, so SLOP in all on each axis.
     return geom.shape.intersects(range.clip.x - SLOP / 2, range.clip.y - SLOP / 2,
-        range.clip.width + SLOP / 2, range.clip.height + SLOP / 2);
+        range.clip.width + SLOP, range.clip.height + SLOP);
 
   }
 }

@@ -27,9 +27,8 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
-import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.locationtech.jts.index.quadtree.Quadtree;
 import org.locationtech.jts.operation.union.UnaryUnionOp;
 import sim.engine.SimState;
@@ -76,12 +75,12 @@ public class VectorLayer extends Layer {
   /**
    * The convex hull of all the geometries in this field.
    */
-  private PreparedPolygon convexHull = null;
+  private PreparedGeometry convexHull = null;
 
   /**
    * Defines the outer shell of all the geometries within this field.
    */
-  private PreparedPolygon union;
+  private PreparedGeometry union;
 
   /**
    * Helper factory for computing the union or convex hull.
@@ -129,15 +128,33 @@ public class VectorLayer extends Layer {
    * the specified MasonGeometry to the VectorLayer and inserts its envelope into the layer's
    * spatial index for efficient spatial queries.
    *
+   * <p>A MasonGeometry with no geometry, or an empty one, is not added: it has no location, so no
+   * spatial query could ever return it, and its null envelope cannot be put in the spatial index
+   * (the quadtree threw on it).
+   *
    * @param masonGeometry The MasonGeometry to be added to the VectorLayer.
    */
   public void addGeometry(MasonGeometry masonGeometry) {
 
-    final Envelope envelope = masonGeometry.getGeometry().getEnvelopeInternal();
+    final Geometry geometry = masonGeometry.getGeometry();
+    if (geometry == null || geometry.isEmpty()) {
+      return;
+    }
+    final Envelope envelope = geometry.getEnvelopeInternal();
     MBR.expandToInclude(envelope);
     spatialIndex.insert(envelope, masonGeometry);
     geometriesList.add(masonGeometry);
     idIndex = null;
+    invalidateDerivedGeometries();
+  }
+
+  /**
+   * Drops the cached convex hull and union, so the next call computes them from the geometries the
+   * layer holds now. Without this they kept describing the layer as it was when first asked.
+   */
+  private void invalidateDerivedGeometries() {
+    convexHull = null;
+    union = null;
   }
 
   /**
@@ -178,6 +195,7 @@ public class VectorLayer extends Layer {
     geometriesList.remove(masonGeometry);
     spatialIndexDirty = true;
     idIndex = null;
+    invalidateDerivedGeometries();
   }
 
   /**
@@ -339,8 +357,12 @@ public class VectorLayer extends Layer {
     if (otherMasonGeometry != null) {
       otherMasonGeometry.geometry.apply(coordsFilter);
       otherMasonGeometry.geometry.geometryChanged();
+      // The prepared form indexes the old coordinates; it is rebuilt on demand by the relation
+      // queries, which would otherwise keep answering for where the geometry used to be.
+      otherMasonGeometry.preparedGeometry = null;
     }
     spatialIndexDirty = true;
+    invalidateDerivedGeometries();
   }
 
   /**
@@ -354,7 +376,9 @@ public class VectorLayer extends Layer {
   public void setGeometryLocation(MasonGeometry masonGeometry, Point newLocation) {
     MasonGeometry otherMasonGeometry = findGeometry(masonGeometry);
     otherMasonGeometry.geometry = newLocation;
+    otherMasonGeometry.preparedGeometry = null; // prepared for the old geometry; see above
     spatialIndexDirty = true;
+    invalidateDerivedGeometries();
   }
 
   /**
@@ -399,7 +423,11 @@ public class VectorLayer extends Layer {
   public synchronized void updateSpatialIndex() {
     Quadtree freshIndex = new Quadtree();
     for (MasonGeometry masonGeometry : geometriesList) {
-      freshIndex.insert(masonGeometry.getGeometry().getEnvelopeInternal(), masonGeometry);
+      final Envelope envelope = masonGeometry.getGeometry().getEnvelopeInternal();
+      // A geometry emptied after it was added has a null envelope, which the quadtree cannot key.
+      if (!envelope.isNull()) {
+        freshIndex.insert(envelope, masonGeometry);
+      }
     }
     spatialIndex = freshIndex;
     spatialIndexDirty = false;
@@ -445,6 +473,7 @@ public class VectorLayer extends Layer {
     geometriesList.clear();
     spatialIndexDirty = false;
     idIndex = null;
+    invalidateDerivedGeometries();
   }
 
   // Geometric Computations
@@ -469,20 +498,23 @@ public class VectorLayer extends Layer {
 
     final Coordinate[] coordinates = points.toArray(new Coordinate[points.size()]);
     final ConvexHull convexHull = new ConvexHull(coordinates, layerGeomFactory);
-    this.convexHull = new PreparedPolygon((Polygon) convexHull.getConvexHull());
+    // Not necessarily a Polygon: the hull of one point is a Point and of collinear points a
+    // LineString, and casting those threw.
+    this.convexHull = PreparedGeometryFactory.prepare(convexHull.getConvexHull());
   }
 
   /**
    * Computes and retrieves the convex hull of the geometries within this VectorLayer. The convex
    * hull is the smallest convex polygon that encloses all the geometries in this VectorLayer.
    *
-   * @return The convex hull geometry of the geometries in this VectorLayer
+   * @return The convex hull geometry of the geometries in this VectorLayer; an empty polygon when
+   *         the layer is empty. A Point or LineString when the geometries are degenerate.
    */
   public Geometry getConvexHull() {
     if (convexHull == null) {
       computeConvexHull();
     }
-    return convexHull.getGeometry();
+    return convexHull == null ? layerGeomFactory.createPolygon() : convexHull.getGeometry();
   }
 
   /**
@@ -500,21 +532,23 @@ public class VectorLayer extends Layer {
     for (MasonGeometry masonGeometry : geometriesList) {
       geometries.add(masonGeometry.getGeometry());
     }
-    Geometry polygon = UnaryUnionOp.union(geometries);
-    union = new PreparedPolygon((Polygon) polygon);
+    // Not necessarily a Polygon: disjoint polygons union to a MultiPolygon, and lines or points to
+    // their multi- forms. Casting to Polygon threw on all of those.
+    union = PreparedGeometryFactory.prepare(UnaryUnionOp.union(geometries));
   }
 
   /**
    * Computes and retrieves the union of the geometries within this VectorLayer. The resulting
    * Geometry represents the outside points of the field's geometries.
    *
-   * @return The union geometry of the geometries in this VectorLayer.
+   * @return The union geometry of the geometries in this VectorLayer; an empty polygon when the
+   *         layer is empty.
    */
   public Geometry getUnion() {
     if (union == null) {
       computeUnion();
     }
-    return union.getGeometry();
+    return union == null ? layerGeomFactory.createPolygon() : union.getGeometry();
   }
 
   // Spatial Queries
@@ -694,7 +728,7 @@ public class VectorLayer extends Layer {
     if (convexHull == null) {
       computeConvexHull();
     }
-    if (convexHull.intersects(point)) {
+    if (convexHull != null && convexHull.intersects(point)) {
       return true;
     }
     return false;
@@ -711,7 +745,7 @@ public class VectorLayer extends Layer {
     if (union == null) {
       computeUnion();
     }
-    if (union.intersects(point)) {
+    if (union != null && union.intersects(point)) {
       return true;
     }
     return false;

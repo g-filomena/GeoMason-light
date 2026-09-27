@@ -125,6 +125,9 @@ public class Utilities {
    */
   public static <K, V extends Comparable<Double>> Map<K, Double> filterMapByPercentile(
       Map<K, Double> map, double percentile) {
+    if (map.isEmpty()) {
+      return new HashMap<>(); // no values, so no threshold to compute
+    }
     double percentileValue = calculatePercentileThreshold(map, percentile);
     return filterMapByThreshold(map, percentileValue);
   }
@@ -144,8 +147,10 @@ public class Utilities {
     // Sort the values array (ascending order)
     java.util.Arrays.sort(valuesArray);
 
-    // Calculate the index corresponding to the specified percentile
+    // Calculate the index corresponding to the specified percentile. Kept within the array: a
+    // percentile of 0 gave -1.
     int index = (int) Math.ceil(percentile * valuesArray.length) - 1;
+    index = Math.max(0, Math.min(index, valuesArray.length - 1));
 
     // Return the threshold value
     return valuesArray[index];

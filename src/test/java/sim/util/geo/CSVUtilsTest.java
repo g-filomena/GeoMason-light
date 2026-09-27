@@ -41,11 +41,27 @@ class CSVUtilsTest {
   }
 
   @Test
-  @DisplayName("embedded double quotes are doubled")
+  @DisplayName("a value with embedded double quotes is quoted, the quotes doubled")
   void doublesEmbeddedQuotes() throws IOException {
     StringWriter writer = new StringWriter();
     CSVUtils.writeLine(writer, Collections.singletonList("say \"hi\""));
-    assertEquals("say \"\"hi\"\"\n", writer.toString());
+    assertEquals("\"say \"\"hi\"\"\"\n", writer.toString());
+  }
+
+  @Test
+  @DisplayName("a value holding the separator or a line break is quoted")
+  void quotesValuesThatWouldSplit() throws IOException {
+    StringWriter writer = new StringWriter();
+    CSVUtils.writeLine(writer, Arrays.asList("Liverpool, UK", "two\nlines", "plain"));
+    assertEquals("\"Liverpool, UK\",\"two\nlines\",plain\n", writer.toString());
+  }
+
+  @Test
+  @DisplayName("a custom quote character inside a value is doubled")
+  void escapesTheCustomQuote() throws IOException {
+    StringWriter writer = new StringWriter();
+    CSVUtils.writeLine(writer, Collections.singletonList("it's"), ',', '\'');
+    assertEquals("'it''s'\n", writer.toString());
   }
 
   @Test

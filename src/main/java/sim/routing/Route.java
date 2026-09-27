@@ -131,12 +131,15 @@ public class Route {
    */
   public void dualNodesSequence(Graph dualNetwork) {
 
-    directedEdgesSequence.forEach(directedEdge -> {
-      EdgeGraph edge = (EdgeGraph) directedEdge.getEdge();
-      edgesSequence.add(edge);
-      NodeGraph dualNode = dualNetwork.findNode(edge.getDualNode());
-      dualNodesSequence.add(dualNode);
-    });
+    // Assigns rather than appends, as nodesSequence() and edgeSequence() do: appending here
+    // doubled edgesSequence on any route whose sequences had already been computed.
+    edgeSequence();
+    List<NodeGraph> dualNodes = new ArrayList<>(edgesSequence.size());
+    for (EdgeGraph edge : edgesSequence) {
+      NodeGraph dualNode = edge.getDualNode();
+      dualNodes.add(dualNode == null ? null : dualNetwork.findNode(dualNode));
+    }
+    dualNodesSequence = dualNodes;
   }
 
   /**

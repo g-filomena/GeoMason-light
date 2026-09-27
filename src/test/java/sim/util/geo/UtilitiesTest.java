@@ -108,4 +108,15 @@ class UtilitiesTest {
     assertEquals(Integer.valueOf(1), filtered.get("a"));
     assertEquals(Integer.valueOf(3), filtered.get("c"));
   }
+
+  @Test
+  @DisplayName("a percentile of zero, or an empty map, does not index out of bounds")
+  void percentileEdgeCases() {
+    Map<String, Double> map = new HashMap<>();
+    assertTrue(Utilities.filterMapByPercentile(map, 0.5).isEmpty());
+
+    map.put("a", 1.0);
+    map.put("b", 2.0);
+    assertTrue(Utilities.filterMapByPercentile(map, 0.0).isEmpty());
+  }
 }

@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -117,5 +119,38 @@ class GraphUtilsTest {
     Geometry hull = GraphUtils.smallestEnclosingGeometryBetweenNodes(
         new java.util.ArrayList<>(Arrays.asList(one, two, three, four)));
     assertEquals(200.0 * 200.0, hull.getArea(), 1e-6);
+  }
+
+  @Test
+  @DisplayName("collinear nodes get an enclosing circle, not a hull with no area")
+  void collinearNodesAreEnclosed() {
+    Graph graph = Fixtures.path(3, 100.0);
+    List<NodeGraph> nodes = new ArrayList<>(graph.getNodes());
+    Collections.reverse(nodes);
+    List<NodeGraph> before = new ArrayList<>(nodes);
+
+    Geometry enclosing = GraphUtils.smallestEnclosingGeometryBetweenNodes(nodes);
+
+    // The circle through the two outer nodes, as for two nodes: the middle one inside, the outer
+    // ones on its (polygonised) rim.
+    assertTrue(enclosing.getArea() > 0.0);
+    assertTrue(enclosing.contains(Fixtures.nodeAt(graph, 100, 0).getMasonGeometry().getGeometry()));
+    for (NodeGraph node : graph.getNodes()) {
+      assertTrue(enclosing.distance(node.getMasonGeometry().getGeometry()) < 1e-6, node.toString());
+    }
+    assertEquals(before, nodes, "the caller's list is left in its order");
+  }
+
+  @Test
+  @DisplayName("nodes all at one point are enclosed by a buffer around it")
+  void coincidentNodesAreEnclosed() {
+    NodeGraph node = new NodeGraph(new Coordinate(5, 5));
+    NodeGraph same = new NodeGraph(new Coordinate(5, 5));
+    NodeGraph again = new NodeGraph(new Coordinate(5, 5));
+
+    Geometry enclosing =
+        GraphUtils.smallestEnclosingGeometryBetweenNodes(new ArrayList<>(Arrays.asList(node, same, again)));
+
+    assertTrue(enclosing.getArea() > 0.0);
   }
 }

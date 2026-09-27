@@ -110,8 +110,15 @@ public class GridLayer extends Layer {
   public final void setGrid(Grid2D newGrid) {
     grid = newGrid;
 
-    setPixelWidth(grid.getWidth());
-    setPixelHeight(grid.getHeight());
+    // A pixel's size is the extent divided by the number of cells, as setMBR computes it. This set
+    // it to the number of cells itself, so a layer whose MBR was set before its grid mapped every
+    // coordinate to the wrong cell. Without an extent there is nothing to divide, and the sizes are
+    // left for setMBR or the caller to set.
+    Envelope mbr = getMBR();
+    if (mbr != null && !mbr.isNull() && grid.getWidth() > 0 && grid.getHeight() > 0) {
+      setPixelWidth(mbr.getWidth() / grid.getWidth());
+      setPixelHeight(mbr.getHeight() / grid.getHeight());
+    }
   }
 
   /**
@@ -250,36 +257,40 @@ public class GridLayer extends Layer {
 
     Coordinate[] coordinates = new Coordinate[5];
     double x_orig = getMBR().getMinX();
-    double y_orig = getMBR().getMinY(); // XXX getMaxY() instead?
+    double y_orig = getMBR().getMinY();
+
+    // Grid rows run top-down and world y bottom-up; invert, as toPoint() does, so that the cell
+    // polygon and the cell centre describe the same cell.
+    int invertedY = getGridHeight() - y - 1;
 
     // Bottom left corner
     coordinates[0] = new Coordinate();
     coordinates[0].x = x_orig + (x * getPixelWidth());
-    coordinates[0].y = y_orig + (y * getPixelHeight());
+    coordinates[0].y = y_orig + (invertedY * getPixelHeight());
     coordinates[0].z = 0.0;
 
     // Upper left corner
     coordinates[1] = new Coordinate();
     coordinates[1].x = x_orig + (x * getPixelWidth());
-    coordinates[1].y = y_orig + ((y + 1) * getPixelHeight());
+    coordinates[1].y = y_orig + ((invertedY + 1) * getPixelHeight());
     coordinates[1].z = 0.0;
 
     // Upper right corner
     coordinates[2] = new Coordinate();
     coordinates[2].x = x_orig + ((x + 1) * getPixelWidth());
-    coordinates[2].y = y_orig + ((y + 1) * getPixelHeight());
+    coordinates[2].y = y_orig + ((invertedY + 1) * getPixelHeight());
     coordinates[2].z = 0.0;
 
     // Finally, lower right corner
     coordinates[3] = new Coordinate();
     coordinates[3].x = x_orig + ((x + 1) * getPixelWidth());
-    coordinates[3].y = y_orig + (y * getPixelHeight());
+    coordinates[3].y = y_orig + (invertedY * getPixelHeight());
     coordinates[3].z = 0.0;
 
     // Close the ring
     coordinates[4] = new Coordinate();
     coordinates[4].x = x_orig + (x * getPixelWidth());
-    coordinates[4].y = y_orig + (y * getPixelHeight());
+    coordinates[4].y = y_orig + (invertedY * getPixelHeight());
     coordinates[4].z = 0.0;
 
     LinearRing ring = geometryFactory.createLinearRing(coordinates);
