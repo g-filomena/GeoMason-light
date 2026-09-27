@@ -131,7 +131,7 @@ public class Astar {
 
       // The node's own outgoing directed edges carry the target node, the undirected edge and the
       // directed edge together, so no getEdgeBetween/getDirectedEdgeBetween lookups are needed -
-      // each of those allocates a key pair, and the old shape performed three per neighbour.
+      // each of those allocates a key pair.
       for (DirectedEdge outEdge : currentNode.getOutDirectedEdges()) {
         final NodeGraph targetNode = (NodeGraph) outEdge.getToNode();
         if (closedSet.contains(targetNode)) {

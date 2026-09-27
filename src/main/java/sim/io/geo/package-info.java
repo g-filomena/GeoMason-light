@@ -5,7 +5,7 @@
  * grids, GeoPackages, and GeoJSON. Importers normally populate {@link sim.field.geo.GridLayer}
  * or {@link sim.field.geo.VectorLayer} instances with geometry and attribute data that can then be
  * used by simulations, graphs, and portrayals. Vector export uses the open GeoPackage and GeoJSON
- * formats; ESRI Shapefiles can still be read but are no longer written.</p>
+ * formats; ESRI Shapefiles can be read but not written.</p>
  *
  * <h2>Supported workflows</h2>
  * <ul>

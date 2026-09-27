@@ -42,7 +42,7 @@ public class MasonGeometry implements sim.util.Proxiable, java.io.Serializable {
   private final Map<String, AttributeValue> attributes;
 
   /**
-   * XXX This might be deprecated because no longer support hidden attributes
+   * XXX Hidden attributes are not supported, so this may be deprecated.
    *
    * @return true iff this.attributes contains any hidden attributes
    */

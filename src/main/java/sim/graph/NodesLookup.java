@@ -479,9 +479,9 @@ public class NodesLookup {
 			} else if (!candidates.isEmpty()) {
 				return selectRandomNode(candidates, random);
 			}
-			// Widen both ends. Moving only the upper one, as this did, meant a graph too sparse to
-			// answer the first interval could only ever be answered by a node further away than
-			// asked for - a bias in one direction, produced by the search rather than by the data.
+			// Widen both ends, so a graph too sparse to answer the first interval is not answered
+			// only by nodes further away than asked for - a bias produced by the search rather than
+			// by the data.
 			lowerLimit = Math.max(0.0, lowerLimit - INITIAL_TOLERANCE);
 			upperLimit += INITIAL_TOLERANCE;
 		}

@@ -47,10 +47,9 @@ public class Islands {
     this.visitedNodes = new HashSet<>();
     islands.clear();
 
-    // Sequential, deliberately. This was a parallelStream whose entire body sat inside
-    // synchronized (visitedNodes), so every DFS serialised anyway and the only thing the
-    // fork-join pool added was overhead - on a hot path called once per agent, and again on
-    // every iteration of the merge loop below.
+    // Sequential, deliberately: every DFS shares visitedNodes, so a parallel stream would
+    // serialise on it and add only fork-join overhead - on a hot path called once per agent, and
+    // again on every iteration of the merge loop below.
     for (NodeGraph currentNode : nodes) {
       if (visitedNodes.contains(currentNode)) {
         continue;
@@ -165,13 +164,10 @@ public class Islands {
   /**
    * Finds the globally closest pair of nodes lying in two different islands.
    *
-   * <p>Plain nested loops over each unordered island pair. What this replaces was a nested
-   * {@code parallelStream} that materialised a {@code Pair} and a {@code SimpleEntry} for every
-   * cross-island node pair before taking the minimum, and enumerated each unordered pair twice
-   * because it never excluded the symmetric case. On the activity module - whose agents anchor on
-   * home, work and two persona destinations, so their known space fragments into several
-   * well-separated islands - that allocation was the single hottest thing in the model, and it is
-   * paid once per agent.
+   * <p>Each unordered island pair is visited once, and nothing is allocated per node pair. On the
+   * activity module - whose agents anchor on home, work and two persona destinations, so their
+   * known space fragments into several well-separated islands - this search is paid once per
+   * agent.
    *
    *
    * @return the closest cross-island pair, or null when there are fewer than two islands
@@ -183,9 +179,8 @@ public class Islands {
 
     // One spatial index per island, then for each unordered pair walk the smaller island and ask
     // the larger one's index for its nearest node. Closest-pair-between-two-point-sets is what a
-    // spatial index is for; the nested loops this replaces compared every node of every island
-    // against every node of every other, which is quadratic in the size of an agent's known space
-    // and is paid once per agent.
+    // spatial index is for; comparing every node of every island against every node of every
+    // other would be quadratic in the size of an agent's known space.
     List<STRtree> trees = new ArrayList<>(islands.size());
     for (Set<NodeGraph> island : islands) {
       STRtree tree = new STRtree();

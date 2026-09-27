@@ -26,9 +26,8 @@ import sim.routing.Route;
 import sim.testing.Fixtures;
 
 /**
- * Two different streets joining the same pair of junctions: a straight road and a crescent. Before
- * 2.3.0 the adjacency maps held one edge per pair, so whichever street was read last hid the other
- * from every lookup.
+ * Two different streets joining the same pair of junctions: a straight road and a crescent. Every
+ * lookup by node pair sees both.
  */
 class ParallelEdgesTest {
 

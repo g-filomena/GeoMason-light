@@ -170,9 +170,8 @@ public class VectorLayer extends Layer {
       if (!masonGeometry.hasAttribute(name)) {
         continue;
       }
-      // getAttribute() hands back the AttributeValue wrapper, not the value inside it, so
-      // comparing it against the value the caller asked for never matched and this lookup always
-      // returned null. Unwrap before comparing.
+      // getAttribute() hands back the AttributeValue wrapper, not the value inside it: unwrap it
+      // before comparing with the value the caller asked for.
       final Object attribute = masonGeometry.getAttribute(name);
       final Object stored =
           attribute instanceof AttributeValue ? ((AttributeValue) attribute).getValue() : attribute;
@@ -852,8 +851,7 @@ public class VectorLayer extends Layer {
     final List<MasonGeometry> filteredFeatures = new ArrayList<>();
     for (final MasonGeometry masonGeometry : geometriesList) {
       final Integer attribute = masonGeometry.getIntegerAttribute(attributeName);
-      // As in the String overload above: without the equal guard, equal = false kept the matching
-      // features too and the filter returned everything.
+      // As in the String overload above: both branches are guarded on `equal`.
       if (!equal && !attribute.equals(attributeValue)) {
         filteredFeatures.add(masonGeometry);
       } else if (equal && attribute.equals(attributeValue)) {
@@ -908,8 +906,7 @@ public class VectorLayer extends Layer {
     for (final Object geometry : geometriesList) {
       MasonGeometry otherMasonGeometry = (MasonGeometry) geometry;
       // Prepare on demand, as the sibling relation queries do: nothing else populates
-      // preparedGeometry for the geometries held by this layer, so reading it unguarded threw a
-      // NullPointerException on any layer that had not been through isCovered() first.
+      // preparedGeometry for the geometries held by this layer.
       if (otherMasonGeometry.preparedGeometry == null) {
         otherMasonGeometry.preparedGeometry =
             PreparedGeometryFactory.prepare(otherMasonGeometry.getGeometry());

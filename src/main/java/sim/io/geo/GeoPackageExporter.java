@@ -42,7 +42,7 @@ import sim.util.geo.MasonGeometry;
 
 /**
  * Writes a {@link VectorLayer} to a single-file OGC GeoPackage (.gpkg), the read counterpart of
- * {@link GeoPackageImporter}. Replaces the ESRI shapefile exporter: no 10-character column-name
+ * {@link GeoPackageImporter}. Preferred to ESRI shapefiles: no 10-character column-name
  * limit, no 254-character field limit, typed columns, and one file instead of three.
  *
  * <p>The feature table schema is the union of the layer's attribute names; each column's type is

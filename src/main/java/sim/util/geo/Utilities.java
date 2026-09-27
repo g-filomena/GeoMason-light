@@ -67,10 +67,10 @@ public class Utilities {
    * @return A random value from the distribution.
    */
   public static double fromDistribution(double mean, double sd, String direction) {
-    // ThreadLocalRandom instead of a shared static Random: the shared instance serialises all
+    // ThreadLocalRandom rather than a shared static Random: a shared instance serialises all
     // threads on one atomic seed, which badly contends when simulations draw per-edge costs
-    // from several worker threads. This draw was never seedable, so reproducibility semantics
-    // are unchanged; use the Random-parameter overload for seeded, reproducible draws.
+    // from several worker threads. This draw is not seedable; use the Random-parameter overload
+    // for seeded, reproducible draws.
     return fromDistribution(mean, sd, direction,
         java.util.concurrent.ThreadLocalRandom.current());
   }

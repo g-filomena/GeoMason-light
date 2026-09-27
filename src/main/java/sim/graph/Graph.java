@@ -46,8 +46,8 @@ public class Graph extends PlanarGraph {
   protected VectorLayer junctions = new VectorLayer();
 
   // Every edge joining a pair of nodes, shortest first. A pair can be joined by more than one
-  // street (a crescent beside a straight road, the two sides of a block); a single-valued map kept
-  // only the last one read and silently dropped the others.
+  // street (a crescent beside a straight road, the two sides of a block), so each pair maps to a
+  // list.
   protected Map<Pair<NodeGraph, NodeGraph>, List<EdgeGraph>> adjacencyMatrix = new HashMap<>();
   protected Map<Pair<NodeGraph, NodeGraph>, List<DirectedEdge>> adjacencyMatrixDirected =
       new HashMap<>();

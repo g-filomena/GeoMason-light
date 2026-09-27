@@ -112,9 +112,8 @@ public class GeoJSONExporter {
    * properties from {@code properties} rather than from its attributes.
    *
    * <p>For the common case of writing a layer alongside values the model computed - a pedestrian
-   * volume per street, say - rather than the attributes it was imported with. Without this,
-   * callers ended up rebuilding the document by hand and re-implementing the JSON escaping and
-   * number formatting below.
+   * volume per street, say - rather than the attributes it was imported with, with the JSON
+   * escaping and number formatting below.
    *
    * <p>Values are typed as they are for attributes: numbers and booleans become JSON literals,
    * null becomes {@code null}, anything else is written as a string. A null or empty map yields

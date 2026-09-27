@@ -88,8 +88,8 @@ class GraphHashOrderTest {
   @Test
   @DisplayName("a node's hash does not vary between equivalent graphs built separately")
   void hashIsReproducibleAcrossBuilds() {
-    // Two graphs built identically give equal hashes for corresponding nodes. Under an identity
-    // hash this held only by accident, and never across JVMs.
+    // Two graphs built identically give equal hashes for corresponding nodes, within a JVM and
+    // across JVMs.
     Graph first = Fixtures.grid(3, 3, 100.0);
     Graph second = Fixtures.grid(3, 3, 100.0);
 

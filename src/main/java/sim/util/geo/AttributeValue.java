@@ -105,7 +105,7 @@ public class AttributeValue implements java.io.Serializable {
     Object v = getValue();
     // Box explicitly. With an int on one arm and an Integer on the other, the conditional is of
     // primitive type and the Integer arm gets unboxed, so an attribute that carries no value
-    // threw a NullPointerException from a method whose return type says it may be null.
+    // would throw a NullPointerException from a method whose return type says it may be null.
     return (v instanceof Number) ? Integer.valueOf(((Number) v).intValue()) : (Integer) v;
   }
 
