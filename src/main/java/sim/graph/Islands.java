@@ -86,8 +86,9 @@ public class Islands {
         visitedNodes.add(currentNode);
         currentIsland.add(currentNode);
         for (NodeGraph adjacentNode : currentNode.getAdjacentNodes()) {
-          if (!visitedNodes.contains(adjacentNode)
-              && edges.contains(graph.getEdgeBetween(currentNode, adjacentNode))) {
+          // any of the parallel edges joining the two will do: the set may hold a longer one only
+          if (!visitedNodes.contains(adjacentNode) && graph
+              .getEdgesBetween(currentNode, adjacentNode).stream().anyMatch(edges::contains)) {
             stack.push(adjacentNode);
           }
         }

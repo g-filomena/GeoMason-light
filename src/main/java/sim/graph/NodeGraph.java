@@ -206,11 +206,12 @@ public class NodeGraph extends Node {
 
   /**
    * Identifies a List of all the nodes adjacent to this node (i.e., sharing an edge with this
-   * node). This method initializes the 'adjacentNodes' list.
+   * node). This method initializes the 'adjacentNodes' list. A node joined to this one by parallel
+   * edges is listed once; before, it was listed once per edge.
    */
   private void setAdjacentNodes() {
     this.adjacentNodes = edges.stream().map(edge -> (NodeGraph) edge.getOppositeNode(this))
-        .collect(Collectors.toList());
+        .distinct().collect(Collectors.toList());
   }
 
   /**

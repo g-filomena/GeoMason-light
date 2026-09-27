@@ -9,6 +9,7 @@
 package sim.graph;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -43,8 +44,12 @@ public class Graph extends PlanarGraph {
   protected Map<NodeGraph, Double> centralityMap = new LinkedHashMap<>();
   protected VectorLayer junctions = new VectorLayer();
 
-  protected Map<Pair<NodeGraph, NodeGraph>, EdgeGraph> adjacencyMatrix = new HashMap<>();
-  protected Map<Pair<NodeGraph, NodeGraph>, DirectedEdge> adjacencyMatrixDirected = new HashMap<>();
+  // Every edge joining a pair of nodes, shortest first. A pair can be joined by more than one
+  // street (a crescent beside a straight road, the two sides of a block); a single-valued map kept
+  // only the last one read and silently dropped the others.
+  protected Map<Pair<NodeGraph, NodeGraph>, List<EdgeGraph>> adjacencyMatrix = new HashMap<>();
+  protected Map<Pair<NodeGraph, NodeGraph>, List<DirectedEdge>> adjacencyMatrixDirected =
+      new HashMap<>();
   protected Map<NodeGraph, Double> salientNodes = new HashMap<>();
   protected Set<DirectedEdge> directedEdges = new HashSet<>();
   public Map<String, AttributeValue> attributes = new HashMap<>();
@@ -228,10 +233,18 @@ public class Graph extends PlanarGraph {
    * between nodes and edges.
    */
   protected void generateAdjacencyMatrix() {
+    adjacencyMatrix.clear();
+    adjacencyMatrixDirected.clear();
     for (EdgeGraph edgeGraph : edgesGraph) {
       addEdgesToAdjacencyMatrix(edgeGraph, 0);
       addEdgesToAdjacencyMatrix(edgeGraph, 1);
     }
+    // Shortest first, then lowest id, so the single-edge lookups answer the same edge every run.
+    Comparator<EdgeGraph> shortestFirst =
+        Comparator.comparingDouble(EdgeGraph::getLength).thenComparingInt(EdgeGraph::getID);
+    adjacencyMatrix.values().forEach(edges -> edges.sort(shortestFirst));
+    adjacencyMatrixDirected.values().forEach(directedEdges -> directedEdges
+        .sort(Comparator.comparing(directed -> (EdgeGraph) directed.getEdge(), shortestFirst)));
   }
 
   private void addEdgesToAdjacencyMatrix(EdgeGraph edgeGraph, int index) {
@@ -240,8 +253,11 @@ public class Graph extends PlanarGraph {
     NodeGraph toNode = (NodeGraph) directedEdge.getToNode();
     Pair<NodeGraph, NodeGraph> nodes = new Pair<>(fromNode, toNode);
 
-    adjacencyMatrixDirected.put(nodes, directedEdge);
-    adjacencyMatrix.put(nodes, edgeGraph);
+    adjacencyMatrixDirected.computeIfAbsent(nodes, pair -> new ArrayList<>()).add(directedEdge);
+    List<EdgeGraph> edges = adjacencyMatrix.computeIfAbsent(nodes, pair -> new ArrayList<>());
+    if (!edges.contains(edgeGraph)) { // a self-loop meets the same pair from both directions
+      edges.add(edgeGraph);
+    }
   }
 
   /**
@@ -320,28 +336,59 @@ public class Graph extends PlanarGraph {
   }
 
   /**
-   * Retrieves the edge between two nodes, if it exists in the graph's adjacency matrix.
+   * Retrieves the edge between two nodes. Where parallel edges (different streets) join the two
+   * nodes, this is the shortest of them - the one a shortest path takes; see
+   * {@link #getEdgesBetween(NodeGraph, NodeGraph)} for all of them.
    *
    * @param fromNode The source node of the edge.
    * @param toNode The target node of the edge.
-   * @return The EdgeGraph object representing the edge between the specified source and target
-   *         nodes, or null if no such edge exists.
+   * @return The shortest EdgeGraph between the specified source and target nodes, or null if no
+   *         such edge exists.
    */
   public EdgeGraph getEdgeBetween(NodeGraph fromNode, NodeGraph toNode) {
-    return adjacencyMatrix.get(new Pair<>(fromNode, toNode));
+    List<EdgeGraph> edges = adjacencyMatrix.get(new Pair<>(fromNode, toNode));
+    return edges == null ? null : edges.get(0);
   }
 
   /**
-   * Retrieves the directed edge between two nodes, if it exists in the graph's directed adjacency
-   * matrix.
+   * Retrieves every edge between two nodes, shortest first. More than one edge joins two nodes
+   * where different streets connect the same pair of junctions.
+   *
+   * @param fromNode The source node of the edges.
+   * @param toNode The target node of the edges.
+   * @return The edges between the two nodes, shortest first; empty if there is none.
+   */
+  public List<EdgeGraph> getEdgesBetween(NodeGraph fromNode, NodeGraph toNode) {
+    List<EdgeGraph> edges = adjacencyMatrix.get(new Pair<>(fromNode, toNode));
+    return edges == null ? new ArrayList<>() : new ArrayList<>(edges);
+  }
+
+  /**
+   * Retrieves the directed edge from one node to another. Where parallel edges join the two nodes,
+   * this is the shortest of them; see {@link #getDirectedEdgesBetween(NodeGraph, NodeGraph)} for
+   * all of them.
    *
    * @param fromNode The source node of the directed edge.
    * @param toNode The target node of the directed edge.
-   * @return The DirectedEdge object representing the directed edge between the specified source and
-   *         target nodes, or null if no such edge exists.
+   * @return The DirectedEdge of the shortest edge from the source to the target node, or null if no
+   *         such edge exists.
    */
   public DirectedEdge getDirectedEdgeBetween(NodeGraph fromNode, NodeGraph toNode) {
-    return adjacencyMatrixDirected.get(new Pair<>(fromNode, toNode));
+    List<DirectedEdge> directedEdges = adjacencyMatrixDirected.get(new Pair<>(fromNode, toNode));
+    return directedEdges == null ? null : directedEdges.get(0);
+  }
+
+  /**
+   * Retrieves every directed edge from one node to another, shortest edge first.
+   *
+   * @param fromNode The source node of the directed edges.
+   * @param toNode The target node of the directed edges.
+   * @return The directed edges from the source to the target node, shortest first; empty if there
+   *         is none.
+   */
+  public List<DirectedEdge> getDirectedEdgesBetween(NodeGraph fromNode, NodeGraph toNode) {
+    List<DirectedEdge> directedEdges = adjacencyMatrixDirected.get(new Pair<>(fromNode, toNode));
+    return directedEdges == null ? new ArrayList<>() : new ArrayList<>(directedEdges);
   }
 
   /**

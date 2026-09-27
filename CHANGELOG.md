@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 2.3.0
+
+* [Breaking] A pair of nodes can be joined by more than one edge - different streets between the same two junctions, such as a crescent beside a straight road. `Graph`'s adjacency maps held one edge per pair, so whichever street was read last hid the others from every lookup by node pair, and a caller rebuilding a route that way could report a street other than the one walked. The protected `adjacencyMatrix` and `adjacencyMatrixDirected` now map a pair to a list, shortest first.
+* [Enhancement] `Graph.getEdgesBetween(from, to)` and `Graph.getDirectedEdgesBetween(from, to)` return every edge between two nodes, shortest first (then lowest id).
+* [Note] `getEdgeBetween` and `getDirectedEdgeBetween` keep their signatures and answer the shortest of the parallel edges - the one a shortest path takes - so the answer no longer depends on reading order.
+* [Fix] `NodeGraph.getAdjacentNodes()` lists a node joined by parallel edges once; it was listed once per edge.
+* [Fix] `Islands` treats two nodes as joined when any of their parallel edges is in the edge set. It checked only the edge `getEdgeBetween` answered, so a set holding only the longer street split the pair into two islands.
+* [Enhancement] `RoutingUtils.getPrimalJunction(centroid, otherCentroid, arrivalJunction)` answers the junction a walk crosses from one segment to the next, given the junction it arrived by: the segment's far end. Parallel segments share both ends, and the two-argument form cannot tell which one is meant. `getPreviousJunction` now walks the sequence with it.
+* [Enhancement] Added `ParallelEdgesTest` (lookups, direction, adjacency, `Astar`, `Islands` on a crescent beside a straight road) and parallel-street cases in `RoutingUtilsTest`; `Fixtures.polyline(...)` builds a street with bends.
+
 ## Version 2.2.3
 
 * [Breaking] `VectorLayer.readGPKG(url, layer)` refuses a GeoPackage holding more than one feature table, with an `IllegalStateException` naming them. It used to read every feature table into the one layer, so a file carrying two versions of the same data - an old layer left beside a rewritten one, which writing a GeoPackage layer by name does - loaded as their union, with no error. A file with a single feature table reads exactly as before, and one with none still adds nothing.

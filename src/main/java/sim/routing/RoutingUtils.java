@@ -22,18 +22,53 @@ public class RoutingUtils {
       return (NodeGraph) sequenceDirectedEdges.get(0).getFromNode();
     }
 
-    int ixLast = sequenceDirectedEdges.size() - 1;
-    int ixBeforeLast = sequenceDirectedEdges.size() - 2;
-    NodeGraph lastCentroid =
-        ((EdgeGraph) sequenceDirectedEdges.get(ixLast).getEdge()).getDualNode();
-    NodeGraph otherCentroid =
-        ((EdgeGraph) sequenceDirectedEdges.get(ixBeforeLast).getEdge()).getDualNode();
-    return getPrimalJunction(lastCentroid, otherCentroid);
+    // Walk the sequence junction by junction: where two consecutive segments are parallel (they
+    // share both ends), only the junction the walk arrived by tells which end it crossed at.
+    NodeGraph junction = null;
+    for (int i = 1; i < sequenceDirectedEdges.size(); i++) {
+      NodeGraph centroid = ((EdgeGraph) sequenceDirectedEdges.get(i - 1).getEdge()).getDualNode();
+      NodeGraph nextCentroid = ((EdgeGraph) sequenceDirectedEdges.get(i).getEdge()).getDualNode();
+      junction = getPrimalJunction(centroid, nextCentroid, junction);
+    }
+    return junction;
+  }
+
+  /**
+   * Identifies the junction at which a walk moves from one segment to the next, given the junction
+   * by which it arrived on the first segment. The walk leaves a segment at its far end, so that end
+   * is answered when the next segment shares it. This is what tells parallel segments (which share
+   * both ends) apart; for any other pair it gives what
+   * {@link #getPrimalJunction(NodeGraph, NodeGraph)} gives.
+   *
+   * @param centroid The dual node of the segment the walk is on.
+   * @param otherCentroid The dual node of the next segment.
+   * @param arrivalJunction The junction by which the walk arrived on {@code centroid}'s segment;
+   *        null when unknown.
+   * @return The junction between the two segments, or null if they share none.
+   */
+  public static NodeGraph getPrimalJunction(NodeGraph centroid, NodeGraph otherCentroid,
+      NodeGraph arrivalJunction) {
+
+    EdgeGraph edge = centroid.getPrimalEdge();
+    EdgeGraph otherEdge = otherCentroid.getPrimalEdge();
+    NodeGraph farEnd = null;
+    if (edge.getFromNode().equals(arrivalJunction)) {
+      farEnd = edge.getToNode();
+    } else if (edge.getToNode().equals(arrivalJunction)) {
+      farEnd = edge.getFromNode();
+    }
+    if (farEnd != null
+        && (farEnd.equals(otherEdge.getFromNode()) || farEnd.equals(otherEdge.getToNode()))) {
+      return farEnd;
+    }
+    return getPrimalJunction(centroid, otherCentroid);
   }
 
   /**
    * Given two centroids (nodes in the dual graph), identifies their shared junction (i.e., the
-   * junction shared by the corresponding primal segments).
+   * junction shared by the corresponding primal segments). Parallel segments share both ends, and
+   * this answers the first segment's from-node; where the walk's direction is known, use
+   * {@link #getPrimalJunction(NodeGraph, NodeGraph, NodeGraph)}.
    *
    * @param centroid A dual node.
    * @param otherCentroid Another dual node.

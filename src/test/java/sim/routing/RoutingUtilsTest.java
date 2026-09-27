@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,5 +105,50 @@ class RoutingUtilsTest {
   @DisplayName("a longer sequence reports the junction between its last two segments")
   void previousJunctionOfALongerSequenceIsTheLastSharedNode() {
     assertSame(Fixtures.nodeAt(graph, 200.0, 0.0), RoutingUtils.getPreviousJunction(chain));
+  }
+
+  /**
+   * A road from (-100,0) to junction A (0,0), then two parallel streets between A and B (100,0): a
+   * straight one and a crescent. Parallel streets share both ends, so the junction between them is
+   * the one the walk did not arrive by.
+   */
+  private List<EdgeGraph> approachThenParallelStreets() {
+    graph = Fixtures.graphOf(Arrays.asList(Fixtures.segment(-100, 0, 0, 0),
+        Fixtures.segment(0, 0, 100, 0), Fixtures.polyline(0, 0, 50, 60, 100, 0)));
+    attachDualNodes();
+    NodeGraph a = Fixtures.nodeAt(graph, 0.0, 0.0);
+    NodeGraph b = Fixtures.nodeAt(graph, 100.0, 0.0);
+    List<EdgeGraph> parallel = graph.getEdgesBetween(a, b);
+    return Arrays.asList(graph.getEdgeBetween(Fixtures.nodeAt(graph, -100.0, 0.0), a),
+        parallel.get(0), parallel.get(1));
+  }
+
+  @Test
+  @DisplayName("between parallel streets, the junction is the far end from the arrival")
+  void primalJunctionOfParallelStreetsIsTheFarEnd() {
+    List<EdgeGraph> streets = approachThenParallelStreets();
+    NodeGraph a = Fixtures.nodeAt(graph, 0.0, 0.0);
+    NodeGraph b = Fixtures.nodeAt(graph, 100.0, 0.0);
+    NodeGraph straight = streets.get(1).getDualNode();
+    NodeGraph crescent = streets.get(2).getDualNode();
+
+    assertSame(b, RoutingUtils.getPrimalJunction(straight, crescent, a));
+    assertSame(a, RoutingUtils.getPrimalJunction(straight, crescent, b));
+    // without the arrival, parallel streets fall back to the first segment's from-node
+    assertSame(streets.get(1).getFromNode(),
+        RoutingUtils.getPrimalJunction(straight, crescent, null));
+  }
+
+  @Test
+  @DisplayName("the previous junction of a walk onto a parallel street is the far end")
+  void previousJunctionWalksPastParallelStreets() {
+    List<EdgeGraph> streets = approachThenParallelStreets();
+    List<DirectedEdge> walk = new ArrayList<>();
+    for (EdgeGraph street : streets) {
+      walk.add(street.getDirEdge(0));
+    }
+
+    // approach -> A -> straight -> B -> crescent: the last junction crossed is B
+    assertSame(Fixtures.nodeAt(graph, 100.0, 0.0), RoutingUtils.getPreviousJunction(walk));
   }
 }

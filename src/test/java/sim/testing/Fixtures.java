@@ -38,6 +38,15 @@ public final class Fixtures {
     return new MasonGeometry(line);
   }
 
+  /** A LineString through the given x, y pairs, wrapped as a MasonGeometry: a street with bends. */
+  public static MasonGeometry polyline(double... xy) {
+    Coordinate[] coordinates = new Coordinate[xy.length / 2];
+    for (int i = 0; i < coordinates.length; i++) {
+      coordinates[i] = new Coordinate(xy[2 * i], xy[2 * i + 1]);
+    }
+    return new MasonGeometry(FACTORY.createLineString(coordinates));
+  }
+
   /** A point wrapped as a MasonGeometry. */
   public static MasonGeometry point(double x, double y) {
     return new MasonGeometry(FACTORY.createPoint(new Coordinate(x, y)));
