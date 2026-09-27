@@ -9,22 +9,20 @@
 package sim.graph;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.javatuples.Pair;
+import org.locationtech.jts.algorithm.ConvexHull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 import sim.util.geo.GeometryUtilities;
 
 /**
@@ -32,9 +30,6 @@ import sim.util.geo.GeometryUtilities;
  */
 public class GraphUtils {
 
-  // Introduce a HashMap to cache previously computed distances
-  private static Map<Pair<Coordinate, Coordinate>, Double> distanceCache =
-      new ConcurrentHashMap<>();
   private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
 
   /**
@@ -46,20 +41,10 @@ public class GraphUtils {
    */
   public static double nodesDistance(NodeGraph node, NodeGraph otherNode) {
 
-    final Coordinate coords = node.getCoordinate();
-    final Coordinate otherCoords = otherNode.getCoordinate();
-    Pair<Coordinate, Coordinate> pair = new Pair<>(coords, otherCoords);
-    Pair<Coordinate, Coordinate> otherPair = new Pair<>(otherCoords, coords);
-
-    if (distanceCache.containsKey(pair)) {
-      return distanceCache.get(pair);
-    } else if (distanceCache.containsKey(otherPair)) {
-      return distanceCache.get(otherPair);
-    }
-
-    double distance = GeometryUtilities.euclideanDistance(coords, otherCoords);
-    distanceCache.put(pair, distance);
-    return distance;
+    // Computed, not cached. The static cache this replaces kept every pair ever measured for the
+    // life of the JVM - an unbounded leak in a long run - and a square root is cheaper than the two
+    // Pair allocations and hash lookups it took to consult it.
+    return GeometryUtilities.euclideanDistance(node.getCoordinate(), otherNode.getCoordinate());
   }
 
   /**
@@ -81,77 +66,30 @@ public class GraphUtils {
   }
 
   /**
-   * Calculates the convex hull from a list of nodes using Andrew's monotone chain algorithm.
+   * Calculates the convex hull of a list of nodes.
+   *
+   * <p>Nodes lying on one line have a hull with no area, which contains none of them; for those
+   * this returns the circle through the two outermost nodes, as for two nodes, and for nodes all
+   * at one point the same 50-unit buffer as for a single node. The caller's list is not reordered.
    *
    * @param nodes The list of nodes to compute the convex hull from.
-   * @return The convex hull polygon as a Geometry object, or null if there are fewer than 3 nodes.
+   * @return A geometry enclosing all the nodes.
    */
   private static Geometry convexHullFromNodes(List<NodeGraph> nodes) {
 
-    // Sort nodes by x-coordinate (break ties by y-coordinate)
-    nodes.sort(Comparator.comparingDouble((NodeGraph node) -> node.getCoordinate().x)
-        .thenComparingDouble(node -> node.getCoordinate().y));
-
-    List<NodeGraph> hull = new ArrayList<>();
-
-    // Build lower hull
-    for (NodeGraph node : nodes) {
-      while (hull.size() >= 2
-          && !isCounterClockwise(hull.get(hull.size() - 2), hull.get(hull.size() - 1), node)) {
-        hull.remove(hull.size() - 1);
-      }
-      hull.add(node);
+    Coordinate[] coordinates = nodes.stream().map(NodeGraph::getCoordinate)
+        .toArray(Coordinate[]::new);
+    Geometry hull = new ConvexHull(coordinates, GEOMETRY_FACTORY).getConvexHull();
+    if (hull instanceof Polygon) {
+      return hull;
     }
-
-    // Build upper hull
-    int lowerHullSize = hull.size();
-    for (int i = nodes.size() - 1; i >= 0; i--) {
-      NodeGraph node = nodes.get(i);
-      while (hull.size() > lowerHullSize
-          && !isCounterClockwise(hull.get(hull.size() - 2), hull.get(hull.size() - 1), node)) {
-        hull.remove(hull.size() - 1);
-      }
-
-      hull.add(node);
+    if (hull instanceof LineString) {
+      // For collinear input the hull is the segment between the two outermost points.
+      LineString segment = (LineString) hull;
+      return enclosingCircle(segment.getCoordinateN(0),
+          segment.getCoordinateN(segment.getNumPoints() - 1));
     }
-
-    // Remove the last point because it is repeated at the beginning of the list
-    if (hull.size() > 1 && hull.get(hull.size() - 1).equals(hull.get(0))) {
-      hull.remove(hull.size() - 1);
-    }
-
-    // Create an array of coordinates for the convex hull
-    Coordinate[] coordinates =
-        hull.stream().map(NodeGraph::getCoordinate).toArray(Coordinate[]::new);
-
-    // Ensure the polygon is closed
-    if (!coordinates[0].equals(coordinates[coordinates.length - 1])) {
-      coordinates = Arrays.copyOf(coordinates, coordinates.length + 1);
-      coordinates[coordinates.length - 1] = coordinates[0];
-    }
-
-    // Create and return the polygon using JTS
-    LinearRing linearRing = GEOMETRY_FACTORY.createLinearRing(coordinates);
-    return GEOMETRY_FACTORY.createPolygon(linearRing);
-  }
-
-  /**
-   * Determines if three nodes form a counter-clockwise turn.
-   *
-   * This method uses the cross product of vectors to determine the relative orientation of three
-   * points (nodes). It returns true if the points form a counter-clockwise turn, and false
-   * otherwise.
-   *
-   * @param a The first node.
-   * @param b The second node.
-   * @param c The third node.
-   * @return true if the nodes a, b, and c form a counter-clockwise turn, false otherwise.
-   */
-  private static boolean isCounterClockwise(NodeGraph a, NodeGraph b, NodeGraph c) {
-    Coordinate p1 = a.getCoordinate();
-    Coordinate p2 = b.getCoordinate();
-    Coordinate p3 = c.getCoordinate();
-    return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x) > 0;
+    return hull.buffer(50);
   }
 
   /**
@@ -162,10 +100,15 @@ public class GraphUtils {
    * @return The smallest enclosing circle as a geometry.
    */
   protected static Geometry enclosingCircleBetweenTwoNodes(NodeGraph node, NodeGraph otherNode) {
-    final LineString line = LineStringBetweenNodes(node, otherNode);
+    return enclosingCircle(node.getCoordinate(), otherNode.getCoordinate());
+  }
+
+  /** The circle whose diameter is the segment between the two coordinates. */
+  private static Geometry enclosingCircle(Coordinate coordinate, Coordinate otherCoordinate) {
+    final LineString line =
+        GEOMETRY_FACTORY.createLineString(new Coordinate[] {coordinate, otherCoordinate});
     final Point centroid = line.getCentroid();
-    final Geometry smallestEnclosingCircle = centroid.buffer(line.getLength() / 2);
-    return smallestEnclosingCircle;
+    return centroid.buffer(line.getLength() / 2);
   }
 
   /**

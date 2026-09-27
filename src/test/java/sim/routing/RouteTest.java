@@ -149,4 +149,23 @@ class RouteTest {
     assertEquals(nodes, route.nodesSequence.size());
     assertEquals(length, route.getLength(), 1e-9);
   }
+
+  @Test
+  @DisplayName("building the dual node sequence leaves the edge sequence as it was")
+  void dualNodesSequenceDoesNotDuplicateEdges() {
+    Graph primal = Fixtures.path(3, 100.0);
+    Graph dual = Fixtures.graphOf(Arrays.asList(Fixtures.segment(50.0, 0.0, 150.0, 0.0)));
+    for (EdgeGraph edge : primal.getEdges()) {
+      edge.setDualNode(dual.findNode(edge.getCoordsCentroid()));
+    }
+    Route route = new Astar().astarRoute(Fixtures.nodeAt(primal, 0, 0),
+        Fixtures.nodeAt(primal, 200, 0), primal, null);
+
+    route.dualNodesSequence(dual);
+    route.dualNodesSequence(dual);
+
+    assertEquals(2, route.edgesSequence.size());
+    assertEquals(Arrays.asList(Fixtures.nodeAt(dual, 50, 0), Fixtures.nodeAt(dual, 150, 0)),
+        route.dualNodesSequence);
+  }
 }

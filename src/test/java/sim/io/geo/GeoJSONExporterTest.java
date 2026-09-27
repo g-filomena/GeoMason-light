@@ -264,4 +264,21 @@ class GeoJSONExporterTest {
     assertEquals(1, lines.size());
     assertEquals(GeoJSONExporter.toFeatureCollection(layer), lines.get(0));
   }
+
+  @Test
+  @DisplayName("an empty geometry is written as a null geometry")
+  void anEmptyGeometryIsANullGeometry() {
+    // A layer does not take empty geometries, but one can become empty after it was added.
+    VectorLayer layer = new VectorLayer();
+    MasonGeometry emptied = Fixtures.point(1, 1);
+    layer.addGeometry(emptied);
+    emptied.geometry = Fixtures.FACTORY.createPoint();
+
+    String json = GeoJSONExporter.toFeatureCollection(layer, false);
+
+    assertEquals(
+        "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"geometry\":null,"
+            + "\"properties\":{}}]}",
+        json);
+  }
 }

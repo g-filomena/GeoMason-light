@@ -13,6 +13,9 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Polygon;
 import sim.testing.Fixtures;
 
 class SubGraphTest {
@@ -141,5 +144,26 @@ class SubGraphTest {
     SubGraph sub = new SubGraph();
     assertTrue(sub.getEdges().isEmpty());
     assertTrue(sub.getNodes().isEmpty());
+  }
+
+  @Test
+  @DisplayName("a subgraph answers spatial queries over its own nodes")
+  void subGraphNodesWithinPolygon() {
+    Graph graph = Fixtures.path(3, 100.0);
+    SubGraph subGraph = new SubGraph(graph.getEdges().subList(0, 1));
+    Polygon area = (Polygon) Fixtures.FACTORY.toGeometry(new Envelope(-10, 110, -10, 10));
+
+    assertEquals(2, subGraph.getNodesWithinPolygon(area).size());
+  }
+
+  @Test
+  @DisplayName("a subgraph wrapping a whole graph finds that graph's nodes")
+  void wholeGraphSubGraphFindsNodes() {
+    Graph graph = Fixtures.path(3, 100.0);
+    SubGraph subGraph = new SubGraph(graph);
+    Polygon area = (Polygon) Fixtures.FACTORY.toGeometry(new Envelope(-10, 210, -10, 10));
+
+    assertSame(Fixtures.nodeAt(graph, 100, 0), subGraph.findNode(new Coordinate(100, 0)));
+    assertEquals(3, subGraph.getNodesWithinPolygon(area).size());
   }
 }

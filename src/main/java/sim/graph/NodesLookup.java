@@ -230,7 +230,8 @@ public class NodesLookup {
 			}
 			double lowerLimit = distance - tolerance;
 			double upperLimit = distance + tolerance;
-			candidates = getNodesBetweenDistanceInterval(graph, originNode, lowerLimit, upperLimit);
+			// The junctions the caller passed, which were ignored in favour of the graph's own.
+			candidates = nodesAmong(graph, junctionsOf(graph, junctions), originNode, lowerLimit, upperLimit);
 			tolerance += TOLERANCE_INCREMENT;
 		}
 
@@ -257,11 +258,26 @@ public class NodesLookup {
 	 */
 	public static List<NodeGraph> getNodesBetweenDistanceInterval(Graph graph, NodeGraph node, double lowerLimit,
 			double upperLimit) {
-		MasonGeometry originGeometry = node.masonGeometry;
-		List<MasonGeometry> containedGeometries = graph.junctions.featuresBetweenLimits(originGeometry.geometry,
+		return nodesAmong(graph, graph.junctions, node, lowerLimit, upperLimit);
+	}
+
+	/**
+	 * The graph nodes at the junctions of {@code junctions} whose distance from {@code node} falls
+	 * within the range, the node itself excluded. A junction matching no node of the graph is left
+	 * out rather than returned as null.
+	 */
+	private static List<NodeGraph> nodesAmong(Graph graph, VectorLayer junctions, NodeGraph node,
+			double lowerLimit, double upperLimit) {
+		List<MasonGeometry> containedGeometries = junctions.featuresBetweenLimits(node.masonGeometry.geometry,
 				lowerLimit, upperLimit);
 		return containedGeometries.stream().map(masonGeometry -> graph.findNode(masonGeometry.geometry.getCoordinate()))
-				.filter(potentialNode -> !node.equals(potentialNode)).collect(Collectors.toList());
+				.filter(potentialNode -> potentialNode != null && !node.equals(potentialNode))
+				.collect(Collectors.toList());
+	}
+
+	/** The layer to search: the one supplied, or the graph's own junctions when none is. */
+	private static VectorLayer junctionsOf(Graph graph, VectorLayer junctions) {
+		return junctions != null ? junctions : graph.junctions;
 	}
 
 	/**
@@ -517,15 +533,17 @@ public class NodesLookup {
 	 * @return A filtered list of nodes matching the DMA criteria.
 	 */
 	public static List<NodeGraph> getCandidatesByDMA(List<NodeGraph> nodes, String DMA) {
+		// Constant-first comparisons: dma is null on any node that was never labelled, and calling
+		// equals on it threw rather than leaving that node out.
 		if (DMA.equals("random")) {
 			return nodes.stream()
-					.filter(node -> node.dma.equals("work") || node.dma.equals("visit") || node.dma.equals("live"))
+					.filter(node -> "work".equals(node.dma) || "visit".equals(node.dma) || "live".equals(node.dma))
 					.collect(Collectors.toList());
 		} else if (DMA.equals("workOrVisit")) {
-			return nodes.stream().filter(node -> node.dma.equals("work") || node.dma.equals("visit"))
+			return nodes.stream().filter(node -> "work".equals(node.dma) || "visit".equals(node.dma))
 					.collect(Collectors.toList());
 		} else {
-			return nodes.stream().filter(node -> node.dma.equals(DMA)).collect(Collectors.toList());
+			return nodes.stream().filter(node -> DMA.equals(node.dma)).collect(Collectors.toList());
 		}
 	}
 

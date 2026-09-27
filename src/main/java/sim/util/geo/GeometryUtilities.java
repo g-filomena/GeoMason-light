@@ -8,6 +8,7 @@
 package sim.util.geo;
 
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import org.locationtech.jts.geom.Coordinate;
@@ -32,11 +33,12 @@ public class GeometryUtilities {
    */
   public static AffineTransform worldToScreenTransform(final Envelope mapExtent,
       final java.awt.geom.Rectangle2D.Double viewport) {
-    double scaleX = viewport.width / mapExtent.getWidth();
-    double scaleY = viewport.height / mapExtent.getHeight();
+    final Envelope extent = drawableExtent(mapExtent);
+    double scaleX = viewport.width / extent.getWidth();
+    double scaleY = viewport.height / extent.getHeight();
 
-    double tx = -mapExtent.getMinX() * scaleX;
-    double ty = (mapExtent.getMinY() * scaleY) + viewport.height;
+    double tx = -extent.getMinX() * scaleX;
+    double ty = (extent.getMinY() * scaleY) + viewport.height;
 
     AffineTransform at = new AffineTransform(scaleX, 0.0d, 0.0d, -scaleY, tx, ty);
     AffineTransform originTranslation =
@@ -45,6 +47,28 @@ public class GeometryUtilities {
 
     return originTranslation != null ? originTranslation : at;
 
+  }
+
+  /**
+   * An extent with a non-zero width and height. A layer holding a single point, or points along
+   * one horizontal or vertical line, has a zero-width or zero-height MBR (an empty layer has a null
+   * one); scaling to it divided by zero and produced a transform that could not be inverted. Such
+   * an extent is padded to a square around it: by half its other dimension, or by one unit when
+   * both are zero.
+   */
+  private static Envelope drawableExtent(final Envelope mapExtent) {
+    if (mapExtent == null || mapExtent.isNull()) {
+      return new Envelope(-1.0, 1.0, -1.0, 1.0);
+    }
+    final double width = mapExtent.getWidth();
+    final double height = mapExtent.getHeight();
+    if (width > 0.0 && height > 0.0) {
+      return mapExtent;
+    }
+    final double pad = Math.max(width, height) > 0.0 ? Math.max(width, height) / 2.0 : 1.0;
+    final Envelope padded = new Envelope(mapExtent);
+    padded.expandBy(width > 0.0 ? 0.0 : pad, height > 0.0 ? 0.0 : pad);
+    return padded;
   }
 
   public static org.locationtech.jts.geom.util.AffineTransformation getPortrayalTransform(
@@ -79,12 +103,14 @@ public class GeometryUtilities {
   public static Point2D screenToWorldPointTransform(final AffineTransform worldToScreen, double x,
       double y) {
     // code taken from GeoTools and hacked on
-    AffineTransform screenToWorld = null;
+    AffineTransform screenToWorld;
     try {
       screenToWorld = worldToScreen.createInverse();
-    } catch (Exception e) {
-      System.out.println(e);
-      System.exit(-1);
+    } catch (NoninvertibleTransformException e) {
+      // Reported to the caller. This used to call System.exit, so a library method could
+      // terminate the whole simulation over a degenerate display transform.
+      throw new IllegalStateException("world-to-screen transform cannot be inverted: "
+          + worldToScreen, e);
     }
 
     Point2D p = new Point2D.Double();
