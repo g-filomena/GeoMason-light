@@ -42,6 +42,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
+		<!-- Overridable from the command line: -Dcentral.autoPublish=false -Dcentral.waitUntil=validated
+		     uploads and validates a release on the Central Portal without publishing it (a dry run). -->
+		<central.autoPublish>true</central.autoPublish>
+		<central.waitUntil>published</central.waitUntil>
 	</properties>
 
 	<dependencies>
@@ -280,8 +284,8 @@
 				<extensions>true</extensions>
 				<configuration>
 					<publishingServerId>central</publishingServerId>
-					<autoPublish>true</autoPublish>
-					<waitUntil>published</waitUntil>
+					<autoPublish>${central.autoPublish}</autoPublish>
+					<waitUntil>${central.waitUntil}</waitUntil>
 				</configuration>
 			</plugin>
 		</plugins>

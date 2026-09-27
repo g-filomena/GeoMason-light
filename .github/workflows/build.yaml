@@ -1,7 +1,19 @@
 name: Maven Central Publish
 
+# Publishes to Maven Central when a version tag (v2.3.0, ...) is pushed. The manual trigger is a
+# dry run by default: it uploads and validates the bundle (credentials, signatures, POM, sources and
+# javadoc jars) but does not publish; drop the validated deployment at central.sonatype.com. Run it
+# with dry_run unchecked, on the tag, only to retry a failed release.
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Validate on the Central Portal without publishing'
+        type: boolean
+        default: true
 
 jobs:
   publish:
@@ -22,15 +34,33 @@ jobs:
           server-id: central
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
-          gpg-private-key: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
 
       - name: Install MASON dependency locally
         run: mvn -B install:install-file -Dfile=lib/mason-21.jar -DgroupId=sim -DartifactId=mason -Dversion=21 -Dpackaging=jar
 
+      # Central versions are immutable, so a tag that disagrees with the POM stops here rather than
+      # publishing the POM's version under the wrong tag.
+      - name: Check tag matches POM version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          POM_VERSION=$(mvn -B help:evaluate -Dexpression=project.version -q -DforceStdout)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$POM_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match pom.xml version $POM_VERSION"
+            exit 1
+          fi
+
+      # sign-maven-plugin reads the key from SIGN_KEY / SIGN_KEY_PASS (the pom's sign-key-id server
+      # exists only in the local settings), not from a gpg keyring. By default it skips signing when
+      # it finds no key; skipNoKey=false fails the build instead of uploading unsigned artifacts.
       - name: Publish to Maven Central
-        run: mvn -B clean deploy --settings "$HOME/.m2/settings.xml"
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY_RUN="-Dcentral.autoPublish=false -Dcentral.waitUntil=validated"
+          fi
+          mvn -B clean deploy -Dsign.skipNoKey=false $DRY_RUN
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
-          GPG_PASSPHRASE: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+          SIGN_KEY: ${{ secrets.OSSRH_GPG_SECRET_KEY }}
+          SIGN_KEY_PASS: ${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
