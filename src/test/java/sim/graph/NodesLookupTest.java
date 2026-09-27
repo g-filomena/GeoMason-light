@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import sim.field.geo.VectorLayer;
 import sim.testing.Fixtures;
 
 class NodesLookupTest {
@@ -275,5 +276,32 @@ class NodesLookupTest {
       assertSame(Fixtures.nodeAt(graph, 200.0, 200.0),
           NodesLookup.randomNodeDMA(graph, "work", random));
     }
+  }
+
+  @Test
+  @DisplayName("nodes with no DMA label are left out")
+  void unlabelledNodesAreLeftOut() {
+    Graph graph = Fixtures.grid(3, 3, 100.0);
+    NodeGraph labelled = Fixtures.nodeAt(graph, 100, 100);
+    labelled.dma = "live";
+
+    assertEquals(Collections.singletonList(labelled),
+        NodesLookup.getCandidatesByDMA(graph.getNodes(), "live"));
+    assertEquals(Collections.singletonList(labelled),
+        NodesLookup.getCandidatesByDMA(graph.getNodes(), "random"));
+    assertTrue(NodesLookup.getCandidatesByDMA(graph.getNodes(), "workOrVisit").isEmpty());
+  }
+
+  @Test
+  @DisplayName("randomNodeFromDistancesSet searches the junctions it is given")
+  void distancesSetUsesTheSuppliedJunctions() {
+    Graph graph = Fixtures.path(5, 100.0);
+    VectorLayer onlyTheFarEnd = new VectorLayer();
+    onlyTheFarEnd.addGeometry(Fixtures.point(400, 0));
+
+    NodeGraph node = NodesLookup.randomNodeFromDistancesSet(graph, onlyTheFarEnd,
+        Fixtures.nodeAt(graph, 0, 0), Arrays.asList(300f), new MersenneTwisterFast(1));
+
+    assertSame(Fixtures.nodeAt(graph, 400, 0), node);
   }
 }

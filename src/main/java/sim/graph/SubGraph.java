@@ -41,10 +41,20 @@ public class SubGraph extends Graph {
   public SubGraph(Graph parentGraph) {
     edgesGraph = parentGraph.getEdges();
     nodesGraph = parentGraph.getNodes();
+    junctions = parentGraph.junctions;
+    // Registered with the planar graph too, as addFromParentGraph does for its nodes and edges:
+    // findNode looks nodes up there.
+    for (NodeGraph node : nodesGraph) {
+      add(node);
+    }
+    for (EdgeGraph edge : edgesGraph) {
+      add(edge);
+    }
     for (NodeGraph node : nodesGraph) {
       node.setNeighbouringComponents();
     }
     generateAdjacencyMatrix();
+    buildSpatialIndex();
   }
 
   /**
@@ -60,6 +70,8 @@ public class SubGraph extends Graph {
       node.setNeighbouringComponents();
     }
     generateAdjacencyMatrix();
+    // The index getNodesWithinPolygon queries.
+    buildSpatialIndex();
   }
 
   /**
@@ -183,6 +195,7 @@ public class SubGraph extends Graph {
       node.setNeighbouringComponents();
     }
     generateAdjacencyMatrix();
+    buildSpatialIndex();
   }
 
   /**

@@ -207,6 +207,11 @@ public class Astar {
     route.directedEdgesSequence = directedEdgesSequence;
     if (!route.directedEdgesSequence.isEmpty()) {
       route.computeRouteSequences();
+    } else {
+      // The origin is itself a target: a route of no edges that starts and ends there.
+      route.originNode = endWrapper.node;
+      route.destinationNode = endWrapper.node;
+      route.nodesSequence.add(endWrapper.node);
     }
     return route;
   }

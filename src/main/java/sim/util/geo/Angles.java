@@ -55,7 +55,9 @@ public class Angles {
     final double magA = Math.pow(dot(vectorA, vectorA), 0.5);
     final double magB = Math.pow(dot(vectorB, vectorB), 0.5);
 
-    final double anglRad = Math.acos(dot_prod / magB / magA);
+    // Clamped: rounding can push the cosine a hair past 1 for a destination due north (or south),
+    // and acos of that is NaN.
+    final double anglRad = Math.acos(Math.max(-1.0, Math.min(1.0, dot_prod / magB / magA)));
     double angleDeg = Math.toDegrees(anglRad) % 360;
     if (destination.x < origin.x) {
       angleDeg = 180 + (180 - angleDeg);
@@ -83,7 +85,9 @@ public class Angles {
     final double magA = Math.pow(dot(vectorA, vectorA), 0.5);
     final double magB = Math.pow(dot(vectorB, vectorB), 0.5);
 
-    final double anglRad = Math.acos(dot_prod / magB / magA);
+    // Clamped: rounding can push the cosine a hair past 1 for a destination due north (or south),
+    // and acos of that is NaN.
+    final double anglRad = Math.acos(Math.max(-1.0, Math.min(1.0, dot_prod / magB / magA)));
     double angleDeg = Math.toDegrees(anglRad) % 360;
     if (destination.x < origin.x) {
       angleDeg = 180 + (180 - angleDeg);

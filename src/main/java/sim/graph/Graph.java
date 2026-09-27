@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import org.javatuples.Pair;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateArrays;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
@@ -93,10 +94,21 @@ public class Graph extends PlanarGraph {
     adoptJunctionGeometries(streetJunctions);
     nodesGraph.forEach(NodeGraph::setNeighbouringComponents);
     generateAdjacencyMatrix();
+    buildSpatialIndex();
+  }
 
+  /**
+   * Rebuilds the spatial index of the nodes that {@link #getNodesWithinPolygon(Polygon)} queries.
+   * A fresh tree each time: an STRtree cannot take insertions once it has been queried, and a
+   * graph may be populated more than once.
+   */
+  protected void buildSpatialIndex() {
+    STRtree freshIndex = new STRtree();
     for (NodeGraph node : getNodes()) {
-      index.insert(node.masonGeometry.getGeometry().getEnvelopeInternal(), node);
+      // The node's own coordinate: a node of a dual graph or a subgraph may carry no geometry.
+      freshIndex.insert(new Envelope(node.getCoordinate()), node);
     }
+    index = freshIndex;
   }
 
   /**
@@ -497,7 +509,10 @@ public class Graph extends PlanarGraph {
     List<MasonGeometry> containedGeometries =
         junctions.featuresBetweenLimits(originGeometry.geometry, lowerLimit, upperLimit);
     for (MasonGeometry masonGeometry : containedGeometries) {
-      containedNodes.add(findNode(masonGeometry.geometry.getCoordinate()));
+      NodeGraph containedNode = findNode(masonGeometry.geometry.getCoordinate());
+      if (containedNode != null) {
+        containedNodes.add(containedNode);
+      }
     }
 
     List<NodeGraph> salientNodes = new ArrayList<>(getSalientNodes(percentile).keySet());
@@ -573,7 +588,8 @@ public class Graph extends PlanarGraph {
       return nodesInPolygon;
     }
 
-    return candidates.stream().filter(node -> polygon.contains(node.masonGeometry.getGeometry()))
+    return candidates.stream()
+        .filter(node -> polygon.contains(GEOMETRY_FACTORY.createPoint(node.getCoordinate())))
         .collect(Collectors.toList());
   }
 }

@@ -169,7 +169,12 @@ public class GeoJSONExporter {
   private static void writeFeature(Writer writer, MasonGeometry masonGeometry, Geometry geometry,
       Function<MasonGeometry, Map<String, Object>> properties) throws IOException {
     writer.write("{\"type\":\"Feature\",\"geometry\":");
-    writeGeometry(writer, geometry);
+    if (geometry.isEmpty()) {
+      // GeoJSON's null geometry: an empty geometry has no coordinates to write as a shape.
+      writer.write("null");
+    } else {
+      writeGeometry(writer, geometry);
+    }
     writer.write(",\"properties\":{");
     Map<String, Object> values = properties.apply(masonGeometry);
     if (values != null) {

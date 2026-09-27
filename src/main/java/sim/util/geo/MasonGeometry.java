@@ -88,6 +88,17 @@ public class MasonGeometry implements sim.util.Proxiable, java.io.Serializable {
    */
   public AffineTransform transform = new AffineTransform();
 
+  /**
+   * A hash of the wrapped geometry, consistent with {@link #equals(Object)}, which compares by
+   * value (geometry and attributes) rather than by identity.
+   *
+   * <p><b>Do not keep a geometry that moves in a hash-based collection.</b> Both the hash and
+   * equality follow the geometry, so once it is moved or replaced - by
+   * {@code VectorLayer.setGeometryLocation}, by applying a filter, or by assigning
+   * {@link #geometry} - a {@code HashSet} or {@code HashMap} holding it looks in the wrong bucket
+   * and no longer finds it. Use an identity-based collection
+   * ({@code Collections.newSetFromMap(new IdentityHashMap<>())}) or a list for movable geometries.
+   */
   @Override
   public int hashCode() {
     int hash = 5;

@@ -2,13 +2,38 @@
 
 ## Version 2.3.0
 
-* [Breaking] A pair of nodes can be joined by more than one edge - different streets between the same two junctions, such as a crescent beside a straight road. `Graph`'s adjacency maps held one edge per pair, so whichever street was read last hid the others from every lookup by node pair, and a caller rebuilding a route that way could report a street other than the one walked. The protected `adjacencyMatrix` and `adjacencyMatrixDirected` now map a pair to a list, shortest first.
+* [Breaking] A pair of nodes can be joined by more than one edge - different streets between the same two junctions, such as a crescent beside a straight road. The protected `adjacencyMatrix` and `adjacencyMatrixDirected` map a pair to a list of edges, shortest first, so every street between two junctions is visible to lookups by node pair.
 * [Enhancement] `Graph.getEdgesBetween(from, to)` and `Graph.getDirectedEdgesBetween(from, to)` return every edge between two nodes, shortest first (then lowest id).
-* [Note] `getEdgeBetween` and `getDirectedEdgeBetween` keep their signatures and answer the shortest of the parallel edges - the one a shortest path takes - so the answer no longer depends on reading order.
-* [Fix] `NodeGraph.getAdjacentNodes()` lists a node joined by parallel edges once; it was listed once per edge.
-* [Fix] `Islands` treats two nodes as joined when any of their parallel edges is in the edge set. It checked only the edge `getEdgeBetween` answered, so a set holding only the longer street split the pair into two islands.
-* [Enhancement] `RoutingUtils.getPrimalJunction(centroid, otherCentroid, arrivalJunction)` answers the junction a walk crosses from one segment to the next, given the junction it arrived by: the segment's far end. Parallel segments share both ends, and the two-argument form cannot tell which one is meant. `getPreviousJunction` now walks the sequence with it.
+* [Note] `getEdgeBetween` and `getDirectedEdgeBetween` answer the shortest of the parallel edges - the one a shortest path takes - whatever the reading order.
+* [Fix] `NodeGraph.getAdjacentNodes()` lists a node joined by parallel edges once.
+* [Fix] `Islands` treats two nodes as joined when any of their parallel edges is in the edge set.
+* [Enhancement] `RoutingUtils.getPrimalJunction(centroid, otherCentroid, arrivalJunction)` answers the junction a walk crosses from one segment to the next, given the junction it arrived by: the segment's far end. Parallel segments share both ends, and the two-argument form cannot tell which one is meant. `getPreviousJunction` walks the sequence with it.
 * [Enhancement] Added `ParallelEdgesTest` (lookups, direction, adjacency, `Astar`, `Islands` on a crescent beside a straight road) and parallel-street cases in `RoutingUtilsTest`; `Fixtures.polyline(...)` builds a street with bends.
+* [Breaking] `GridLayer.toPolygon(x, y)` flips the y axis as `toPoint`, `toXCoord` and `toYCoord` do: row 0 is the top row. `GridLayer.setGrid` sets the pixel size to the MBR divided by the number of cells when an MBR is set.
+* [Fix] `Route.dualNodesSequence` rebuilds `edgesSequence` and `dualNodesSequence`, so it can be called on a route whose sequences are already computed.
+* [Fix] Shapefile polygons: clockwise rings are shells and counter-clockwise rings are holes. Each hole goes to the smallest shell containing it, and a hole no shell contains is read as a shell of its own; a file whose rings are all counter-clockwise is read as shells.
+* [Fix] `ShapeFileImporter` skips null-shape records wherever they appear and logs how many it skipped, reads to the end of the stream whatever `available()` reports, reads each record whole so the stream stays aligned whatever the shape reader consumes, and closes both files on every path. Whole numeric fields are Integers, or Longs past the int range; unparseable ones are kept as strings. Record and header sizes are read as unsigned.
+* [Fix] `ImporterUtils` completes short reads; only the end of the stream is an error.
+* [Fix] `VectorLayer.getUnion()` and `getConvexHull()` return whatever geometry results - a MultiPolygon for disjoint polygons, a Point or LineString for degenerate input - and an empty polygon for an empty layer. Both are recomputed after any geometry is added, removed, moved or cleared.
+* [Fix] `VectorLayer.setGeometryLocation` discards the moved geometry's prepared form, so `coveringFeatures`, `coveredFeatures` and `isCovered` answer for its new position.
+* [Fix] `VectorLayer.addGeometry` leaves out a geometry that is missing or empty: it has no location to index.
+* [Fix] `GeoPackageImporter` finds the geometry column by its declared name (QGIS and GDAL use "geom"), keeps polygon holes, and skips features with no geometry, logging how many it skipped.
+* [Fix] `GeoPackageExporter` types a column from all its values: integers mixed with decimals make a DOUBLE column, and numbers mixed with other values make a TEXT column.
+* [Fix] `GeoJSONExporter` writes an empty geometry as `null`.
+* [Fix] `GeometryUtilities.screenToWorldPointTransform` throws `IllegalStateException` on a transform it cannot invert. `worldToScreenTransform` pads a zero-width or zero-height extent (one point, points on one line, an empty layer), so the transform it gives can always be inverted.
+* [Enhancement] `ShapeFileImporter`, `GeoPackageImporter` and `GeometryUtilities` report through `java.util.logging`, with loggers named after their classes.
+* [Fix] `GeomPortrayal.draw` strokes lines and fills polygons geometry by geometry, leaving the shared portrayal's `filled` untouched. `hitObject` pads the hit box by `SLOP / 2` on every side.
+* [Fix] `NodeGraph.getDualNode` and `getDualNodes` with region-based navigation take the far end of each edge from the node itself. `getDualNodes` skips edges with no dual node, as `getDualNode` does.
+* [Fix] `NodeGraph.getAdjacentRegion()` rebuilds `adjacentRegionEntries` on every call. `EdgeGraph.setNodes` replaces the node list.
+* [Fix] `NodesLookup.getCandidatesByDMA` leaves out nodes with no DMA label. `randomNodeFromDistancesSet` searches the junction layer it is given, or the graph's own when that is null. Distance lookups leave out junctions matching no graph node.
+* [Fix] `GraphUtils.smallestEnclosingGeometryBetweenNodes` returns the circle through the two outer nodes for collinear nodes and a 50-unit buffer for nodes at one point, and leaves the caller's list in its order.
+* [Fix] `GraphUtils.nodesDistance` computes the distance on every call, without a cache.
+* [Fix] A `SubGraph` builds the spatial index `getNodesWithinPolygon` queries, and `SubGraph(Graph)` registers the graph's nodes and edges for `findNode`. A `Graph` can be populated more than once.
+* [Fix] `Astar` from a node that is itself a target returns a route with no edges whose origin and destination are that node; `directedEdgesSequence.isEmpty()` tells it apart.
+* [Fix] `Angles.angle` clamps the cosine to [-1, 1] before `acos`, so a destination due north or south gives an angle, whatever the rounding.
+* [Fix] `Utilities.filterMapByPercentile` accepts a percentile of 0 and an empty map.
+* [Note] `MasonGeometry.hashCode` documents that equality follows the geometry, so a geometry that moves must not be kept in a hash-based collection.
+* [Enhancement] Tests for each of the above; new `GridLayerTest`, `NodeGraphTest`, `ImporterUtilsTest`, `ShapeFileImporterTest` and `GeomPortrayalTest`, and `sim.testing.CapturedLog` for asserting on what a class logs.
 
 ## Version 2.2.3
 

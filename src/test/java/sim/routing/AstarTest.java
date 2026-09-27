@@ -197,4 +197,19 @@ class AstarTest {
 
     assertNull(new Astar().astarRouteAllowing(origin, destination, graph, edge -> false));
   }
+
+  @Test
+  @DisplayName("a route from a node to itself starts and ends there")
+  void aRouteToTheOriginItself() {
+    Graph graph = Fixtures.path(3, 100.0);
+    NodeGraph origin = Fixtures.nodeAt(graph, 0, 0);
+
+    Route route = new Astar().astarRoute(origin, origin, graph, null);
+
+    assertNotNull(route);
+    assertSame(origin, route.originNode);
+    assertSame(origin, route.destinationNode);
+    assertEquals(Arrays.asList(origin), route.nodesSequence);
+    assertTrue(route.edgesSequence.isEmpty());
+  }
 }

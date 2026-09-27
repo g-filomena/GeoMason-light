@@ -308,4 +308,116 @@ class VectorLayerTest {
   void geometryLocationIsTheCentroid() {
     assertEquals(0.0, layer.getGeometryLocation(west).getX(), 1e-9);
   }
+
+  private static MasonGeometry squareFeature(double minX, double minY, double side) {
+    return new MasonGeometry(
+        Fixtures.FACTORY.toGeometry(new Envelope(minX, minX + side, minY, minY + side)));
+  }
+
+  @Test
+  @DisplayName("the union of disjoint polygons is a MultiPolygon")
+  void unionOfDisjointPolygons() {
+    VectorLayer layer = new VectorLayer();
+    layer.addGeometry(squareFeature(0, 0, 1));
+    layer.addGeometry(squareFeature(5, 5, 1));
+
+    assertEquals(2.0, layer.getUnion().getArea(), 1e-9);
+    assertTrue(layer.isInsideUnion(new Coordinate(5.5, 5.5)));
+    assertFalse(layer.isInsideUnion(new Coordinate(3, 3)));
+  }
+
+  @Test
+  @DisplayName("the convex hull of a single point is that point")
+  void convexHullOfASinglePoint() {
+    VectorLayer layer = new VectorLayer();
+    layer.addGeometry(Fixtures.point(1, 1));
+
+    assertEquals("Point", layer.getConvexHull().getGeometryType());
+    assertTrue(layer.isInsideConvexHull(new Coordinate(1, 1)));
+  }
+
+  @Test
+  @DisplayName("an empty or missing geometry is not added to the layer")
+  void emptyGeometriesAreNotAdded() {
+    VectorLayer layer = new VectorLayer();
+    layer.addGeometry(new MasonGeometry(Fixtures.FACTORY.createPoint()));
+    layer.addGeometry(new MasonGeometry());
+    layer.addGeometry(Fixtures.point(1, 1));
+
+    assertEquals(1, layer.size());
+    assertEquals(new Envelope(1, 1, 1, 1), layer.getMBR());
+  }
+
+  @Test
+  @DisplayName("a geometry emptied after it was added does not break the spatial index")
+  void aGeometryEmptiedLaterIsKeptOutOfTheIndex() {
+    VectorLayer layer = new VectorLayer();
+    MasonGeometry emptied = Fixtures.point(5, 5);
+    layer.addGeometry(emptied);
+    layer.addGeometry(Fixtures.point(1, 1));
+    emptied.geometry = Fixtures.FACTORY.createPoint();
+
+    layer.updateSpatialIndex();
+
+    assertEquals(1, layer.queryField(new Envelope(0, 10, 0, 10)).size());
+  }
+
+  @Test
+  @DisplayName("an empty layer has an empty hull and union and contains nothing")
+  void anEmptyLayerHasAnEmptyHullAndUnion() {
+    VectorLayer layer = new VectorLayer();
+
+    assertTrue(layer.getConvexHull().isEmpty());
+    assertTrue(layer.getUnion().isEmpty());
+    assertFalse(layer.isInsideConvexHull(new Coordinate(0, 0)));
+    assertFalse(layer.isInsideUnion(new Coordinate(0, 0)));
+  }
+
+  @Test
+  @DisplayName("the hull and union take in geometries added after they were first computed")
+  void hullAndUnionFollowAddedGeometries() {
+    VectorLayer layer = new VectorLayer();
+    layer.addGeometry(squareFeature(0, 0, 1));
+    layer.getConvexHull();
+    layer.getUnion();
+
+    layer.addGeometry(squareFeature(5, 5, 1));
+
+    assertTrue(layer.isInsideConvexHull(new Coordinate(5.5, 5.5)));
+    assertTrue(layer.isInsideUnion(new Coordinate(5.5, 5.5)));
+  }
+
+  @Test
+  @DisplayName("the hull forgets a removed geometry")
+  void hullForgetsRemovedGeometries() {
+    VectorLayer layer = new VectorLayer();
+    MasonGeometry far = squareFeature(5, 5, 1);
+    layer.addGeometry(squareFeature(0, 0, 1));
+    layer.addGeometry(far);
+    assertTrue(layer.isInsideConvexHull(new Coordinate(5.5, 5.5)));
+
+    layer.removeGeometry(far);
+
+    assertFalse(layer.isInsideConvexHull(new Coordinate(5.5, 5.5)));
+  }
+
+  @Test
+  @DisplayName("relation queries see a geometry where it was moved to, not where it was")
+  void coveringFeaturesFollowAMovedGeometry() {
+    VectorLayer layer = new VectorLayer();
+    MasonGeometry mover = Fixtures.point(1, 1);
+    layer.addGeometry(mover);
+
+    layer.setGeometryLocation(mover, Fixtures.FACTORY.createPoint(new Coordinate(5, 5)));
+
+    assertEquals(1, layer.coveringFeatures(query(5, 5)).size());
+    assertTrue(layer.coveringFeatures(query(1, 1)).isEmpty());
+  }
+
+  /** A point that does not compare equal to the layer's own, so relation queries consider it. */
+  private static MasonGeometry query(double x, double y) {
+    MasonGeometry query = Fixtures.point(x, y);
+    query.addStringAttribute("role", "query");
+    return query;
+  }
 }

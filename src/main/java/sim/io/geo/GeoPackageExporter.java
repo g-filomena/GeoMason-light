@@ -146,9 +146,11 @@ public class GeoPackageExporter {
   // ----------------------------------------------------------------
 
   /**
-   * Builds the column schema: the union of attribute names (insertion order preserved), each typed
-   * from its first non-null value. Names colliding with the reserved id / geometry columns are
-   * suffixed so no data is lost.
+   * Picks each column's type from every value it holds, not only the first. A column mixing
+   * integers and decimals is DOUBLE, so no decimal is truncated; a column mixing numbers or
+   * booleans with anything else is TEXT, so a string is never written into a numeric column. A
+   * column holding only nulls is TEXT. Columns keep the attributes' insertion order, and names
+   * colliding with the reserved id / geometry columns are suffixed so no data is lost.
    */
   private static Map<String, GeoPackageDataType> inferColumnTypes(List<MasonGeometry> geometries) {
     Map<String, GeoPackageDataType> types = new LinkedHashMap<>();
@@ -160,16 +162,33 @@ public class GeoPackageExporter {
       for (Map.Entry<String, AttributeValue> entry : attributes.entrySet()) {
         String column = safeColumnName(entry.getKey());
         Object value = entry.getValue() == null ? null : entry.getValue().getValue();
-        GeoPackageDataType inferred = dataType(value);
         GeoPackageDataType existing = types.get(column);
-        // Keep the first concrete type; only upgrade away from the TEXT default when we finally
-        // see a typed value.
-        if (existing == null || (existing == GeoPackageDataType.TEXT && value != null)) {
-          types.put(column, inferred);
+        if (value == null) {
+          types.putIfAbsent(column, null); // keeps the column; its type comes from other rows
+          continue;
         }
+        types.put(column, widen(existing, dataType(value)));
       }
     }
+    types.replaceAll((column, type) -> type == null ? GeoPackageDataType.TEXT : type);
     return types;
+  }
+
+  /**
+   * The narrowest type that holds values of both types: INTEGER and DOUBLE widen to DOUBLE, and
+   * any other disagreement to TEXT.
+   *
+   * @param existing the type so far, or null if the column has held no value yet.
+   * @param seen the type of the value just seen.
+   */
+  private static GeoPackageDataType widen(GeoPackageDataType existing, GeoPackageDataType seen) {
+    if (existing == null || existing == seen) {
+      return seen;
+    }
+    boolean numeric = (existing == GeoPackageDataType.INTEGER
+        || existing == GeoPackageDataType.DOUBLE)
+        && (seen == GeoPackageDataType.INTEGER || seen == GeoPackageDataType.DOUBLE);
+    return numeric ? GeoPackageDataType.DOUBLE : GeoPackageDataType.TEXT;
   }
 
   private static GeoPackageDataType dataType(Object value) {

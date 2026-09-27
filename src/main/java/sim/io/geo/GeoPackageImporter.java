@@ -8,8 +8,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
 import mil.nga.geopackage.GeoPackage;
 import mil.nga.geopackage.GeoPackageManager;
 import mil.nga.geopackage.features.user.FeatureDao;
@@ -23,6 +25,8 @@ import sim.util.geo.AttributeValue;
 import sim.util.geo.MasonGeometry;
 
 public class GeoPackageImporter {
+
+  private static final Logger LOGGER = Logger.getLogger(GeoPackageImporter.class.getName());
 
   /**
    * Reads the feature table of a GeoPackage holding exactly one, and populates the provided
@@ -103,6 +107,10 @@ public class GeoPackageImporter {
 
   /** Adds every feature of one table to {@code vectorLayer}. */
   private static void readTable(FeatureDao featureDao, VectorLayer vectorLayer) {
+    // The geometry column is whatever the table declares - QGIS and GDAL call it "geom", not
+    // "geometry" - so ask for its name rather than assuming it.
+    String geometryColumn = featureDao.getGeometryColumnName();
+    int skipped = 0;
     for (FeatureRow row : featureDao.queryForAll()) {
       // Parse geometry using GeoPackage-Java's GeometryReader
       GeoPackageGeometryData geometryData = row.getGeometry();
@@ -111,6 +119,12 @@ public class GeoPackageImporter {
       if (geometryData != null && !geometryData.isEmpty()) {
         sfGeometry = geometryData.getGeometry();
       }
+      if (sfGeometry == null) {
+        // A feature without a geometry has no place in a spatial layer: skipped and counted, as
+        // the Shapefile importer does with null shapes.
+        skipped++;
+        continue;
+      }
 
       // Convert to JTS Geometry
       org.locationtech.jts.geom.Geometry jtsGeometry = convertToJTSGeometry(sfGeometry);
@@ -118,7 +132,7 @@ public class GeoPackageImporter {
       Map<String, AttributeValue> attributes = new HashMap<>();
       for (String columnName : featureDao.getTable().getColumnNames()) {
 
-        if (!columnName.equalsIgnoreCase("geometry")) {
+        if (!columnName.equalsIgnoreCase(geometryColumn)) {
           Object value = row.getValue(columnName);
           attributes.put(columnName, parseAttributeValue(value));
         }
@@ -129,6 +143,10 @@ public class GeoPackageImporter {
       masonGeometry.geometry = jtsGeometry;
       masonGeometry.addAttributes(attributes);
       vectorLayer.addGeometry(masonGeometry);
+    }
+    if (skipped > 0) {
+      LOGGER.warning("Skipped " + skipped + " features with no geometry in table "
+          + featureDao.getTableName());
     }
   }
 
@@ -233,26 +251,38 @@ public class GeoPackageImporter {
           .toArray(org.locationtech.jts.geom.LineString[]::new);
       return gf.createMultiLineString(lineStrings);
     } else if (geometryType.equals(GeometryType.POLYGON)) {
-      mil.nga.sf.Polygon pg = (mil.nga.sf.Polygon) sfGeometry;
-      return new GeometryFactory().createPolygon(pg.getExteriorRing().getPoints().stream()
-          .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new));
+      return toJTSPolygon((mil.nga.sf.Polygon) sfGeometry, new GeometryFactory());
     } else if (geometryType.equals(GeometryType.MULTIPOLYGON)) {
       mil.nga.sf.MultiPolygon mpg = (mil.nga.sf.MultiPolygon) sfGeometry;
       GeometryFactory gf = new GeometryFactory();
       if (mpg.getPolygons().size() == 1) {
-        mil.nga.sf.Polygon singlePolygon = mpg.getPolygons().get(0);
-        return gf.createPolygon(singlePolygon.getExteriorRing().getPoints()
-            .stream().map(point -> new Coordinate(point.getX(), point.getY()))
-            .toArray(Coordinate[]::new));
+        return toJTSPolygon(mpg.getPolygons().get(0), gf);
       }
       org.locationtech.jts.geom.Polygon[] polygons = mpg.getPolygons().stream()
-          .map(pg -> gf.createPolygon(pg.getExteriorRing().getPoints().stream()
-              .map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new)))
-          .toArray(org.locationtech.jts.geom.Polygon[]::new);
+          .map(pg -> toJTSPolygon(pg, gf)).toArray(org.locationtech.jts.geom.Polygon[]::new);
       return gf.createMultiPolygon(polygons);
     } else {
       throw new IllegalArgumentException(
           "Unsupported GeoPackage geometry type: " + sfGeometry.getGeometryType());
     }
+  }
+
+  /**
+   * Converts a polygon with its holes: the first ring is the exterior, the others are holes.
+   */
+  private static org.locationtech.jts.geom.Polygon toJTSPolygon(mil.nga.sf.Polygon polygon,
+      GeometryFactory gf) {
+    List<mil.nga.sf.LineString> rings = polygon.getRings();
+    LinearRing shell = gf.createLinearRing(toCoordinates(rings.get(0)));
+    LinearRing[] holes = new LinearRing[rings.size() - 1];
+    for (int i = 1; i < rings.size(); i++) {
+      holes[i - 1] = gf.createLinearRing(toCoordinates(rings.get(i)));
+    }
+    return gf.createPolygon(shell, holes);
+  }
+
+  private static Coordinate[] toCoordinates(mil.nga.sf.LineString ring) {
+    return ring.getPoints().stream().map(point -> new Coordinate(point.getX(), point.getY()))
+        .toArray(Coordinate[]::new);
   }
 }
