@@ -61,10 +61,17 @@ public class CSVUtils {
       if (!first) {
         sb.append(separators);
       }
+      final String text = value == null ? "" : value;
       if (customQuote == ' ') {
-        sb.append(followCVSformat(value));
+        // Unquoted unless the value needs it: one holding the separator, a double quote or a line
+        // break is quoted, as RFC 4180 has it, so it stays one field.
+        if (needsQuoting(text, separators)) {
+          sb.append('"').append(escape(text, '"')).append('"');
+        } else {
+          sb.append(text);
+        }
       } else {
-        sb.append(customQuote).append(followCVSformat(value)).append(customQuote);
+        sb.append(customQuote).append(escape(text, customQuote)).append(customQuote);
       }
 
       first = false;
@@ -73,17 +80,14 @@ public class CSVUtils {
     w.append(sb.toString());
   }
 
-  /**
-   * Helper method to format a value for CSV by handling special characters.
-   *
-   * @param value The value to be formatted.
-   * @return The formatted value suitable for CSV.
-   */
-  private static String followCVSformat(String value) {
-    String result = value;
-    if (result.contains("\"")) {
-      result = result.replace("\"", "\"\"");
-    }
-    return result;
+  private static boolean needsQuoting(String value, char separator) {
+    return value.indexOf(separator) >= 0 || value.indexOf('"') >= 0 || value.indexOf('\n') >= 0
+        || value.indexOf('\r') >= 0;
+  }
+
+  /** Doubles every occurrence of the quote character, the CSV escape for it inside a field. */
+  private static String escape(String value, char quote) {
+    final String single = String.valueOf(quote);
+    return value.replace(single, single + single);
   }
 }
