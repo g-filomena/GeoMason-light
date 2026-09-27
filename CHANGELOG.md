@@ -34,6 +34,7 @@
 * [Fix] `Utilities.filterMapByPercentile` accepts a percentile of 0 and an empty map.
 * [Note] `MasonGeometry.hashCode` documents that equality follows the geometry, so a geometry that moves must not be kept in a hash-based collection.
 * [Enhancement] Tests for each of the above; new `GridLayerTest`, `NodeGraphTest`, `ImporterUtilsTest`, `ShapeFileImporterTest` and `GeomPortrayalTest`, and `sim.testing.CapturedLog` for asserting on what a class logs.
+* [Breaking] `GeoPackageImporter` keeps TEXT values as text: "007" stays "007", and a number stored in a TEXT column arrives as a String. Numeric and boolean columns keep their types.
 
 ## Version 2.2.3
 

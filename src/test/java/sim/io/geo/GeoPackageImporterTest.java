@@ -161,4 +161,21 @@ class GeoPackageImporterTest {
     assertEquals(1.0, read.get(0).getDoubleAttribute("value"), 0.0);
     assertEquals(2.5, read.get(1).getDoubleAttribute("value"), 0.0);
   }
+
+  @Test
+  @DisplayName("text stays text, leading zeros and long digit strings included")
+  void textStaysText(@TempDir Path dir) throws Exception {
+    File file = dir.resolve("text.gpkg").toFile();
+    MasonGeometry feature = Fixtures.point(0, 0);
+    feature.addStringAttribute("code", "007");
+    feature.addStringAttribute("ref", "12345678901");
+    VectorLayer.writeGPKG(file.getPath(), new VectorLayer(new ArrayList<>(Arrays.asList(feature))));
+    VectorLayer layer = new VectorLayer();
+
+    VectorLayer.readGPKG(file.toURI().toURL(), layer);
+
+    MasonGeometry read = layer.getGeometries().get(0);
+    assertEquals("007", read.getStringAttribute("code"));
+    assertEquals("12345678901", read.getStringAttribute("ref"));
+  }
 }

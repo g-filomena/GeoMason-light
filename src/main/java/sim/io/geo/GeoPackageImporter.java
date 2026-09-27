@@ -151,36 +151,18 @@ public class GeoPackageImporter {
   }
 
   /**
-   * Parses an attribute value and converts it into an AttributeValue object.
+   * Wraps an attribute value read from the table in an AttributeValue.
    *
-   * @param value The raw value to parse.
-   * @return An AttributeValue representing the parsed data.
+   * <p>The value keeps the type its column declares. Text is not re-interpreted: a TEXT column
+   * holding "007" or an 11-digit identifier stays text, with its leading zeros and whatever its
+   * length.
+   *
+   * @param value The raw value to wrap.
+   * @return An AttributeValue holding the value.
    */
   private static AttributeValue parseAttributeValue(Object value) {
     if (value instanceof String) {
-      String rawAttributeValue = ((String) value).trim();
-      AttributeValue attributeValue = new AttributeValue();
-
-      if (rawAttributeValue.isEmpty()) {
-        attributeValue.setString(rawAttributeValue);
-      } else {
-        switch (determineType(rawAttributeValue)) {
-          case "double":
-            attributeValue.setDouble(Double.valueOf(rawAttributeValue));
-            break;
-          case "integer":
-            attributeValue.setInteger(Integer.valueOf(rawAttributeValue));
-            break;
-          case "boolean":
-            attributeValue.setValue(Boolean.valueOf(rawAttributeValue));
-            break;
-          default:
-            attributeValue.setString(rawAttributeValue);
-            break;
-        }
-      }
-
-      return attributeValue;
+      return new AttributeValue(((String) value).trim());
     } else if (value instanceof Long) {
       // Handle Long values explicitly
       long longValue = (Long) value;
@@ -188,36 +170,8 @@ public class GeoPackageImporter {
         return new AttributeValue((int) longValue); // Fits in Integer range
       }
       return new AttributeValue(longValue); // Store as Long
-
-    } else if (value instanceof Integer) {
-      return new AttributeValue(value);
-    } else if (value instanceof Double) {
-      return new AttributeValue(value);
-    } else if (value instanceof Boolean) {
-      return new AttributeValue(value);
-    } else {
-      return new AttributeValue(value);
     }
-
-  }
-
-  /**
-   * Determines the type of a string value (double, integer, boolean, or string).
-   *
-   * @param rawAttributeValue The raw string value to analyze.
-   * @return A string representing the determined type.
-   */
-  private static String determineType(String rawAttributeValue) {
-    if (rawAttributeValue.matches("^-?\\d+\\.\\d+$")) {
-      return "double";
-    } else if (rawAttributeValue.matches("^-?\\d+$")) {
-      return "integer";
-    } else if (rawAttributeValue.equalsIgnoreCase("true")
-        || rawAttributeValue.equalsIgnoreCase("false")) {
-      return "boolean";
-    } else {
-      return "string";
-    }
+    return new AttributeValue(value);
   }
 
   /**
