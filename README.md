@@ -27,7 +27,7 @@ Main additions include:
 * a `graph` package for advanced manipulation of graph components;
 * support for `SubGraph` objects;
 * a `VectorLayer` class with additional GIS-style geometric and spatial operations;
-* support for loading GeoPackages through [GeoPackage Java](https://github.com/ngageoint/geopackage-java);
+* reading and writing GeoPackages through [GeoPackage Java](https://github.com/ngageoint/geopackage-java), and GeoJSON export;
 * routing utilities for graph-based agent movement and street-network simulations.
 
 These features are intended to support flexible urban mobility, traffic, accessibility, and other spatial agent-based models.
@@ -52,7 +52,7 @@ The codebase also uses the modern Java Topology Suite package namespace, `org.lo
 
 ## Requirements
 
-GeoMason-light `2.0.0` requires Java 11 or newer.
+GeoMason-light `2.x` requires Java 11 or newer.
 
 ## Main dependencies
 
@@ -94,7 +94,7 @@ After that, downstream Maven projects can explicitly declare both dependencies:
 <dependency>
 	<groupId>uk.ac.liv.gdsl</groupId>
 	<artifactId>GeoMason-light</artifactId>
-	<version>2.0.0</version>
+	<version>2.3.0</version>
 </dependency>
 
 <dependency>
@@ -114,7 +114,7 @@ Add the following dependency to your project `pom.xml`:
 <dependency>
 	<groupId>uk.ac.liv.gdsl</groupId>
 	<artifactId>GeoMason-light</artifactId>
-	<version>2.0.0</version>
+	<version>2.3.0</version>
 </dependency>
 ```
 
@@ -137,7 +137,7 @@ mvn clean install
 <dependency>
 	<groupId>uk.ac.liv.gdsl</groupId>
 	<artifactId>GeoMason-light</artifactId>
-	<version>2.0.0</version>
+	<version>2.3.0</version>
 </dependency>
 ```
 
