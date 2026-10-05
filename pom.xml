@@ -291,6 +291,32 @@
 		</plugins>
 	</build>
 
+	<!-- MASON is not on Maven Central. lib/ is a Maven repository holding the vendored jar, so a
+	     build from source resolves it with no manual step. The profile is active only where lib/
+	     exists, which a project depending on the published artifact does not have. -->
+	<profiles>
+		<profile>
+			<id>vendored-mason</id>
+			<activation>
+				<file>
+					<exists>${basedir}/lib/sim/mason/21/mason-21.jar</exists>
+				</file>
+			</activation>
+			<repositories>
+				<repository>
+					<id>vendored-mason</id>
+					<url>file://${project.basedir}/lib</url>
+					<releases>
+						<checksumPolicy>fail</checksumPolicy>
+					</releases>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+			</repositories>
+		</profile>
+	</profiles>
+
 	<licenses>
 		<license>
 			<name>GNU General Public License, Version 3.0</name>

@@ -1,6 +1,7 @@
 # GeoMason-light
 
 [![Maven Central](https://img.shields.io/maven-central/v/uk.ac.liv.gdsl/GeoMason-light.svg)](https://mvnrepository.com/artifact/uk.ac.liv.gdsl/GeoMason-light)
+[![Tests](https://github.com/g-filomena/GeoMason-light/actions/workflows/test.yml/badge.svg)](https://github.com/g-filomena/GeoMason-light/actions/workflows/test.yml)
 [![Javadoc](https://github.com/g-filomena/GeoMason-light/actions/workflows/javadoc.yml/badge.svg)](https://github.com/g-filomena/GeoMason-light/actions/workflows/javadoc.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -71,11 +72,13 @@ MASON is not available from Maven Central under the `sim:mason:21` coordinates. 
 
 This means that Maven will not try to pull MASON transitively when users add `GeoMason-light` to their project. Users must provide MASON manually.
 
-If you are building `GeoMason-light` from source, or if your downstream Maven project needs to compile against MASON classes, install `mason-21.jar` into your local Maven repository:
+A build from source needs no manual step: `lib/` is a Maven repository holding `mason-21.jar`, and the POM resolves MASON from it.
+
+If your downstream Maven project needs to compile against MASON classes, install the jar from a clone of this repository into your local Maven repository:
 
 ```bash
 mvn install:install-file \
-	-Dfile=lib/mason-21.jar \
+	-Dfile=lib/sim/mason/21/mason-21.jar \
 	-DgroupId=sim \
 	-DartifactId=mason \
 	-Dversion=21 \
@@ -85,7 +88,7 @@ mvn install:install-file \
 On Windows PowerShell:
 
 ```powershell
-mvn install:install-file "-Dfile=.\lib\mason-21.jar" "-DgroupId=sim" "-DartifactId=mason" "-Dversion=21" "-Dpackaging=jar"
+mvn install:install-file "-Dfile=.\lib\sim\mason\21\mason-21.jar" "-DgroupId=sim" "-DartifactId=mason" "-Dversion=21" "-Dpackaging=jar"
 ```
 
 After that, downstream Maven projects can explicitly declare both dependencies:
@@ -159,24 +162,7 @@ git clone https://github.com/g-filomena/GeoMason-light.git
 cd GeoMason-light
 ```
 
-Install MASON into your local Maven repository:
-
-```bash
-mvn install:install-file \
-	-Dfile=lib/mason-21.jar \
-	-DgroupId=sim \
-	-DartifactId=mason \
-	-Dversion=21 \
-	-Dpackaging=jar
-```
-
-On Windows PowerShell:
-
-```powershell
-mvn install:install-file "-Dfile=.\lib\mason-21.jar" "-DgroupId=sim" "-DartifactId=mason" "-Dversion=21" "-Dpackaging=jar"
-```
-
-Then build the project:
+Build the project (MASON is resolved from `lib/`):
 
 ```bash
 mvn clean install

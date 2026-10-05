@@ -1,0 +1,32 @@
+name: Tests
+
+# Builds and tests every push to main and every pull request, on the oldest Java the library
+# supports and on the one its main consumer runs. `verify` also builds the sources and javadoc
+# jars a release attaches, so a change that would break publishing fails here first.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['11', '21']
+    name: verify (Java ${{ matrix.java }})
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build and test
+        run: mvn -B verify

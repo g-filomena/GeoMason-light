@@ -35,9 +35,6 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
 
-      - name: Install MASON dependency locally
-        run: mvn -B install:install-file -Dfile=lib/mason-21.jar -DgroupId=sim -DartifactId=mason -Dversion=21 -Dpackaging=jar
-
       # Central versions are immutable, so a tag that disagrees with the POM stops here rather than
       # publishing the POM's version under the wrong tag.
       - name: Check tag matches POM version

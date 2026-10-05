@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# The vendored Maven repository: checksums are of the files byte for byte
+lib/** -text
