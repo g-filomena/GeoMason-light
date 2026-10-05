@@ -4,6 +4,7 @@
 
 * [Build] A build from source resolves MASON with no manual step. `lib/` is a Maven repository holding `sim:mason:21` (the jar moved to `lib/sim/mason/21/`, with its POM and checksums), declared in a profile that is active only where that directory exists. The `install:install-file` step is gone from the CI workflows.
 * [Build] `.github/workflows/test.yml` runs `mvn verify` on every push to main and every pull request, on Java 11 and 21; the tests used to run only when a release was published.
+* [Build] The MASON version is the `mason.version` property (default 21, the vendored one). `.github/workflows/mason-upstream.yml` builds MASON's core from github.com/eclab/mason weekly and runs the build and tests against it; on 5 Oct 2026, upstream at `08c9529` (10 Jul 2026), all 231 tests pass.
 * [Breaking] A pair of nodes can be joined by more than one edge - different streets between the same two junctions, such as a crescent beside a straight road. The protected `adjacencyMatrix` and `adjacencyMatrixDirected` map a pair to a list of edges, shortest first, so every street between two junctions is visible to lookups by node pair.
 * [Enhancement] `Graph.getEdgesBetween(from, to)` and `Graph.getDirectedEdgesBetween(from, to)` return every edge between two nodes, shortest first (then lowest id).
 * [Note] `getEdgeBetween` and `getDirectedEdgeBetween` answer the shortest of the parallel edges - the one a shortest path takes - whatever the reading order.

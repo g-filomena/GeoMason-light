@@ -46,6 +46,9 @@
 		     uploads and validates a release on the Central Portal without publishing it (a dry run). -->
 		<central.autoPublish>true</central.autoPublish>
 		<central.waitUntil>published</central.waitUntil>
+		<!-- The MASON built against. 21 is vendored in lib/; another version must be in the local
+		     repository first, e.g. -Dmason.version=22 after installing a MASON build as sim:mason:22. -->
+		<mason.version>21</mason.version>
 	</properties>
 
 	<dependencies>
@@ -129,7 +132,7 @@
 		<dependency>
 			<groupId>sim</groupId>
 			<artifactId>mason</artifactId>
-			<version>21</version>
+			<version>${mason.version}</version>
 			<scope>provided</scope>
 		</dependency>
 

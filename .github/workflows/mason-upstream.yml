@@ -1,0 +1,38 @@
+name: MASON upstream
+
+# Builds MASON's core from github.com/eclab/mason as it is today and runs GeoMason-light's build and
+# tests against it, instead of the vendored MASON 21, so a change upstream that breaks this library
+# is seen before anyone upgrades. Weekly, and on demand; a failure here does not block a release.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build MASON core from upstream
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/eclab/mason.git "$RUNNER_TEMP/mason"
+          cd "$RUNNER_TEMP/mason"
+          git sparse-checkout set mason
+          git checkout HEAD -- pom.xml
+          echo "MASON upstream: $(git log -1 --format='%h %ad %s' --date=short)" >> "$GITHUB_STEP_SUMMARY"
+          mvn -B -q install -DskipTests -Dmaven.javadoc.skip=true -pl mason -am
+          jar=$(find ~/.m2/repository/cs/gmu/edu/eclab/mason -name 'mason-*.jar' | head -1)
+          mvn -B -q install:install-file -Dfile="$jar" -DgroupId=sim -DartifactId=mason \
+            -Dversion=upstream -Dpackaging=jar
+
+      - name: Build and test against it
+        run: mvn -B verify -Dmason.version=upstream
