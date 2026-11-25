@@ -2,7 +2,7 @@
  * Copyright 2011 by Mark Coletti, Keith Sullivan, Sean Luke, and George Mason University Mason
  * University Licensed under the Academic Free License version 3.0
  *
- * See the file "LICENSE" for more information
+ * See the file "GEOMASON-LICENSE" for more information
  *
  */
 package sim.util.geo;

@@ -197,4 +197,6 @@ These packages cover vector/raster layers, geospatial import/export, graph struc
 
 GeoMason-light is released under the GNU General Public License v3.0.
 
-See the [GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html) for details.
+See the [LICENSE](LICENSE) file or the [GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html) for details.
+
+Some source files derive from [GeoMason](https://cs.gmu.edu/~eclab/projects/mason/extensions/geomason/), Copyright 2011 by Mark Coletti, Keith Sullivan, Sean Luke, and George Mason University, licensed under the Academic Free License version 3.0. They have been modified for GeoMason-light and keep their original notices. The text of that license is in [GEOMASON-LICENSE](GEOMASON-LICENSE).
