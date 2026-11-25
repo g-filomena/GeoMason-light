@@ -595,13 +595,24 @@ public class VectorLayer extends Layer {
 
     for (final Object geometry : geometriesList) {
       final MasonGeometry otherMasonGeometry = (MasonGeometry) geometry;
-      // JTS distance is not cheap: compute it once per candidate, not twice
-      final double distance = inputGeometry.distance(otherMasonGeometry.getGeometry());
+      final double distance = distanceBetween(inputGeometry, otherMasonGeometry.getGeometry());
       if (distance >= lowerLimit && distance <= upperLimit) {
         featuresBetween.add(otherMasonGeometry);
       }
     }
     return featuresBetween;
+  }
+
+  /**
+   * The JTS distance between two geometries. Two points are measured coordinate to coordinate, the
+   * figure {@link Geometry#distance(Geometry)} reaches after extracting every component of both.
+   */
+  private static double distanceBetween(Geometry geometry, Geometry other) {
+    if (geometry instanceof Point && other instanceof Point && !geometry.isEmpty()
+        && !other.isEmpty()) {
+      return geometry.getCoordinate().distance(other.getCoordinate());
+    }
+    return geometry.distance(other);
   }
 
   /**

@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 2.3.1
+
+* [Enhancement] `GeoPackageExporter.write` inserts the rows in one transaction instead of one per row, so a failed write leaves none of them in the file.
+* [Enhancement] `VectorLayer.featuresBetweenLimits` measures two points coordinate to coordinate instead of through a JTS `DistanceOp`; the distances are the same.
+* [Enhancement] Added `GeoPackageExporterTest`, and a `VectorLayerTest` case comparing the point distances with JTS.
+
 ## Version 2.3.0
 
 * [Build] A build from source resolves MASON with no manual step. `lib/` is a Maven repository holding `sim:mason:21` (the jar moved to `lib/sim/mason/21/`, with its POM and checksums), declared in a profile that is active only where that directory exists. The `install:install-file` step is gone from the CI workflows.

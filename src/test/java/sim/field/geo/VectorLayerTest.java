@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ec.util.MersenneTwisterFast;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -137,6 +138,35 @@ class VectorLayerTest {
         layer.featuresBetweenLimits(origin, 50.0, 150.0));
     assertEquals(2, layer.featuresWithinDistance(origin, 150.0).size());
     assertEquals(3, layer.featuresWithinDistance(origin, 500.0).size());
+  }
+
+  @Test
+  @DisplayName("points are selected by the distance JTS measures, limits included")
+  void pointDistancesAreTheJtsOnes() {
+    MersenneTwisterFast random = new MersenneTwisterFast(7L);
+    List<MasonGeometry> points = new ArrayList<>();
+    for (int i = 0; i < 400; i++) {
+      points.add(Fixtures.point(1.4e6 + 3000 * random.nextDouble(), 5e6 + 3000 * random.nextDouble()));
+    }
+    VectorLayer cloud = new VectorLayer(points);
+    Geometry origin = points.get(0).getGeometry();
+    double lower = origin.distance(points.get(1).getGeometry());
+    double upper = origin.distance(points.get(2).getGeometry());
+    double min = Math.min(lower, upper);
+    double max = Math.max(lower, upper);
+
+    List<MasonGeometry> found = cloud.featuresBetweenLimits(origin, min, max);
+
+    List<MasonGeometry> expected = new ArrayList<>();
+    for (MasonGeometry point : points) {
+      double distance = origin.distance(point.getGeometry());
+      if (distance >= min && distance <= max) {
+        expected.add(point);
+      }
+    }
+    assertTrue(expected.size() > 2);
+    assertEquals(expected.size(), found.size());
+    assertTrue(found.containsAll(expected));
   }
 
   @Test

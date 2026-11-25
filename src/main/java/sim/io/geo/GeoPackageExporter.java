@@ -76,7 +76,8 @@ public class GeoPackageExporter {
   }
 
   /**
-   * Writes the layer to a GeoPackage tagged with the given spatial-reference id.
+   * Writes the layer to a GeoPackage tagged with the given spatial-reference id. The rows go in as
+   * one transaction: all of them are written, or none is.
    *
    * @param fileName output path; a {@code .gpkg} extension is added when none is present
    * @param vectorLayer the layer to export
@@ -126,15 +127,24 @@ public class GeoPackageExporter {
           FeatureTableMetadata.create(geometryColumns, columns, boundingBox));
 
       FeatureDao featureDao = geoPackage.getFeatureDao(tableName);
-      for (MasonGeometry masonGeometry : geometries) {
-        Geometry geometry = masonGeometry.getGeometry();
-        if (geometry == null) {
-          continue;
+      // One transaction for the whole layer: without it every row is a commit of its own, and a
+      // commit costs milliseconds where an insert costs microseconds.
+      featureDao.beginTransaction();
+      boolean written = false;
+      try {
+        for (MasonGeometry masonGeometry : geometries) {
+          Geometry geometry = masonGeometry.getGeometry();
+          if (geometry == null) {
+            continue;
+          }
+          FeatureRow row = featureDao.newRow();
+          row.setGeometry(GeoPackageGeometryData.create(srsId, toSfGeometry(geometry)));
+          writeAttributes(row, masonGeometry, columnTypes);
+          featureDao.insert(row);
         }
-        FeatureRow row = featureDao.newRow();
-        row.setGeometry(GeoPackageGeometryData.create(srsId, toSfGeometry(geometry)));
-        writeAttributes(row, masonGeometry, columnTypes);
-        featureDao.insert(row);
+        written = true;
+      } finally {
+        featureDao.endTransaction(written);
       }
     } catch (SQLException e) {
       throw new IOException("Failed to write GeoPackage " + path, e);
