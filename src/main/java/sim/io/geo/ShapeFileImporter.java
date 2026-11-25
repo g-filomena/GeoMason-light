@@ -282,7 +282,7 @@ public class ShapeFileImporter {
                   break;
                 }
                 case 'L': // Logical
-                  attributeValue.setValue(Boolean.valueOf(rawAttributeValue));
+                  attributeValue.setValue(parseLogical(rawAttributeValue));
                   break;
                 default:
                   attributeValue.setString(rawAttributeValue);
@@ -436,6 +436,27 @@ public class ShapeFileImporter {
       } catch (final NumberFormatException notNumber) {
         return raw;
       }
+    }
+  }
+
+  /**
+   * Parses a logical .dbf value: T, t, Y and y are true, F, f, N and n false. Anything else,
+   * including the "?" dBase writes for a value not set, is kept as the raw string, which is neither.
+   */
+  static Object parseLogical(final String raw) {
+    switch (raw) {
+      case "T":
+      case "t":
+      case "Y":
+      case "y":
+        return Boolean.TRUE;
+      case "F":
+      case "f":
+      case "N":
+      case "n":
+        return Boolean.FALSE;
+      default:
+        return raw;
     }
   }
 }

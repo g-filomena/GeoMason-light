@@ -46,7 +46,7 @@ import sim.util.geo.MasonGeometry;
  * limit, no 254-character field limit, typed columns, and one file instead of three.
  *
  * <p>The feature table schema is the union of the layer's attribute names; each column's type is
- * inferred from the first non-null value seen for it (text / integer / double / boolean). Geometry
+ * inferred from all the values it holds (text / integer / double / boolean). Geometry
  * is stored in a generic {@code geometry} column, so mixed geometry types in one layer are allowed.
  *
  * <p>Coordinates are written verbatim (no reprojection). The spatial-reference id defaults to

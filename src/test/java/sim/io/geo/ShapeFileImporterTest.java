@@ -103,4 +103,47 @@ class ShapeFileImporterTest {
     assertEquals(100000.0, ShapeFileImporter.parseNumber("1e5"));
     assertEquals("*****", ShapeFileImporter.parseNumber("*****"));
   }
+
+  /** A .dbf with one logical field, FLAG, holding the given one-character values. */
+  private static byte[] logicalDbf(String... flags) {
+    int headerSize = 32 + 32 + 1;
+    int recordSize = 2;
+    ByteBuffer buffer = ByteBuffer.allocate(headerSize + recordSize * flags.length)
+        .order(ByteOrder.LITTLE_ENDIAN);
+    buffer.put((byte) 3).put(new byte[3]).putInt(flags.length).putShort((short) headerSize)
+        .putShort((short) recordSize).put(new byte[20]);
+    byte[] name = new byte[11];
+    System.arraycopy("FLAG".getBytes(StandardCharsets.US_ASCII), 0, name, 0, 4);
+    buffer.put(name).put((byte) 'L').put(new byte[4]).put((byte) 1).put((byte) 0)
+        .put(new byte[14]);
+    buffer.put((byte) 0x0D);
+    for (String flag : flags) {
+      buffer.put((byte) ' ').put(flag.getBytes(StandardCharsets.US_ASCII));
+    }
+    return buffer.array();
+  }
+
+  @Test
+  @DisplayName("logical fields are read as dBase writes them: T/t/Y/y and F/f/N/n")
+  void logicalsAreReadAsDBaseWritesThem(@TempDir Path dir) throws Exception {
+    String[] flags = {"T", "t", "Y", "y", "F", "f", "N", "n", "?"};
+    Object[] expected = {true, true, true, true, false, false, false, false, "?"};
+    byte[][] records = new byte[flags.length][];
+    for (int i = 0; i < flags.length; i++) {
+      records[i] = record(i + 1, new double[] {i, i});
+    }
+    File shp = dir.resolve("flags.shp").toFile();
+    File dbf = dir.resolve("flags.dbf").toFile();
+    Files.write(shp.toPath(), shp(records));
+    Files.write(dbf.toPath(), logicalDbf(flags));
+    VectorLayer layer = new VectorLayer();
+
+    ShapeFileImporter.read(shp.toURI().toURL(), dbf.toURI().toURL(), layer);
+
+    assertEquals(flags.length, layer.size());
+    for (int i = 0; i < flags.length; i++) {
+      assertEquals(expected[i], layer.getGeometries().get(i).getAttributes().get("FLAG").getValue(),
+          "dBase value " + flags[i]);
+    }
+  }
 }
